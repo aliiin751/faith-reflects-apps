@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FaithReflects - Spiritual Garden</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body {
+            background-color: #191919;
+            color: #E3E3E3;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            overflow-x: hidden;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #191919; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #444; }
+        
+        .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+        .animate-grow { animation: grow 1s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .animate-pop { animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes grow {
+            from { opacity: 0; transform: scale(0.5) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.95); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // --- ICONS ---
+        const Icons = {
+            Book: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>,
+            Sun: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2"/><path d="M12 21v2"/><path d="M4.22 4.22l1.42 1.42"/><path d="M18.36 18.36l1.42 1.42"/><path d="M1 12h2"/><path d="M21 12h2"/><path d="M4.22 19.78l1.42-1.42"/><path d="M18.36 5.64l1.42-1.42"/></svg>,
+            Edit: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
+            Refresh: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>,
+            Check: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
+            X: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        };
+
+        const { useState, useEffect } = React;
+
+        // --- PLANT COMPONENT ---
+        const Plant = ({ stage }) => {
+            // Colors
+            const potColor = "#9F6B53"; // Brand Brown
+            const plantColor = "#8BA870"; // Muted Sage Green
+            const flowerColor = "#E3E3E3"; // White Flower
+            const soilColor = "#3E3029"; // Dark Soil
+
+            return (
+                <div className="relative w-full max-w-[200px] mx-auto aspect-square flex items-end justify-center mb-6">
+                    <svg viewBox="0 0 200 200" className="w-full h-full drop-shadow-2xl">
+                        
+                        {/* 0. POT (Always visible) */}
+                        <g className="animate-fade-in">
+                            {/* Back rim */}
+                            <ellipse cx="100" cy="140" rx="50" ry="10" fill="#784F3D" />
+                            {/* Pot Body */}
+                            <path d="M50 140 L65 190 H135 L150 140 Z" fill={potColor} />
+                            {/* Soil */}
+                            <ellipse cx="100" cy="140" rx="45" ry="8" fill={soilColor} />
+                            {/* Front rim highlight */}
+                            <path d="M50 140 Q100 155 150 140" fill="none" stroke="#784F3D" strokeWidth="2" opacity="0.3" />
+                        </g>
+
+                        {/* STAGE 1: SPROUT (1+ habits) */}
+                        {stage >= 1 && (
+                            <g className="animate-grow origin-bottom" style={{transformOrigin: '100px 140px'}}>
+                                {/* Stem */}
+                                <path d="M100 140 Q100 120 100 110" stroke={plantColor} strokeWidth="4" strokeLinecap="round" fill="none" />
+                                {/* Left Leaf */}
+                                <path d="M100 120 Q80 110 80 120 Q80 130 100 125" fill={plantColor} />
+                                {/* Right Leaf */}
+                                <path d="M100 115 Q120 105 120 115 Q120 125 100 120" fill={plantColor} />
+                            </g>
+                        )}
+
+                        {/* STAGE 2: GROWING (2+ habits) */}
+                        {stage >= 2 && (
+                            <g className="animate-grow origin-bottom" style={{transformOrigin: '100px 140px'}}>
+                                {/* Extended Stem */}
+                                <path d="M100 110 Q95 90 100 70" stroke={plantColor} strokeWidth="3" strokeLinecap="round" fill="none" />
+                                {/* New Leaves */}
+                                <path d="M100 90 Q70 80 75 100 Q100 100 100 90" fill={plantColor} />
+                                <path d="M100 80 Q130 60 125 80 Q100 90 100 80" fill={plantColor} />
+                            </g>
+                        )}
+
+                        {/* STAGE 3: BLOOM (3 habits) */}
+                        {stage >= 3 && (
+                            <g className="animate-grow origin-bottom" style={{transformOrigin: '100px 70px'}}>
+                                {/* Flower Center */}
+                                <circle cx="100" cy="65" r="5" fill="#FDE047" />
+                                {/* Petals */}
+                                <g opacity="0.9">
+                                    <path d="M100 65 Q100 45 90 50 Q80 55 100 65" fill={flowerColor} />
+                                    <path d="M100 65 Q120 45 110 50 Q100 55 100 65" fill={flowerColor} />
+                                    <path d="M100 65 Q130 65 120 75 Q110 80 100 65" fill={flowerColor} />
+                                    <path d="M100 65 Q100 95 90 85 Q80 80 100 65" fill={flowerColor} />
+                                    <path d="M100 65 Q70 65 80 55 Q90 50 100 65" fill={flowerColor} />
+                                </g>
+                                {/* Sparkles */}
+                                <circle cx="85" cy="40" r="1" fill="white" className="animate-pulse" />
+                                <circle cx="120" cy="50" r="1" fill="white" className="animate-pulse" style={{animationDelay: '0.5s'}} />
+                            </g>
+                        )}
+
+                    </svg>
+                </div>
+            );
+        };
+
+        // --- HABIT BUTTON COMPONENT ---
+        const HabitButton = ({ habit, isCompleted, onClick }) => {
+            const Icon = habit.icon;
+            
+            return (
+                <button 
+                    onClick={onClick}
+                    className={`
+                        w-full p-4 rounded-xl border transition-all duration-300 flex items-center justify-between group mb-3
+                        ${isCompleted 
+                            ? 'bg-[#2C2C2C] border-[#9F6B53] shadow-[0_0_10px_rgba(159,107,83,0.2)]' 
+                            : 'bg-[#202020] border-[#333] hover:border-[#555] opacity-80 hover:opacity-100'
+                        }
+                    `}
+                >
+                    <div className="flex items-center gap-3">
+                        <div className={`
+                            p-2 rounded-lg transition-colors duration-300
+                            ${isCompleted ? 'bg-[#9F6B53] text-white' : 'bg-[#2C2C2C] text-stone-500'}
+                        `}>
+                            <Icon size={20} />
+                        </div>
+                        <div className="text-left">
+                            <span className={`block text-sm font-bold ${isCompleted ? 'text-white' : 'text-stone-400'}`}>
+                                {habit.label}
+                            </span>
+                            <span className="text-[10px] text-stone-500 uppercase tracking-wider">
+                                {habit.subLabel}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className={`
+                        w-5 h-5 rounded-full border flex items-center justify-center transition-colors
+                        ${isCompleted ? 'bg-[#9F6B53] border-[#9F6B53]' : 'border-[#444]'}
+                    `}>
+                        {isCompleted && <Icons.Check size={12} className="text-white" />}
+                    </div>
+                </button>
+            );
+        };
+
+        // --- MAIN APP ---
+        function App() {
+            const [habits, setHabits] = useState({
+                word: false,
+                prayer: false,
+                journal: false
+            });
+            const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+            // Calculate Growth Stage (0 to 3)
+            const completedCount = Object.values(habits).filter(Boolean).length;
+            const stage = completedCount; 
+
+            // Messages based on stage
+            const messages = [
+                "The seeds of faith are planted in quietness.",
+                "A sprout appears! Your consistency is growing.",
+                "Roots growing deep. You are abiding in Him.",
+                "Fruitful & Blooming! A beautiful offering."
+            ];
+
+            // Load state
+            useEffect(() => {
+                const saved = localStorage.getItem('faithreflects_garden');
+                if (saved) {
+                    try {
+                        setHabits(JSON.parse(saved));
+                    } catch (e) { console.error(e); }
+                }
+            }, []);
+
+            // Save state
+            useEffect(() => {
+                localStorage.setItem('faithreflects_garden', JSON.stringify(habits));
+            }, [habits]);
+
+            const toggleHabit = (key) => {
+                setHabits(prev => ({ ...prev, [key]: !prev[key] }));
+            };
+
+            const triggerReset = () => {
+                setShowResetConfirm(true);
+            };
+
+            const confirmReset = () => {
+                setHabits({ word: false, prayer: false, journal: false });
+                setShowResetConfirm(false);
+            };
+
+            const habitConfig = [
+                { key: 'word', label: 'Scripture', subLabel: 'Water', icon: Icons.Book },
+                { key: 'prayer', label: 'Prayer', subLabel: 'Sunlight', icon: Icons.Sun },
+                { key: 'journal', label: 'Reflection', subLabel: 'Soil Care', icon: Icons.Edit }
+            ];
+
+            return (
+                <div className="min-h-screen bg-[#191919] text-[#E3E3E3] font-sans flex flex-col p-4 max-w-xs mx-auto">
+                    
+                    {/* Header */}
+                    <header className="flex justify-between items-center mb-6 relative">
+                        <div className="flex items-center space-x-1.5 text-stone-300">
+                            <span className="text-lg">✨</span>
+                            <span className="font-semibold tracking-tight text-sm font-serif">FaithReflects</span>
+                        </div>
+                        
+                        {/* Reset Confirmation UI */}
+                        {showResetConfirm ? (
+                            <div className="flex items-center bg-[#2C2C2C] rounded-lg border border-[#333] p-1 shadow-lg animate-fade-in absolute right-0">
+                                <span className="text-[10px] mr-2 text-stone-400 pl-2">Reset?</span>
+                                <button onClick={confirmReset} className="p-1 text-[#9F6B53] hover:text-white mr-1" title="Confirm">
+                                    <Icons.Check size={14} />
+                                </button>
+                                <button onClick={() => setShowResetConfirm(false)} className="p-1 text-stone-500 hover:text-white" title="Cancel">
+                                    <Icons.X size={14} />
+                                </button>
+                            </div>
+                        ) : (
+                            <button 
+                                onClick={triggerReset}
+                                className="text-stone-500 hover:text-stone-300 transition-colors p-1.5 rounded hover:bg-[#2C2C2C]"
+                                title="New Day"
+                            >
+                                <Icons.Refresh size={16} />
+                            </button>
+                        )}
+                    </header>
+
+                    {/* Title */}
+                    <div className="text-center mb-2">
+                        <h1 className="text-xl font-bold text-[#E3E3E3] tracking-tight">Daily Garden</h1>
+                        <p className="text-stone-500 text-xs mt-1 italic transition-all duration-500">
+                            "{messages[stage]}"
+                        </p>
+                    </div>
+
+                    {/* The Plant */}
+                    <Plant stage={stage} />
+
+                    {/* Habit Controls */}
+                    <div className="space-y-1">
+                        {habitConfig.map(h => (
+                            <HabitButton 
+                                key={h.key}
+                                habit={h}
+                                isCompleted={habits[h.key]}
+                                onClick={() => toggleHabit(h.key)}
+                            />
+                        ))}
+                    </div>
+
+                    {/* Progress Indicator */}
+                    <div className="mt-6 flex justify-center gap-1.5">
+                        {[0, 1, 2].map(i => (
+                            <div 
+                                key={i} 
+                                className={`h-1.5 w-8 rounded-full transition-colors duration-500 ${i < completedCount ? 'bg-[#9F6B53]' : 'bg-[#2C2C2C]'}`}
+                            />
+                        ))}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="mt-8 text-center opacity-30 text-[9px]">
+                        FaithReflects • Spiritual Growth Tracker
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

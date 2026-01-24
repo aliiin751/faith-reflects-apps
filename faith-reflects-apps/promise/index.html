@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FaithReflects Promise Box</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Pinyon+Script&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .serif-title { font-family: 'Cinzel', serif; }
+        .script-font { font-family: 'Pinyon Script', cursive; }
+        
+        /* Card Flip & Fade Animations */
+        @keyframes fade-in-up {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .animate-card {
+            animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Subtle Texture Pattern */
+        .texture-bg {
+            background-color: #fdfbf7;
+            background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23d6d3d1' fill-opacity='0.4' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E");
+        }
+    </style>
+</head>
+<body class="bg-[#EBE9E4] flex items-center justify-center min-h-screen p-4">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Icons
+        const IconSparkles = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>;
+        const IconCopy = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>;
+        const IconRefresh = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>;
+        const IconShare = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>;
+
+        const promises = [
+            { text: "For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, plans to give you hope and a future.", ref: "Jeremiah 29:11", topic: "Hope" },
+            { text: "Come to me, all you who are weary and burdened, and I will give you rest.", ref: "Matthew 11:28", topic: "Rest" },
+            { text: "And my God will meet all your needs according to the riches of his glory in Christ Jesus.", ref: "Philippians 4:19", topic: "Provision" },
+            { text: "The Lord is my shepherd, I lack nothing.", ref: "Psalm 23:1", topic: "Comfort" },
+            { text: "But those who hope in the Lord will renew their strength. They will soar on wings like eagles.", ref: "Isaiah 40:31", topic: "Strength" },
+            { text: "Cast all your anxiety on him because he cares for you.", ref: "1 Peter 5:7", topic: "Anxiety" },
+            { text: "I can do all this through him who gives me strength.", ref: "Philippians 4:13", topic: "Strength" },
+            { text: "Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.", ref: "Joshua 1:9", topic: "Courage" },
+            { text: "Peace I leave with you; my peace I give you. I do not give to you as the world gives.", ref: "John 14:27", topic: "Peace" },
+            { text: "The Lord will fight for you; you need only to be still.", ref: "Exodus 14:14", topic: "Trust" },
+            { text: "He heals the brokenhearted and binds up their wounds.", ref: "Psalm 147:3", topic: "Healing" },
+            { text: "I am with you always, to the very end of the age.", ref: "Matthew 28:20", topic: "Presence" },
+            { text: "Trust in the Lord with all your heart and lean not on your own understanding.", ref: "Proverbs 3:5", topic: "Guidance" },
+            { text: "The joy of the Lord is your strength.", ref: "Nehemiah 8:10", topic: "Joy" },
+            { text: "God is our refuge and strength, an ever-present help in trouble.", ref: "Psalm 46:1", topic: "Refuge" }
+        ];
+
+        const App = () => {
+            const [currentPromise, setCurrentPromise] = useState(null);
+            const [isAnimating, setIsAnimating] = useState(false);
+            const [copied, setCopied] = useState(false);
+
+            const drawPromise = () => {
+                setIsAnimating(true);
+                setCopied(false);
+                setTimeout(() => {
+                    const randomIdx = Math.floor(Math.random() * promises.length);
+                    setCurrentPromise(promises[randomIdx]);
+                    setIsAnimating(false);
+                }, 100);
+            };
+
+            const copyToClipboard = () => {
+                if (!currentPromise) return;
+                const textToCopy = `"${currentPromise.text}" - ${currentPromise.ref}`;
+                navigator.clipboard.writeText(textToCopy);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            };
+
+            return (
+                <div className="w-full max-w-sm flex flex-col items-center">
+                    
+                    {/* Header */}
+                    <div className="mb-6 text-center">
+                        <div className="inline-flex items-center justify-center p-3 bg-white rounded-full shadow-sm mb-3">
+                            <IconSparkles className="w-6 h-6 text-yellow-600" />
+                        </div>
+                        <h1 className="serif-title text-2xl text-stone-800 tracking-wider font-bold">Daily Promise</h1>
+                        <p className="text-stone-500 text-xs uppercase tracking-widest mt-1">A Promise for Your Day</p>
+                    </div>
+
+                    {/* Card Area */}
+                    <div className="relative w-full h-72 perspective-1000 mb-8 group">
+                        
+                        {!currentPromise ? (
+                            // Empty State / Start State
+                            <div className="absolute w-full h-full bg-stone-100 rounded-xl shadow-inner border-2 border-dashed border-stone-300 flex flex-col items-center justify-center p-6 text-center cursor-pointer hover:bg-stone-50 transition-colors" onClick={drawPromise}>
+                                <p className="text-stone-400 font-serif italic text-lg mb-4">"Ask, and it will be given to you..."</p>
+                                <button className="px-6 py-2 bg-stone-800 text-white rounded-full text-sm font-medium hover:bg-stone-700 transition-transform transform hover:scale-105 shadow-lg">
+                                    Receive a Word
+                                </button>
+                            </div>
+                        ) : (
+                            // The Card
+                            <div key={currentPromise.text} className="absolute w-full h-full animate-card texture-bg rounded-xl shadow-2xl border border-stone-200 p-6 flex flex-col justify-between transform transition-transform duration-500">
+                                
+                                {/* Card Top */}
+                                <div className="flex justify-between items-center border-b border-stone-200 pb-3">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Promise #{(promises.indexOf(currentPromise) + 1).toString().padStart(3, '0')}</span>
+                                    <span className="px-2 py-1 bg-stone-100 text-stone-500 text-[10px] uppercase font-bold rounded-md">
+                                        {currentPromise.topic}
+                                    </span>
+                                </div>
+
+                                {/* Card Content */}
+                                <div className="text-center py-2 flex flex-col justify-center flex-grow">
+                                    <p className="font-serif text-lg leading-relaxed text-stone-800 mb-2">
+                                        "{currentPromise.text}"
+                                    </p>
+                                    <p className="script-font text-2xl text-stone-600">
+                                        — {currentPromise.ref}
+                                    </p>
+                                </div>
+
+                                {/* Card Footer / Actions */}
+                                <div className="flex justify-center gap-4 border-t border-stone-200 pt-3">
+                                    <button 
+                                        onClick={copyToClipboard}
+                                        className="flex items-center gap-1 text-stone-400 hover:text-stone-700 transition-colors text-xs uppercase font-bold"
+                                        title="Copy to Clipboard"
+                                    >
+                                        {copied ? <span className="text-green-600">Copied!</span> : <><IconCopy className="w-4 h-4" /> Copy</>}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Controls */}
+                    {currentPromise && (
+                        <button 
+                            onClick={drawPromise}
+                            className="flex items-center gap-2 px-8 py-3 bg-stone-800 text-white rounded-full hover:bg-stone-700 shadow-xl transition-all transform hover:scale-105 active:scale-95"
+                        >
+                            <IconRefresh className="w-4 h-4" /> Draw Another
+                        </button>
+                    )}
+
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

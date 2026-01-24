@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FaithReflects Prayer Timer</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-stone-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Simple Icon Components to replace Lucide dependency for single-file portability
+        const IconHeart = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>;
+        const IconAlert = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>;
+        const IconSmile = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg>;
+        const IconHand = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>;
+        const IconPlay = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="5 3 19 12 5 21 5 3"/></svg>;
+        const IconPause = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>;
+        const IconRotate = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>;
+        const IconSkip = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" x2="19" y1="5" y2="19"/></svg>;
+
+        const ActsTimer = () => {
+            const defaultTime = 180; 
+            
+            const phases = [
+                {
+                    id: 'adoration',
+                    letter: 'A',
+                    title: 'Adoration',
+                    subtitle: 'Who is God?',
+                    prompt: 'Praise God for His attributes: His Holiness, Power, and Love. Focus on who He is, not just what He does.',
+                    color: 'text-amber-600',
+                    bgColor: 'bg-amber-50',
+                    ringColor: '#d97706',
+                    icon: <IconHeart className="w-5 h-5" />
+                },
+                {
+                    id: 'confession',
+                    letter: 'C',
+                    title: 'Confession',
+                    subtitle: 'Heart Examination',
+                    prompt: 'Confess any sins weighing on your conscience. Ask God for a clean heart and accept His forgiveness.',
+                    color: 'text-stone-600',
+                    bgColor: 'bg-stone-50',
+                    ringColor: '#57534e',
+                    icon: <IconAlert className="w-5 h-5" />
+                },
+                {
+                    id: 'thanksgiving',
+                    letter: 'T',
+                    title: 'Thanksgiving',
+                    subtitle: 'Gratitude',
+                    prompt: 'Give thanks for 3 specific things from today: health, family, or provision. Cultivate a grateful heart.',
+                    color: 'text-emerald-600',
+                    bgColor: 'bg-emerald-50',
+                    ringColor: '#059669',
+                    icon: <IconSmile className="w-5 h-5" />
+                },
+                {
+                    id: 'supplication',
+                    letter: 'S',
+                    title: 'Supplication',
+                    subtitle: 'Requests & Needs',
+                    prompt: 'Present your requests for yourself and others. Pray for His will to be done in your life.',
+                    color: 'text-blue-600',
+                    bgColor: 'bg-blue-50',
+                    ringColor: '#2563eb',
+                    icon: <IconHand className="w-5 h-5" />
+                }
+            ];
+
+            const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
+            const [timeLeft, setTimeLeft] = useState(defaultTime);
+            const [isActive, setIsActive] = useState(false);
+            const [isFinished, setIsFinished] = useState(false);
+
+            const currentPhase = phases[currentPhaseIndex];
+
+            useEffect(() => {
+                let interval = null;
+                if (isActive && timeLeft > 0) {
+                    interval = setInterval(() => {
+                        setTimeLeft(timeLeft => timeLeft - 1);
+                    }, 1000);
+                } else if (timeLeft === 0) {
+                    handlePhaseComplete();
+                }
+                return () => clearInterval(interval);
+            }, [isActive, timeLeft]);
+
+            const handlePhaseComplete = () => {
+                setIsActive(false);
+                if (currentPhaseIndex < phases.length - 1) {
+                    setCurrentPhaseIndex(prev => prev + 1);
+                    setTimeLeft(defaultTime);
+                } else {
+                    setIsFinished(true);
+                }
+            };
+
+            const toggleTimer = () => setIsActive(!isActive);
+            
+            const resetTimer = () => {
+                setIsActive(false);
+                setIsFinished(false);
+                setCurrentPhaseIndex(0);
+                setTimeLeft(defaultTime);
+            };
+
+            const skipPhase = () => {
+                handlePhaseComplete();
+            };
+
+            const radius = 50;
+            const circumference = 2 * Math.PI * radius;
+            const progress = ((defaultTime - timeLeft) / defaultTime) * circumference;
+            const dashoffset = circumference - progress;
+
+            const formatTime = (seconds) => {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+            };
+
+            return (
+                <div className={`min-h-screen flex flex-col items-center justify-center p-4 transition-colors duration-700 font-sans ${currentPhase.bgColor}`}>
+                    <div className="w-full max-w-sm bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl border border-white/50 p-8 flex flex-col items-center relative overflow-hidden">
+                        
+                        <div className="absolute top-4 text-[10px] uppercase tracking-[0.2em] text-stone-400">
+                            FaithReflects Prayer
+                        </div>
+
+                        {isFinished ? (
+                            <div className="flex flex-col items-center justify-center h-64 animate-fade-in text-center">
+                                <div className="bg-stone-100 p-4 rounded-full mb-4">
+                                    <IconHeart className="w-8 h-8 text-stone-600" />
+                                </div>
+                                <h2 className="text-2xl font-serif text-stone-800 mb-2">Amen!</h2>
+                                <p className="text-stone-500 text-sm mb-6">You have completed your prayer time.</p>
+                                <button 
+                                    onClick={resetTimer}
+                                    className="px-6 py-2 bg-stone-800 text-white rounded-full hover:bg-stone-700 transition-colors text-sm"
+                                >
+                                    Start Over
+                                </button>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="flex gap-2 mb-8 mt-4">
+                                    {phases.map((phase, idx) => (
+                                        <div 
+                                            key={phase.id}
+                                            className={`h-1.5 rounded-full transition-all duration-300 ${
+                                                idx === currentPhaseIndex ? `w-8 ${phase.color.replace('text', 'bg')}` : 
+                                                idx < currentPhaseIndex ? 'w-2 bg-stone-300' : 'w-2 bg-stone-100'
+                                            }`}
+                                        />
+                                    ))}
+                                </div>
+
+                                <div className="relative mb-8">
+                                    <svg className="transform -rotate-90 w-48 h-48">
+                                        <circle cx="96" cy="96" r={radius} stroke="#e5e7eb" strokeWidth="6" fill="transparent" />
+                                        <circle
+                                            cx="96" cy="96" r={radius}
+                                            stroke={currentPhase.ringColor}
+                                            strokeWidth="6"
+                                            fill="transparent"
+                                            strokeDasharray={circumference}
+                                            strokeDashoffset={dashoffset}
+                                            strokeLinecap="round"
+                                            className="transition-all duration-1000 ease-linear"
+                                        />
+                                    </svg>
+                                    
+                                    <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center">
+                                        <div className={`text-4xl font-mono font-light tracking-tighter text-stone-800 transition-all ${isActive ? 'scale-110' : 'scale-100'}`}>
+                                            {formatTime(timeLeft)}
+                                        </div>
+                                        <div className={`text-6xl font-serif absolute opacity-5 font-bold ${currentPhase.color}`}>
+                                            {currentPhase.letter}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="text-center mb-8 h-24">
+                                    <div className="flex items-center justify-center gap-2 mb-1">
+                                        {currentPhase.icon}
+                                        <h2 className={`text-lg font-bold uppercase tracking-wider ${currentPhase.color}`}>
+                                            {currentPhase.title}
+                                        </h2>
+                                    </div>
+                                    <p className="text-stone-400 text-xs font-serif italic mb-3">{currentPhase.subtitle}</p>
+                                    <p className="text-stone-600 text-sm leading-relaxed px-2 animate-fade-in">
+                                        {currentPhase.prompt}
+                                    </p>
+                                </div>
+
+                                <div className="flex items-center gap-6">
+                                    <button onClick={resetTimer} className="p-3 text-stone-400 hover:text-stone-600 transition-colors hover:bg-stone-100 rounded-full" title="Reset">
+                                        <IconRotate className="w-5 h-5" />
+                                    </button>
+                                    <button 
+                                        onClick={toggleTimer}
+                                        className={`p-5 rounded-full shadow-lg transition-all transform hover:scale-105 active:scale-95 text-white ${isActive ? 'bg-stone-800 hover:bg-stone-700' : currentPhase.color.replace('text', 'bg')}`}
+                                    >
+                                        {isActive ? <IconPause className="w-8 h-8 fill-current" /> : <IconPlay className="w-8 h-8 fill-current ml-1" />}
+                                    </button>
+                                    <button onClick={skipPhase} className="p-3 text-stone-400 hover:text-stone-600 transition-colors hover:bg-stone-100 rounded-full" title="Skip Phase">
+                                        <IconSkip className="w-5 h-5" />
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<ActsTimer />);
+    </script>
+</body>
+</html>

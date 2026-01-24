@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FaithReflects Prayer Journal</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body {
+            background-color: #191919;
+            color: #E3E3E3;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        /* Custom Scrollbar for dark theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #191919; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #444; 
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Notion-like focus ring */
+        textarea:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(159, 107, 83, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // --- ICONS (SVG Components) ---
+        // Inlined here to avoid external dependency issues
+        const Icons = {
+            BookOpen: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>,
+            Heart: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>,
+            MessageCircle: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>,
+            Send: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>,
+            Copy: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>,
+            Save: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>,
+            History: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 12"/><path d="M3 3v9h9"/><path d="M12 7v5l4 2"/></svg>,
+            Plus: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>,
+            X: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>,
+            ChevronLeft: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>,
+            ChevronRight: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        };
+
+        const { useState, useEffect } = React;
+
+        // --- COMPONENTS ---
+
+        const NotionButton = ({ children, onClick, variant = 'primary', className = '', icon: Icon }) => {
+            const baseStyle = "flex items-center justify-center px-3 py-1.5 rounded text-sm font-medium transition-colors duration-200 select-none cursor-pointer";
+            const variants = {
+                primary: "bg-[#9F6B53] text-white hover:bg-[#8F5B43] shadow-sm", // Notion Brown
+                secondary: "bg-[#2C2C2C] text-stone-300 hover:bg-[#3F3F3F]",
+                ghost: "text-stone-400 hover:bg-[#2C2C2C] hover:text-stone-200",
+                danger: "text-red-400 hover:bg-[#3F2020]",
+            };
+
+            return (
+                <button onClick={onClick} className={`${baseStyle} ${variants[variant]} ${className}`}>
+                    {Icon && <Icon size={16} className="mr-2" />}
+                    {children}
+                </button>
+            );
+        };
+
+        const ProgressBar = ({ current, total }) => {
+            const progress = ((current + 1) / total) * 100;
+            return (
+                <div className="w-full h-1 bg-[#2C2C2C] rounded-full mb-6">
+                    <div 
+                        className="h-1 bg-[#9F6B53] rounded-full transition-all duration-500 ease-out"
+                        style={{ width: `${progress}%` }}
+                    />
+                </div>
+            );
+        };
+
+        const StepCard = ({ title, description, icon, placeholder, value, onChange, verse, color }) => {
+            return (
+                <div className="animate-fade-in-up">
+                    <div className={`flex items-center space-x-3 mb-4 ${color}`}>
+                        <div className="p-2 rounded-md bg-[#2C2C2C] bg-opacity-50">
+                            {icon}
+                        </div>
+                        <h2 className="text-xl font-semibold text-[#E3E3E3]">{title}</h2>
+                    </div>
+                    
+                    <div className="bg-[#2C2C2C] border border-[#3F3F3F] rounded-lg p-4 mb-4 text-sm text-stone-400 italic border-l-4 border-l-[#9F6B53]">
+                        "{verse}"
+                    </div>
+
+                    <p className="text-stone-400 mb-3 text-sm">{description}</p>
+                    
+                    <textarea
+                        className="w-full h-48 p-4 rounded-lg border border-[#3F3F3F] focus:ring-1 focus:ring-[#9F6B53] focus:border-[#9F6B53] outline-none resize-none bg-[#202020] text-stone-200 placeholder-stone-600 transition-all font-sans text-base leading-relaxed shadow-sm"
+                        placeholder={placeholder}
+                        value={value}
+                        onChange={(e) => onChange(e.target.value)}
+                        autoFocus
+                    />
+                </div>
+            );
+        };
+
+        const HistoryItem = ({ item, onDelete }) => {
+            const [expanded, setExpanded] = useState(false);
+
+            const formatDate = (dateString) => {
+                if (!dateString) return '';
+                const dateObj = new Date(dateString);
+                return dateObj.toLocaleDateString(undefined, {
+                    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+                });
+            };
+
+            const copyToClipboard = () => {
+                const fullText = `ACTS Prayer - ${formatDate(item.createdAt)}\n\nADORATION:\n${item.adoration}\n\nCONFESSION:\n${item.confession}\n\nTHANKSGIVING:\n${item.thanksgiving}\n\nSUPPLICATION:\n${item.supplication}`;
+                
+                const textArea = document.createElement("textarea");
+                textArea.value = fullText;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                } catch (err) {
+                    console.error('Fallback: Oops, unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            };
+
+            return (
+                <div className="border border-[#2C2C2C] rounded-lg mb-3 hover:bg-[#252525] transition-colors bg-[#202020]">
+                    <div 
+                        className="p-4 flex justify-between items-center cursor-pointer"
+                        onClick={() => setExpanded(!expanded)}
+                    >
+                        <div className="flex items-center space-x-3">
+                            <span className="text-xl opacity-80">🙏</span>
+                            <div>
+                                <h3 className="font-medium text-stone-200 text-sm">Prayer Entry</h3>
+                                <p className="text-xs text-stone-500">{formatDate(item.createdAt)}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); copyToClipboard(); }}
+                                className="p-1.5 text-stone-500 hover:text-stone-300 hover:bg-[#3F3F3F] rounded"
+                                title="Copy to Clipboard"
+                            >
+                                <Icons.Copy size={14} />
+                            </button>
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); onDelete(item.id); }}
+                                className="p-1.5 text-stone-500 hover:text-red-400 hover:bg-[#3F2020] rounded"
+                                title="Delete"
+                            >
+                                <Icons.X size={14} />
+                            </button>
+                        </div>
+                    </div>
+                    
+                    {expanded && (
+                        <div className="px-4 pb-4 border-t border-[#2C2C2C] text-sm text-stone-300 space-y-4 pt-3">
+                            {item.adoration && <div><span className="font-semibold text-xs text-[#9F6B53] uppercase tracking-wider block mb-1">Adoration</span>{item.adoration}</div>}
+                            {item.confession && <div><span className="font-semibold text-xs text-[#9F6B53] uppercase tracking-wider block mb-1">Confession</span>{item.confession}</div>}
+                            {item.thanksgiving && <div><span className="font-semibold text-xs text-[#9F6B53] uppercase tracking-wider block mb-1">Thanksgiving</span>{item.thanksgiving}</div>}
+                            {item.supplication && <div><span className="font-semibold text-xs text-[#9F6B53] uppercase tracking-wider block mb-1">Supplication</span>{item.supplication}</div>}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // --- MAIN APP ---
+
+        function App() {
+            const [view, setView] = useState('welcome'); // welcome, prayer, history, review
+            const [step, setStep] = useState(0);
+            const [entries, setEntries] = useState([]);
+            
+            // Prayer State
+            const [prayerData, setPrayerData] = useState({
+                adoration: '',
+                confession: '',
+                thanksgiving: '',
+                supplication: ''
+            });
+
+            // LOCAL STORAGE INIT
+            useEffect(() => {
+                const saved = localStorage.getItem('faithreflects_prayers');
+                if (saved) {
+                    try {
+                        setEntries(JSON.parse(saved));
+                    } catch (e) {
+                        console.error("Failed to parse history", e);
+                    }
+                }
+            }, []);
+
+            const saveEntry = () => {
+                if (!prayerData.adoration && !prayerData.confession && !prayerData.thanksgiving && !prayerData.supplication) return;
+
+                const newEntry = {
+                    id: Date.now(), // simple unique ID
+                    ...prayerData,
+                    createdAt: new Date().toISOString()
+                };
+
+                const updatedEntries = [newEntry, ...entries];
+                setEntries(updatedEntries);
+                localStorage.setItem('faithreflects_prayers', JSON.stringify(updatedEntries));
+                
+                setView('history');
+                // Reset form
+                setPrayerData({ adoration: '', confession: '', thanksgiving: '', supplication: '' });
+                setStep(0);
+            };
+
+            const deleteEntry = (id) => {
+                const updatedEntries = entries.filter(e => e.id !== id);
+                setEntries(updatedEntries);
+                localStorage.setItem('faithreflects_prayers', JSON.stringify(updatedEntries));
+            };
+
+            const steps = [
+                {
+                    key: 'adoration',
+                    title: 'Adoration',
+                    icon: <Icons.BookOpen size={24} />,
+                    color: 'text-amber-500', 
+                    description: 'Start by praising God for who He is. Focus on His attributes: His holiness, love, power, and grace.',
+                    verse: 'Great is the Lord and most worthy of praise; his greatness no one can fathom. - Psalm 145:3',
+                    placeholder: 'Lord, I praise You for...'
+                },
+                {
+                    key: 'confession',
+                    title: 'Confession',
+                    icon: <Icons.Heart size={24} />,
+                    color: 'text-rose-400',
+                    description: 'Humbly confess your sins to God. Be specific and ask for His forgiveness and cleansing.',
+                    verse: 'If we confess our sins, he is faithful and just and will forgive us our sins. - 1 John 1:9',
+                    placeholder: 'Father, forgive me for...'
+                },
+                {
+                    key: 'thanksgiving',
+                    title: 'Thanksgiving',
+                    icon: <Icons.MessageCircle size={24} />,
+                    color: 'text-emerald-400',
+                    description: 'Give thanks for what God has done. List specific blessings, answered prayers, and gifts.',
+                    verse: 'Give thanks in all circumstances; for this is God’s will for you in Christ Jesus. - 1 Thess 5:18',
+                    placeholder: 'Thank You Lord for...'
+                },
+                {
+                    key: 'supplication',
+                    title: 'Supplication',
+                    icon: <Icons.Send size={24} />,
+                    color: 'text-sky-400',
+                    description: 'Present your requests to God. Pray for others, for the world, and for your own needs.',
+                    verse: 'Do not be anxious about anything, but in every situation... present your requests to God. - Phil 4:6',
+                    placeholder: 'Lord, I ask for...'
+                }
+            ];
+
+            const handleNext = () => {
+                if (step < steps.length - 1) {
+                    setStep(step + 1);
+                } else {
+                    setView('review');
+                }
+            };
+
+            const handleBack = () => {
+                if (step > 0) {
+                    setStep(step - 1);
+                } else {
+                    setView('welcome');
+                }
+            };
+            
+            const copyFullPrayer = () => {
+                const fullText = `ACTS Prayer Journal\n\nADORATION:\n${prayerData.adoration}\n\nCONFESSION:\n${prayerData.confession}\n\nTHANKSGIVING:\n${prayerData.thanksgiving}\n\nSUPPLICATION:\n${prayerData.supplication}`;
+                
+                const textArea = document.createElement("textarea");
+                textArea.value = fullText;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                } catch (err) {
+                    console.error('Copy failed', err);
+                }
+                document.body.removeChild(textArea);
+            };
+
+            // --- Views ---
+
+            if (view === 'welcome') {
+                return (
+                    <div className="max-w-xl mx-auto min-h-screen bg-[#191919] text-[#E3E3E3] font-sans flex flex-col p-6">
+                        <header className="flex justify-between items-center mb-12">
+                            <div className="flex items-center space-x-2 text-stone-300">
+                                <span className="text-2xl">✨</span>
+                                <span className="font-semibold tracking-tight text-lg font-serif">FaithReflects</span>
+                            </div>
+                            <NotionButton variant="ghost" icon={Icons.History} onClick={() => setView('history')}>
+                                Journal
+                            </NotionButton>
+                        </header>
+
+                        <div className="flex-1 flex flex-col justify-center items-center text-center space-y-8 animate-fade-in">
+                            <div className="w-24 h-24 bg-[#2C2C2C] rounded-full flex items-center justify-center mb-4 shadow-sm border border-[#3F3F3F]">
+                                <span className="text-4xl">🙏</span>
+                            </div>
+                            
+                            <div className="space-y-4 max-w-sm">
+                                <h1 className="text-4xl font-bold tracking-tight text-[#E3E3E3]">Quiet Time</h1>
+                                <p className="text-lg text-stone-400 leading-relaxed">
+                                    Pause. Reflect. Pray. <br/>
+                                    A guided journey through Adoration, Confession, Thanksgiving, and Supplication.
+                                </p>
+                            </div>
+
+                            <div className="w-full max-w-xs space-y-3 pt-8">
+                                <button 
+                                    onClick={() => setView('prayer')}
+                                    className="w-full bg-[#9F6B53] text-white py-3 px-6 rounded-lg font-medium hover:bg-[#8F5B43] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0"
+                                >
+                                    Start Guided Prayer
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <footer className="mt-12 text-center text-xs text-stone-600">
+                            FaithReflects • ACTS Model
+                        </footer>
+                    </div>
+                );
+            }
+
+            if (view === 'history') {
+                return (
+                    <div className="max-w-xl mx-auto min-h-screen bg-[#191919] text-[#E3E3E3] font-sans flex flex-col p-6">
+                        <header className="flex items-center justify-between mb-8 pb-4 border-b border-[#2C2C2C]">
+                            <div className="flex items-center space-x-2">
+                                <NotionButton variant="ghost" onClick={() => setView('welcome')} icon={Icons.ChevronLeft}>
+                                    Back
+                                </NotionButton>
+                                <h1 className="text-xl font-bold text-stone-200 ml-2">Prayer Journal</h1>
+                            </div>
+                            <NotionButton variant="primary" onClick={() => setView('prayer')} icon={Icons.Plus}>
+                                New
+                            </NotionButton>
+                        </header>
+
+                        <div className="flex-1 overflow-y-auto">
+                            {entries.length === 0 ? (
+                                <div className="text-center py-20 text-stone-600">
+                                    <Icons.History size={48} className="mx-auto mb-4 opacity-20" />
+                                    <p>No journal entries yet.</p>
+                                    <button onClick={() => setView('prayer')} className="text-[#9F6B53] hover:underline mt-2 text-sm">Start your first prayer</button>
+                                </div>
+                            ) : (
+                                entries.map(entry => (
+                                    <HistoryItem key={entry.id} item={entry} onDelete={deleteEntry} />
+                                ))
+                            )}
+                        </div>
+                    </div>
+                );
+            }
+
+            if (view === 'review') {
+                return (
+                    <div className="max-w-xl mx-auto min-h-screen bg-[#191919] text-[#E3E3E3] font-sans flex flex-col p-6">
+                        <header className="flex items-center mb-8">
+                            <NotionButton variant="ghost" onClick={() => setStep(3) || setView('prayer')} icon={Icons.ChevronLeft}>
+                                Edit
+                            </NotionButton>
+                            <span className="flex-1 text-center font-semibold text-stone-200">Review Entry</span>
+                            <div className="w-16"></div>
+                        </header>
+
+                        <div className="flex-1 space-y-6 overflow-y-auto mb-8">
+                            <div className="bg-[#202020] p-6 rounded-xl border border-[#2C2C2C] space-y-6 shadow-sm">
+                                <h2 className="text-2xl font-bold text-stone-200 mb-2">Your Prayer</h2>
+                                
+                                {steps.map(s => prayerData[s.key] && (
+                                    <div key={s.key} className="border-l-2 border-[#3F3F3F] pl-4 py-1">
+                                        <h3 className={`text-xs font-bold uppercase tracking-wider mb-2 ${s.color}`}>{s.title}</h3>
+                                        <p className="text-stone-300 whitespace-pre-wrap leading-relaxed">{prayerData[s.key]}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <button 
+                                onClick={copyFullPrayer}
+                                className="flex items-center justify-center w-full py-3 bg-[#2C2C2C] text-stone-300 font-medium rounded-lg hover:bg-[#3F3F3F] transition-colors"
+                            >
+                                <Icons.Copy size={18} className="mr-2" />
+                                Copy Text
+                            </button>
+                            <button 
+                                onClick={saveEntry}
+                                className="flex items-center justify-center w-full py-3 bg-[#9F6B53] text-white font-medium rounded-lg hover:bg-[#8F5B43] transition-colors shadow-md"
+                            >
+                                <Icons.Save size={18} className="mr-2" />
+                                Save to Journal
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            // Prayer Flow View
+            const currentStep = steps[step];
+
+            return (
+                <div className="max-w-xl mx-auto min-h-screen bg-[#191919] text-[#E3E3E3] font-sans flex flex-col p-6">
+                    <header className="flex items-center justify-between mb-6">
+                        <NotionButton variant="ghost" onClick={handleBack} icon={Icons.ChevronLeft}>
+                            Back
+                        </NotionButton>
+                        <div className="text-xs font-medium text-stone-500 uppercase tracking-widest">
+                            Step {step + 1} of 4
+                        </div>
+                        <div className="w-16 flex justify-end">
+                            <NotionButton variant="ghost" onClick={() => setView('welcome')} icon={Icons.X} />
+                        </div>
+                    </header>
+
+                    <ProgressBar current={step} total={steps.length} />
+
+                    <main className="flex-1 flex flex-col">
+                        <StepCard 
+                            {...currentStep}
+                            value={prayerData[currentStep.key]}
+                            onChange={(val) => setPrayerData({...prayerData, [currentStep.key]: val})}
+                        />
+                    </main>
+
+                    <footer className="mt-6 flex justify-end">
+                        <button 
+                            onClick={handleNext}
+                            className="flex items-center bg-[#9F6B53] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#8F5B43] transition-all shadow-md hover:shadow-lg"
+                        >
+                            {step === steps.length - 1 ? 'Review' : 'Next'}
+                            <Icons.ChevronRight size={18} className="ml-2" />
+                        </button>
+                    </footer>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
