@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FaithReflects - Armor of God</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body {
+            background-color: #191919;
+            color: #E3E3E3;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            overflow-x: hidden; /* Prevent horizontal scroll in narrow embeds */
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #191919; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #444; }
+        
+        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+        .animate-slide-up { animation: slideUp 0.4s ease-out; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* SVG Hover Effects */
+        .armor-part {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .armor-part:hover {
+            filter: brightness(1.2) drop-shadow(0 0 5px rgba(159, 107, 83, 0.5));
+            transform: scale(1.02); 
+            transform-origin: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // --- ICONS (UI Only) ---
+        const Icons = {
+            Refresh: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+        };
+
+        const { useState, useEffect } = React;
+
+        // --- DATA ---
+        const armorPieces = {
+            helmet: {
+                id: 'helmet',
+                name: 'Helmet of Salvation',
+                verseRef: 'Ephesians 6:17',
+                verseText: 'Take the helmet of salvation...',
+                prayer: 'Protect my mind, O God. Let me think on things that are true and pure. Remind me that I am saved, redeemed, and fully Yours.'
+            },
+            breastplate: {
+                id: 'breastplate',
+                name: 'Breastplate of Righteousness',
+                verseRef: 'Ephesians 6:14',
+                verseText: '...with the breastplate of righteousness in place.',
+                prayer: 'Guard my heart, Jesus. I do not stand in my own perfection, but in Your righteousness. Protect my emotions and desires from impurity.'
+            },
+            belt: {
+                id: 'belt',
+                name: 'Belt of Truth',
+                verseRef: 'Ephesians 6:14',
+                verseText: 'Stand firm then, with the belt of truth buckled around your waist.',
+                prayer: 'Lord, I choose to walk in integrity today. Let Your truth hold my life together. I reject the lies of the enemy and embrace who You say I am.'
+            },
+            shield: {
+                id: 'shield',
+                name: 'Shield of Faith',
+                verseRef: 'Ephesians 6:16',
+                verseText: 'In addition to all this, take up the shield of faith, with which you can extinguish all the flaming arrows of the evil one.',
+                prayer: 'I lift up my faith against every doubt and fear. When the enemy attacks, I trust in Your power, not my circumstances.'
+            },
+            sword: {
+                id: 'sword',
+                name: 'Sword of the Spirit',
+                verseRef: 'Ephesians 6:17',
+                verseText: '...and the sword of the Spirit, which is the word of God.',
+                prayer: 'Holy Spirit, bring Your Word to my remembrance today. Let Scripture be my weapon against temptation and my strength in trial.'
+            },
+            shoes: {
+                id: 'shoes',
+                name: 'Shoes of Peace',
+                verseRef: 'Ephesians 6:15',
+                verseText: '...with your feet fitted with the readiness that comes from the gospel of peace.',
+                prayer: 'Order my steps today, Lord. Let me be a peacemaker. Give me the courage to share Your good news wherever I go.'
+            }
+        };
+
+        // --- SOLDIER SVG COMPONENT (Spartan Style) ---
+        const SoldierMannequin = ({ equipped, onToggle }) => {
+            const getColor = (id) => equipped[id] ? "#9F6B53" : "#2C2C2C"; 
+            const getStroke = (id) => equipped[id] ? "#C88A6E" : "#444444";
+            const getBase = "#E3E3E3"; // White/Light silhouette color
+
+            return (
+                <div className="relative w-full max-w-[200px] mx-auto aspect-[1/2] animate-fade-in my-2">
+                    <svg viewBox="0 0 300 600" className="w-full h-full drop-shadow-2xl" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        
+                        {/* Base Silhouette (Body) - Visible White/Light Gray */}
+                        <g opacity="0.15">
+                           <path d="M150 40 Q130 40 130 65 V85 H110 L100 200 L110 320 L100 550 H130 L140 350 L150 350 L160 550 H190 L180 320 L190 200 H180 L170 85 H170 V65 Q170 40 150 40" fill={getBase} />
+                           {/* Arms */}
+                           <path d="M110 95 L60 180 L90 200" stroke={getBase} strokeWidth="20" strokeLinecap="round" />
+                           <path d="M190 95 L240 180 L210 210" stroke={getBase} strokeWidth="20" strokeLinecap="round" />
+                        </g>
+
+                        {/* 1. HELMET (Head) - Spartan / Corinthian Style */}
+                        <g onClick={() => onToggle('helmet')} className="armor-part">
+                             {/* Large Crest */}
+                            <path d="M100 30 Q150 -10 200 30 V50 H100 Z" fill={getColor('helmet')} stroke={getStroke('helmet')} strokeWidth="2" opacity={equipped['helmet'] ? 1 : 0.5}/>
+                            {/* Helmet Main */}
+                            <path 
+                                d="M120 40 Q150 20 180 40 V110 L170 120 L160 110 V90 H140 V110 L130 120 L120 110 V40 Z" 
+                                fill={getColor('helmet')} 
+                                stroke={getStroke('helmet')} 
+                                strokeWidth="3"
+                            />
+                            {/* T-Slit for eyes/nose */}
+                            <path d="M135 60 H165 V90 H155 V75 H145 V90 H135 V60 Z" fill="#191919" stroke={getStroke('helmet')} strokeWidth="1" />
+                        </g>
+
+                        {/* 2. BREASTPLATE (Torso) - Spartan Muscle Cuirass */}
+                        <g onClick={() => onToggle('breastplate')} className="armor-part">
+                            <path 
+                                d="M105 100 Q150 90 195 100 L190 210 Q150 230 110 210 Z" 
+                                fill={getColor('breastplate')} 
+                                stroke={getStroke('breastplate')} 
+                                strokeWidth="3"
+                            />
+                            {/* Muscle Definition */}
+                            <path d="M150 115 V190 M120 140 Q150 150 180 140 M130 110 Q150 120 170 110" stroke={getStroke('breastplate')} strokeWidth="2" opacity="0.4" fill="none"/>
+                        </g>
+
+                        {/* 3. BELT (Waist) - Simple Heavy Belt */}
+                        <g onClick={() => onToggle('belt')} className="armor-part">
+                            <rect 
+                                x="105" y="205" width="90" height="30" rx="4"
+                                fill={getColor('belt')} 
+                                stroke={getStroke('belt')} 
+                                strokeWidth="3"
+                            />
+                            {/* Studs */}
+                            <circle cx="120" cy="220" r="3" fill={getStroke('belt')}/>
+                            <circle cx="150" cy="220" r="3" fill={getStroke('belt')}/>
+                            <circle cx="180" cy="220" r="3" fill={getStroke('belt')}/>
+                        </g>
+
+                        {/* 4. SWORD (Right Hand) - Xiphos / Short Sword */}
+                        <g onClick={() => onToggle('sword')} className="armor-part">
+                            <g transform="translate(200, 160) rotate(15)">
+                                {/* Blade - Leaf shaped */}
+                                <path d="M20 0 Q25 60 20 120 L25 130 L30 120 Q25 60 30 0 Z" fill={getColor('sword')} stroke={getStroke('sword')} strokeWidth="2" />
+                                {/* Guard */}
+                                <rect x="10" y="-5" width="30" height="6" rx="1" fill={getColor('sword')} stroke={getStroke('sword')}/>
+                                {/* Hilt */}
+                                <rect x="22" y="-25" width="6" height="20" fill={getColor('sword')} stroke={getStroke('sword')}/>
+                                <circle cx="25" cy="-28" r="4" fill={getColor('sword')} stroke={getStroke('sword')}/>
+                            </g>
+                        </g>
+
+                        {/* 5. SHIELD (Left Hand) - Aspis / Round Shield */}
+                        <g onClick={() => onToggle('shield')} className="armor-part">
+                            {/* Large Circle */}
+                            <circle cx="70" cy="200" r="60" fill={getColor('shield')} stroke={getStroke('shield')} strokeWidth="4"/>
+                            {/* Inner Rim */}
+                            <circle cx="70" cy="200" r="50" fill="none" stroke={getStroke('shield')} strokeWidth="1" opacity="0.5"/>
+                            {/* Lambda or Cross Design */}
+                            <path d="M70 160 L45 230 H95 L70 160 Z" stroke={getStroke('shield')} strokeWidth="2" fill="none" opacity="0.3"/>
+                        </g>
+
+                         {/* 6. SHOES (Feet) - Greaves (Shin Guards) */}
+                         <g onClick={() => onToggle('shoes')} className="armor-part">
+                            {/* Left Greave */}
+                            <path d="M100 320 Q90 400 100 480 H130 Q140 400 130 320 H100 Z" fill={getColor('shoes')} stroke={getStroke('shoes')} strokeWidth="3" />
+                            {/* Left Foot */}
+                            <path d="M100 480 L95 530 H130 L130 480" fill={getColor('shoes')} stroke={getStroke('shoes')} strokeWidth="3" />
+                            
+                            {/* Right Greave */}
+                            <path d="M170 320 Q160 400 170 480 H200 Q210 400 200 320 H170 Z" fill={getColor('shoes')} stroke={getStroke('shoes')} strokeWidth="3" />
+                            {/* Right Foot */}
+                            <path d="M170 480 L165 530 H200 L200 480" fill={getColor('shoes')} stroke={getStroke('shoes')} strokeWidth="3" />
+                        </g>
+
+                    </svg>
+                    
+                    {/* Helper Text Overlay */}
+                    {Object.values(equipped).every(v => !v) && (
+                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none w-full">
+                            <span className="bg-[#191919] bg-opacity-90 px-3 py-1 rounded-full text-[10px] text-stone-300 border border-[#9F6B53] shadow-lg animate-pulse-slow">
+                                Tap armor to equip
+                            </span>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const PrayerDisplay = ({ activePieceId }) => {
+            const activePiece = armorPieces[activePieceId];
+            
+            if (!activePiece) return (
+                <div className="mt-1 p-3 rounded-lg border border-dashed border-[#333] text-center text-stone-500 text-[10px] animate-fade-in">
+                    <p>Select a piece of armor to pray.</p>
+                </div>
+            );
+
+            return (
+                <div className="mt-1 bg-[#202020] rounded-xl border border-[#333] overflow-hidden animate-slide-up shadow-lg">
+                    <div className="bg-[#2C2C2C] px-3 py-1.5 border-b border-[#333] flex justify-between items-center">
+                        <span className="text-[#9F6B53] font-bold uppercase tracking-wider text-[9px]">{activePiece.name}</span>
+                        <span className="text-stone-500 text-[9px]">{activePiece.verseRef}</span>
+                    </div>
+                    <div className="p-3 space-y-2">
+                        <p className="text-stone-300 italic font-serif text-xs leading-relaxed border-l-2 border-[#9F6B53] pl-2">
+                            "{activePiece.verseText}"
+                        </p>
+                        
+                        <div className="space-y-0.5">
+                            <h3 className="text-stone-500 text-[9px] font-bold uppercase tracking-wider">Prayer</h3>
+                            <p className="text-stone-200 text-xs leading-relaxed">
+                                {activePiece.prayer}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- MAIN APP ---
+
+        function App() {
+            const [equipped, setEquipped] = useState({}); 
+            const [selectedId, setSelectedId] = useState(null);
+
+            // Load state
+            useEffect(() => {
+                const saved = localStorage.getItem('faithreflects_armor_v3');
+                if (saved) {
+                    try {
+                        setEquipped(JSON.parse(saved));
+                    } catch (e) { console.error(e); }
+                }
+            }, []);
+
+            // Save state
+            useEffect(() => {
+                localStorage.setItem('faithreflects_armor_v3', JSON.stringify(equipped));
+            }, [equipped]);
+
+            const toggleArmor = (id) => {
+                const isNowEquipped = !equipped[id];
+                setEquipped(prev => ({ ...prev, [id]: isNowEquipped }));
+                setSelectedId(id);
+            };
+
+            const resetArmor = () => {
+                setEquipped({});
+                setSelectedId(null);
+            };
+
+            const equipAll = () => {
+                const all = {};
+                Object.keys(armorPieces).forEach(key => all[key] = true);
+                setEquipped(all);
+                setSelectedId('sword'); 
+            };
+
+            // Calculate progress
+            const totalPieces = Object.keys(armorPieces).length;
+            const equippedCount = Object.values(equipped).filter(Boolean).length;
+            const progress = (equippedCount / totalPieces) * 100;
+
+            return (
+                <div className="min-h-screen bg-[#191919] text-[#E3E3E3] font-sans flex flex-col p-3 max-w-xs mx-auto">
+                    
+                    {/* Header */}
+                    <header className="flex justify-between items-center mb-1">
+                        <div className="flex items-center space-x-1.5 text-stone-300">
+                            <span className="text-lg">✨</span>
+                            <span className="font-semibold tracking-tight text-sm font-serif">FaithReflects</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] text-stone-500 font-mono">{Math.round(progress)}%</span>
+                            <button 
+                                onClick={resetArmor}
+                                className="text-stone-500 hover:text-stone-300 transition-colors p-1 rounded hover:bg-[#2C2C2C]"
+                                title="New Day (Reset)"
+                            >
+                                <Icons.Refresh size={14} />
+                            </button>
+                        </div>
+                    </header>
+
+                    {/* Progress Bar */}
+                    <div className="w-full h-1 bg-[#2C2C2C] rounded-full overflow-hidden mb-2">
+                        <div 
+                            className="h-full bg-[#9F6B53] rounded-full transition-all duration-700 ease-out"
+                            style={{ width: `${progress}%` }}
+                        />
+                    </div>
+
+                    {/* Interactive Mannequin */}
+                    <SoldierMannequin equipped={equipped} onToggle={toggleArmor} />
+
+                    {/* Equip All Shortcut */}
+                    {progress < 100 && (
+                        <button 
+                            onClick={equipAll}
+                            className="w-full py-1.5 rounded border border-[#333] text-stone-500 hover:text-stone-300 hover:bg-[#2C2C2C] transition-all text-[10px] uppercase tracking-widest"
+                        >
+                            Equip All
+                        </button>
+                    )}
+
+                    {/* Prayer/Scripture Display */}
+                    <PrayerDisplay activePieceId={selectedId} />
+                    
+                    {/* Footer */}
+                    <div className="mt-4 text-center opacity-30 text-[9px]">
+                        FaithReflects • Armor of God
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
