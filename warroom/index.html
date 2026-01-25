@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FaithReflects - War Room</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body {
+            background-color: #191919;
+            color: #E3E3E3;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            overflow-x: hidden;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #191919; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #444; }
+        
+        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+        .animate-slide-up { animation: slideUp 0.4s ease-out; }
+        .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .7; } }
+
+        /* Heart Fly Animation */
+        .heart-fly {
+            position: absolute;
+            animation: flyUp 1s ease-out forwards;
+            pointer-events: none;
+            color: #9F6B53;
+        }
+        @keyframes flyUp {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-50px) scale(1.5); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // --- ICONS ---
+        const Icons = {
+            Plus: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>,
+            Trash: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>,
+            User: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+            Hands: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m19 7-2.78 2.78a6.003 6.003 0 0 0-7.39 7.39L5 21l-1.5-1.5a4.24 4.24 0 0 1 0-6l2.12-2.12"/><path d="M14.5 13.5 17 11a4.24 4.24 0 0 1 6 0l1.5 1.5-3.5 3.5a6.003 6.003 0 0 1-7.39-7.39L16.22 5a3.003 3.003 0 0 1 4.24 4.24l-1.5 1.5"/></svg>,
+            Check: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
+            X: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>,
+            Heart: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+        };
+
+        const { useState, useEffect } = React;
+
+        // --- PRAYER CARD COMPONENT ---
+        const PrayerCard = ({ person, onPray, onDelete }) => {
+            const [justPrayed, setJustPrayed] = useState(false);
+            const [confirmDelete, setConfirmDelete] = useState(false);
+
+            // Check if prayed today
+            const lastDate = new Date(person.lastPrayed);
+            const today = new Date();
+            const isToday = person.lastPrayed && 
+                            lastDate.getDate() === today.getDate() && 
+                            lastDate.getMonth() === today.getMonth() && 
+                            lastDate.getFullYear() === today.getFullYear();
+
+            const handlePray = (e) => {
+                e.stopPropagation();
+                onPray(person.id);
+                setJustPrayed(true);
+                setTimeout(() => setJustPrayed(false), 1000);
+            };
+
+            const handleDelete = (e) => {
+                e.stopPropagation();
+                if (confirmDelete) {
+                    onDelete(person.id);
+                } else {
+                    setConfirmDelete(true);
+                    setTimeout(() => setConfirmDelete(false), 3000);
+                }
+            };
+
+            // Format date relative
+            const getRelativeTime = (timestamp) => {
+                if (!timestamp) return "Not yet";
+                const diff = Date.now() - timestamp;
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                if (days === 0) return "Today";
+                if (days === 1) return "Yesterday";
+                return `${days} days ago`;
+            };
+
+            return (
+                <div className={`relative bg-[#2C2C2C] p-4 rounded-xl border transition-all duration-300 group ${isToday ? 'border-[#9F6B53] shadow-[0_0_15px_rgba(159,107,83,0.15)]' : 'border-[#333] hover:border-[#555]'}`}>
+                    
+                    {/* Delete Button (Top Right) */}
+                    <button 
+                        onClick={handleDelete}
+                        className={`absolute top-2 right-2 p-1.5 rounded-full transition-all ${confirmDelete ? 'bg-red-900/30 text-red-400 opacity-100' : 'text-stone-600 hover:text-red-400 opacity-0 group-hover:opacity-100'}`}
+                    >
+                        {confirmDelete ? <Icons.X size={12} /> : <Icons.Trash size={12} />}
+                    </button>
+
+                    {/* Content */}
+                    <div className="flex items-start gap-3 mb-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${isToday ? 'bg-[#9F6B53] text-white' : 'bg-[#202020] text-stone-500'}`}>
+                            {person.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold text-stone-200 leading-tight">{person.name}</h3>
+                            <p className="text-[10px] text-stone-500">{person.category || 'General'}</p>
+                        </div>
+                    </div>
+
+                    {/* Stats & Action */}
+                    <div className="flex justify-between items-center mt-2">
+                        <div className="text-[10px] text-stone-500 font-mono">
+                            Prayed: <span className="text-stone-300 font-bold">{person.count}</span> <br/>
+                            Last: {getRelativeTime(person.lastPrayed)}
+                        </div>
+                        
+                        <button 
+                            onClick={handlePray}
+                            className={`relative px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 overflow-visible
+                                ${isToday 
+                                    ? 'bg-[#202020] text-[#9F6B53] border border-[#9F6B53]' 
+                                    : 'bg-[#9F6B53] text-white hover:bg-[#8F5B43] shadow-md'}
+                            `}
+                        >
+                            {justPrayed && (
+                                <div className="absolute top-0 left-1/2 -translate-x-1/2 heart-fly">
+                                    <Icons.Heart size={20} />
+                                </div>
+                            )}
+                            <Icons.Hands size={14} />
+                            {isToday ? "Prayed" : "Pray"}
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- ADD MODAL ---
+        const AddModal = ({ onSave, onCancel }) => {
+            const [name, setName] = useState('');
+            const [category, setCategory] = useState('');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (!name.trim()) return;
+                onSave(name, category);
+            };
+
+            return (
+                <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-[#202020] w-full max-w-xs rounded-xl border border-[#333] p-6 shadow-2xl animate-slide-up">
+                        <h2 className="text-lg font-bold text-white mb-4">New Prayer Focus</h2>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-[10px] text-stone-500 uppercase font-bold mb-1">Name / Topic</label>
+                                <input 
+                                    autoFocus
+                                    value={name}
+                                    onChange={e => setName(e.target.value)}
+                                    className="w-full bg-[#2C2C2C] border border-[#333] rounded-lg p-2 text-sm text-white focus:border-[#9F6B53] outline-none"
+                                    placeholder="e.g. Mom, Healing, Nation..."
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] text-stone-500 uppercase font-bold mb-1">Category (Optional)</label>
+                                <input 
+                                    value={category}
+                                    onChange={e => setCategory(e.target.value)}
+                                    className="w-full bg-[#2C2C2C] border border-[#333] rounded-lg p-2 text-sm text-white focus:border-[#9F6B53] outline-none"
+                                    placeholder="e.g. Family, Work..."
+                                />
+                            </div>
+                            <div className="flex gap-2 pt-2">
+                                <button type="button" onClick={onCancel} className="flex-1 py-2 text-xs text-stone-400 hover:text-white transition-colors">Cancel</button>
+                                <button 
+                                    type="submit" 
+                                    disabled={!name.trim()}
+                                    className="flex-1 bg-[#9F6B53] text-white py-2 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-[#8F5B43] disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Add Card
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- MAIN APP ---
+        function App() {
+            const [people, setPeople] = useState(() => {
+                const saved = localStorage.getItem('faithreflects_warroom');
+                try {
+                    return saved ? JSON.parse(saved) : [];
+                } catch { return []; }
+            });
+            const [isAdding, setIsAdding] = useState(false);
+
+            useEffect(() => {
+                localStorage.setItem('faithreflects_warroom', JSON.stringify(people));
+            }, [people]);
+
+            const addPerson = (name, category) => {
+                const newPerson = {
+                    id: Date.now(),
+                    name,
+                    category,
+                    count: 0,
+                    lastPrayed: null
+                };
+                setPeople(prev => [newPerson, ...prev]);
+                setIsAdding(false);
+            };
+
+            const deletePerson = (id) => {
+                setPeople(prev => prev.filter(p => p.id !== id));
+            };
+
+            const prayForPerson = (id) => {
+                setPeople(prev => prev.map(p => {
+                    if (p.id !== id) return p;
+                    return {
+                        ...p,
+                        count: p.count + 1,
+                        lastPrayed: Date.now()
+                    };
+                }));
+            };
+
+            // Calculate active prayers today
+            const activeToday = people.filter(p => {
+                if (!p.lastPrayed) return false;
+                const last = new Date(p.lastPrayed);
+                const now = new Date();
+                return last.getDate() === now.getDate() && 
+                       last.getFullYear() === now.getFullYear();
+            }).length;
+
+            return (
+                <div className="min-h-screen bg-[#191919] text-[#E3E3E3] font-sans flex flex-col p-4 max-w-sm mx-auto relative overflow-hidden">
+                    
+                    {/* Modal Overlay */}
+                    {isAdding && <AddModal onSave={addPerson} onCancel={() => setIsAdding(false)} />}
+
+                    {/* Header */}
+                    <header className="flex justify-between items-center mb-6">
+                        <div className="flex items-center space-x-1.5 text-stone-300">
+                            <span className="text-xl">✨</span>
+                            <span className="font-semibold tracking-tight text-base font-serif">FaithReflects</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] bg-[#2C2C2C] px-2 py-1 rounded text-[#9F6B53] border border-[#333]">
+                                {activeToday}/{people.length} Active
+                            </span>
+                        </div>
+                    </header>
+
+                    {/* Title Area */}
+                    <div className="mb-6 flex justify-between items-end border-b border-[#2C2C2C] pb-4">
+                        <div>
+                            <h1 className="text-lg font-bold text-white mb-1">War Room</h1>
+                            <p className="text-stone-500 text-xs">"Pray without ceasing."</p>
+                        </div>
+                        <button 
+                            onClick={() => setIsAdding(true)}
+                            className="bg-[#2C2C2C] hover:bg-[#333] text-white p-2 rounded-lg border border-[#333] transition-colors"
+                        >
+                            <Icons.Plus size={18} />
+                        </button>
+                    </div>
+
+                    {/* Grid of Cards */}
+                    <div className="flex-1 overflow-y-auto pb-12 custom-scroll space-y-3">
+                        {people.length === 0 ? (
+                            <div className="text-center py-20 opacity-30 flex flex-col items-center">
+                                <div className="p-4 bg-[#252525] rounded-full mb-4">
+                                    <Icons.User size={32} />
+                                </div>
+                                <p className="text-sm font-bold">Your wall is empty.</p>
+                                <p className="text-xs">Add someone to start praying.</p>
+                            </div>
+                        ) : (
+                            people
+                                .sort((a, b) => (a.lastPrayed || 0) - (b.lastPrayed || 0)) // Sort by oldest prayer first (needs prayer most)
+                                .map(person => (
+                                    <PrayerCard 
+                                        key={person.id} 
+                                        person={person} 
+                                        onPray={prayForPerson}
+                                        onDelete={deletePerson}
+                                    />
+                                ))
+                        )}
+                    </div>
+
+                    <footer className="mt-4 text-center opacity-30 text-[9px]">
+                        FaithReflects • Intercession Tracker
+                    </footer>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
