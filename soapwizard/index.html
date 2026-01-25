@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FaithReflects - SOAP Wizard</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body {
+            background-color: #191919;
+            color: #E3E3E3;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            overflow-x: hidden;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #191919; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #444; }
+        
+        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+        .animate-slide-left { animation: slideLeft 0.4s ease-out; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideLeft { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // --- ICONS ---
+        const Icons = {
+            Book: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>,
+            Eye: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>,
+            Footprints: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 11 3.8 11 8H4a2 2 0 0 1-2 2v2c0 2.4 1.5 5 5 5h3a5 5 0 0 0 5-5v-5h5a2 2 0 0 1 2 2v2c0 2.4-1.5 5-5 5h-3"/><path d="M12 12v.01"/></svg>,
+            Hands: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m19 7-2.78 2.78a6.003 6.003 0 0 0-7.39 7.39L5 21l-1.5-1.5a4.24 4.24 0 0 1 0-6l2.12-2.12"/><path d="M14.5 13.5 17 11a4.24 4.24 0 0 1 6 0l1.5 1.5-3.5 3.5a6.003 6.003 0 0 1-7.39-7.39L16.22 5a3.003 3.003 0 0 1 4.24 4.24l-1.5 1.5"/></svg>,
+            ChevronRight: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>,
+            ChevronLeft: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>,
+            Copy: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>,
+            Refresh: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>,
+            Check: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
+            X: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        };
+
+        const { useState, useEffect } = React;
+
+        // --- COMPONENTS ---
+
+        const StepHeader = ({ step, title, icon: Icon }) => (
+            <div className="flex items-center gap-3 mb-6 animate-fade-in">
+                <div className="w-10 h-10 rounded-full bg-[#9F6B53] text-white flex items-center justify-center font-bold text-lg shadow-lg">
+                    {step}
+                </div>
+                <h2 className="text-xl font-bold text-white tracking-wide">{title}</h2>
+                <div className="ml-auto opacity-20">
+                    <Icon size={40} />
+                </div>
+            </div>
+        );
+
+        const ProgressBar = ({ current }) => (
+            <div className="flex gap-1 mb-8">
+                {[1, 2, 3, 4].map(i => (
+                    <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-500 ${i <= current ? 'bg-[#9F6B53]' : 'bg-[#333]'}`}></div>
+                ))}
+            </div>
+        );
+
+        // --- MAIN APP ---
+        function App() {
+            // State
+            const [step, setStep] = useState(1); // 1: S, 2: O, 3: A, 4: P, 5: Review
+            const [data, setData] = useState(() => {
+                const saved = localStorage.getItem('faithreflects_soap');
+                return saved ? JSON.parse(saved) : {
+                    ref: '',
+                    scripture: '',
+                    observation: '',
+                    application: '',
+                    prayer: ''
+                };
+            });
+            const [showResetConfirm, setShowResetConfirm] = useState(false);
+            const [copyStatus, setCopyStatus] = useState("Copy for Notion");
+
+            useEffect(() => {
+                localStorage.setItem('faithreflects_soap', JSON.stringify(data));
+            }, [data]);
+
+            const updateData = (key, value) => {
+                setData(prev => ({ ...prev, [key]: value }));
+            };
+
+            const nextStep = () => setStep(prev => Math.min(prev + 1, 5));
+            const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
+
+            const triggerReset = () => setShowResetConfirm(true);
+            const confirmReset = () => {
+                setData({ ref: '', scripture: '', observation: '', application: '', prayer: '' });
+                setStep(1);
+                setShowResetConfirm(false);
+            };
+
+            const draftPrayer = () => {
+                if (data.prayer) return; // Don't overwrite if exists
+                const draft = `Lord, thank You for Your Word in ${data.ref || 'Scripture'}. \n\nHelp me to apply this truth: "${data.application}". \n\nGive me the strength to walk in this today. Amen.`;
+                updateData('prayer', draft);
+            };
+
+            const copyToClipboard = () => {
+                const text = `**SOAP Study: ${data.ref}**\n\n**Scripture:**\n"${data.scripture}"\n\n**Observation:**\n${data.observation}\n\n**Application:**\n${data.application}\n\n**Prayer:**\n${data.prayer}`;
+                
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    setCopyStatus("Copied!");
+                    setTimeout(() => setCopyStatus("Copy for Notion"), 2000);
+                } catch (err) {
+                    console.error('Fallback copy failed', err);
+                }
+                document.body.removeChild(textArea);
+            };
+
+            return (
+                <div className="min-h-screen bg-[#191919] text-[#E3E3E3] font-sans flex flex-col p-6 max-w-md mx-auto">
+                    
+                    {/* Header */}
+                    <header className="flex justify-between items-center mb-6">
+                        <div className="flex items-center space-x-1.5 text-stone-300">
+                            <span className="text-xl">✨</span>
+                            <span className="font-semibold tracking-tight text-base font-serif">FaithReflects</span>
+                        </div>
+                        
+                        {/* Reset Logic */}
+                        {showResetConfirm ? (
+                            <div className="flex items-center bg-[#2C2C2C] rounded-lg border border-[#333] p-1 shadow-lg animate-fade-in">
+                                <span className="text-[10px] mr-2 text-stone-400 pl-2">Reset?</span>
+                                <button onClick={confirmReset} className="p-1 text-[#9F6B53] hover:text-white mr-1"><Icons.Check size={14} /></button>
+                                <button onClick={() => setShowResetConfirm(false)} className="p-1 text-stone-500 hover:text-white"><Icons.X size={14} /></button>
+                            </div>
+                        ) : (
+                            <button onClick={triggerReset} className="text-stone-600 hover:text-stone-400 p-1.5 rounded hover:bg-[#2C2C2C] transition-colors" title="New Study">
+                                <Icons.Refresh size={16} />
+                            </button>
+                        )}
+                    </header>
+
+                    <ProgressBar current={step} />
+
+                    {/* STEPS */}
+                    <div className="flex-1 flex flex-col relative overflow-hidden">
+                        
+                        {/* STEP 1: SCRIPTURE */}
+                        {step === 1 && (
+                            <div className="animate-slide-left flex-1 flex flex-col">
+                                <StepHeader step="S" title="Scripture" icon={Icons.Book} />
+                                <div className="space-y-4 flex-1">
+                                    <input 
+                                        value={data.ref}
+                                        onChange={(e) => updateData('ref', e.target.value)}
+                                        placeholder="Reference (e.g. James 1:2)"
+                                        className="w-full bg-[#2C2C2C] border-b-2 border-[#333] focus:border-[#9F6B53] p-3 text-lg font-bold text-white outline-none transition-colors"
+                                    />
+                                    <textarea 
+                                        value={data.scripture}
+                                        onChange={(e) => updateData('scripture', e.target.value)}
+                                        placeholder="Paste or type the verse here..."
+                                        className="w-full h-48 bg-[#202020] border border-[#333] rounded-xl p-4 text-stone-300 italic focus:border-[#9F6B53] outline-none resize-none font-serif leading-relaxed"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* STEP 2: OBSERVATION */}
+                        {step === 2 && (
+                            <div className="animate-slide-left flex-1 flex flex-col">
+                                <StepHeader step="O" title="Observation" icon={Icons.Eye} />
+                                <div className="space-y-4 flex-1">
+                                    <div className="bg-[#2C2C2C] p-3 rounded-lg border-l-4 border-[#9F6B53]">
+                                        <p className="text-xs text-stone-400"><strong>Prompts:</strong> Who is speaking? What is the command? Is there a repeated word?</p>
+                                    </div>
+                                    <textarea 
+                                        value={data.observation}
+                                        onChange={(e) => updateData('observation', e.target.value)}
+                                        placeholder="What stands out to you? Write it down..."
+                                        className="w-full h-48 bg-[#202020] border border-[#333] rounded-xl p-4 text-stone-300 focus:border-[#9F6B53] outline-none resize-none leading-relaxed"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* STEP 3: APPLICATION */}
+                        {step === 3 && (
+                            <div className="animate-slide-left flex-1 flex flex-col">
+                                <StepHeader step="A" title="Application" icon={Icons.Footprints} />
+                                <div className="space-y-4 flex-1">
+                                    <div className="bg-[#2C2C2C] p-3 rounded-lg border-l-4 border-[#9F6B53]">
+                                        <p className="text-xs text-stone-400"><strong>Prompts:</strong> How does this change my day? Is there a sin to confess or a promise to claim?</p>
+                                    </div>
+                                    <textarea 
+                                        value={data.application}
+                                        onChange={(e) => updateData('application', e.target.value)}
+                                        placeholder="I will..."
+                                        className="w-full h-48 bg-[#202020] border border-[#333] rounded-xl p-4 text-stone-300 focus:border-[#9F6B53] outline-none resize-none leading-relaxed"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* STEP 4: PRAYER */}
+                        {step === 4 && (
+                            <div className="animate-slide-left flex-1 flex flex-col">
+                                <StepHeader step="P" title="Prayer" icon={Icons.Hands} />
+                                <div className="space-y-4 flex-1">
+                                    {!data.prayer && data.application && (
+                                        <button 
+                                            onClick={draftPrayer}
+                                            className="text-xs text-[#9F6B53] hover:text-white underline mb-2 block"
+                                        >
+                                            Auto-Draft Prayer based on Application?
+                                        </button>
+                                    )}
+                                    <textarea 
+                                        value={data.prayer}
+                                        onChange={(e) => updateData('prayer', e.target.value)}
+                                        placeholder="Write your prayer to God..."
+                                        className="w-full h-48 bg-[#202020] border border-[#333] rounded-xl p-4 text-stone-300 focus:border-[#9F6B53] outline-none resize-none leading-relaxed"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* STEP 5: REVIEW */}
+                        {step === 5 && (
+                            <div className="animate-slide-left flex-1 flex flex-col">
+                                <div className="text-center mb-6">
+                                    <h2 className="text-2xl font-bold text-white mb-1">Study Complete</h2>
+                                    <p className="text-xs text-stone-500">Ready for your journal.</p>
+                                </div>
+
+                                <div className="bg-[#202020] rounded-xl border border-[#333] p-6 shadow-2xl space-y-4 flex-1 overflow-y-auto max-h-[400px] custom-scroll">
+                                    <div>
+                                        <span className="text-[10px] text-[#9F6B53] font-bold uppercase">Scripture</span>
+                                        <p className="text-sm italic text-stone-300">"{data.scripture}"</p>
+                                    </div>
+                                    <div className="border-t border-[#333] pt-2">
+                                        <span className="text-[10px] text-stone-500 font-bold uppercase">Observation</span>
+                                        <p className="text-sm text-stone-300">{data.observation}</p>
+                                    </div>
+                                    <div className="border-t border-[#333] pt-2">
+                                        <span className="text-[10px] text-stone-500 font-bold uppercase">Application</span>
+                                        <p className="text-sm text-stone-300">{data.application}</p>
+                                    </div>
+                                    <div className="border-t border-[#333] pt-2">
+                                        <span className="text-[10px] text-stone-500 font-bold uppercase">Prayer</span>
+                                        <p className="text-sm text-stone-300">{data.prayer}</p>
+                                    </div>
+                                </div>
+
+                                <button 
+                                    onClick={copyToClipboard}
+                                    className="mt-6 w-full py-3 bg-[#9F6B53] text-white rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-[#8F5B43] transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <Icons.Copy size={16} /> {copyStatus}
+                                </button>
+                            </div>
+                        )}
+
+                    </div>
+
+                    {/* Navigation Buttons */}
+                    {step < 5 && (
+                        <div className="flex justify-between mt-6 pt-4 border-t border-[#2C2C2C]">
+                            <button 
+                                onClick={prevStep}
+                                disabled={step === 1}
+                                className={`flex items-center text-stone-500 hover:text-white transition-colors text-sm font-bold ${step === 1 ? 'opacity-0 pointer-events-none' : ''}`}
+                            >
+                                <Icons.ChevronLeft size={16} className="mr-1" /> Back
+                            </button>
+                            <button 
+                                onClick={nextStep}
+                                className="flex items-center bg-[#2C2C2C] hover:bg-[#333] text-white px-6 py-2 rounded-full transition-colors text-sm font-bold shadow-lg"
+                            >
+                                {step === 4 ? 'Review' : 'Next'} <Icons.ChevronRight size={16} className="ml-1" />
+                            </button>
+                        </div>
+                    )}
+
+                    <footer className="mt-6 text-center opacity-30 text-[9px]">
+                        FaithReflects • SOAP Method
+                    </footer>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
