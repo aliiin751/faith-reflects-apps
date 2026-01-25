@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FaithReflects - Prayer Candles</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body {
+            background-color: #191919;
+            color: #E3E3E3;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            overflow-x: hidden;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #191919; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #444; }
+        
+        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+        .animate-slide-up { animation: slideUp 0.4s ease-out; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Candle Flame Animation */
+        .flame {
+            transform-origin: center bottom;
+            animation: flicker 3s infinite ease-in-out;
+        }
+        
+        /* Different flicker speeds */
+        .flame-fast { animation-duration: 2.5s; }
+        .flame-slow { animation-duration: 3.5s; }
+        .flame-med { animation-duration: 3s; }
+
+        @keyframes flicker {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            25% { transform: scale(1.1) rotate(-2deg); opacity: 1; }
+            50% { transform: scale(0.95) rotate(1deg); opacity: 0.8; }
+            75% { transform: scale(1.05) rotate(-1deg); opacity: 1; }
+        }
+
+        /* Glow effect behind flame */
+        .glow {
+            animation: glowPulse 3s infinite ease-in-out;
+        }
+        @keyframes glowPulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.2); }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // --- ICONS ---
+        const Icons = {
+            Plus: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>,
+            Trash: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>,
+            Check: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
+            X: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>,
+            Refresh: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+        };
+
+        const { useState, useEffect } = React;
+
+        // --- CANDLE COMPONENT ---
+        const Candle = ({ prayer, onToggle, onDelete }) => {
+            const [isHovered, setIsHovered] = useState(false);
+            const [confirmDelete, setConfirmDelete] = useState(false);
+
+            // Randomize flicker speed class
+            const flickerClass = ['flame-fast', 'flame-slow', 'flame-med'][prayer.id % 3];
+
+            const handleDelete = (e) => {
+                e.stopPropagation();
+                if (confirmDelete) {
+                    onDelete(prayer.id);
+                } else {
+                    setConfirmDelete(true);
+                    setTimeout(() => setConfirmDelete(false), 3000);
+                }
+            };
+
+            const toggleStatus = () => {
+                const nextStatus = prayer.status === 'active' ? 'answered' : (prayer.status === 'answered' ? 'paused' : 'active');
+                onToggle(prayer.id, nextStatus);
+            };
+
+            // Status Styles
+            const isActive = prayer.status === 'active';
+            const isAnswered = prayer.status === 'answered';
+            const isPaused = prayer.status === 'paused';
+
+            return (
+                <div 
+                    className={`relative bg-[#2C2C2C] rounded-xl border p-4 flex flex-col items-center justify-between transition-all duration-300 group cursor-pointer h-40
+                        ${isActive ? 'border-[#9F6B53]/50 shadow-[0_0_20px_rgba(159,107,83,0.1)]' : ''}
+                        ${isAnswered ? 'border-[#E3E3E3]/50 bg-[#2C2C2C]/50' : ''}
+                        ${isPaused ? 'border-[#333] opacity-60' : ''}
+                    `}
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
+                    onClick={toggleStatus}
+                >
+                    {/* Delete Button (Visible on Hover) */}
+                    <button 
+                        onClick={handleDelete}
+                        className={`absolute top-2 right-2 p-1.5 rounded-full transition-all z-20 ${confirmDelete ? 'bg-red-900/30 text-red-400 opacity-100' : 'text-stone-600 hover:text-red-400 opacity-0 group-hover:opacity-100'}`}
+                    >
+                        {confirmDelete ? <Icons.X size={12} /> : <Icons.Trash size={12} />}
+                    </button>
+
+                    {/* Status Badge */}
+                    {isAnswered && (
+                        <div className="absolute top-2 left-2 bg-[#E3E3E3] text-[#191919] text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            Answered
+                        </div>
+                    )}
+
+                    {/* The Candle Graphic */}
+                    <div className="flex-1 flex items-end justify-center w-full pb-2 relative">
+                        {isActive && (
+                            <>
+                                {/* Glow */}
+                                <div className="absolute top-0 w-16 h-16 bg-[#FCD34D] rounded-full blur-2xl glow pointer-events-none"></div>
+                                {/* Flame */}
+                                <div className={`absolute bottom-[35px] w-4 h-8 bg-gradient-to-t from-orange-500 to-yellow-200 rounded-full blur-[1px] ${flickerClass} z-10 pointer-events-none`}></div>
+                                {/* Wick */}
+                                <div className="absolute bottom-[30px] w-0.5 h-2 bg-black z-10 pointer-events-none"></div>
+                            </>
+                        )}
+                        
+                        {/* Wax Body */}
+                        <div className={`w-8 h-10 rounded-sm relative z-0 transition-colors duration-500 ${isAnswered ? 'bg-[#E3E3E3]' : 'bg-[#9F6B53]'}`}>
+                            {/* Drips */}
+                            <div className={`absolute top-0 left-0 w-full h-2 rounded-t-sm opacity-50 ${isAnswered ? 'bg-white' : 'bg-[#C88A6E]'}`}></div>
+                        </div>
+                        {/* Holder */}
+                        <div className="w-12 h-1 bg-[#444] rounded-full absolute bottom-0"></div>
+                    </div>
+
+                    {/* Text */}
+                    <div className="w-full text-center">
+                        <p className={`text-xs font-medium truncate w-full ${isAnswered ? 'text-stone-400 line-through' : 'text-stone-200'}`}>
+                            {prayer.text}
+                        </p>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- ADD CARD COMPONENT ---
+        const AddCard = ({ onAdd }) => {
+            const [isEditing, setIsEditing] = useState(false);
+            const [text, setText] = useState('');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (!text.trim()) return;
+                onAdd(text);
+                setText('');
+                setIsEditing(false);
+            };
+
+            if (isEditing) {
+                return (
+                    <form onSubmit={handleSubmit} className="bg-[#202020] rounded-xl border border-dashed border-[#555] p-4 flex flex-col justify-center h-40 animate-fade-in">
+                        <input 
+                            autoFocus
+                            value={text}
+                            onChange={(e) => setText(e.target.value)}
+                            placeholder="Prayer request..."
+                            className="bg-transparent text-sm text-white placeholder-stone-500 outline-none w-full text-center mb-3"
+                        />
+                        <div className="flex gap-2 justify-center">
+                            <button type="button" onClick={() => setIsEditing(false)} className="text-[10px] text-stone-500 hover:text-stone-300">Cancel</button>
+                            <button type="submit" disabled={!text.trim()} className="bg-[#2C2C2C] text-[#9F6B53] px-3 py-1 rounded text-[10px] font-bold hover:bg-[#333]">Add</button>
+                        </div>
+                    </form>
+                );
+            }
+
+            return (
+                <button 
+                    onClick={() => setIsEditing(true)}
+                    className="bg-[#202020] rounded-xl border border-dashed border-[#333] hover:border-[#555] hover:bg-[#252525] p-4 flex flex-col items-center justify-center transition-all h-40 group"
+                >
+                    <div className="w-10 h-10 rounded-full bg-[#2C2C2C] text-stone-500 group-hover:text-stone-300 flex items-center justify-center mb-2 transition-colors">
+                        <Icons.Plus size={20} />
+                    </div>
+                    <span className="text-[10px] text-stone-500 font-bold uppercase tracking-widest group-hover:text-stone-400">Light Candle</span>
+                </button>
+            );
+        };
+
+        // --- MAIN APP ---
+        function App() {
+            // State
+            const [prayers, setPrayers] = useState(() => {
+                const saved = localStorage.getItem('faithreflects_candles');
+                return saved ? JSON.parse(saved) : [];
+            });
+            const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+            useEffect(() => {
+                localStorage.setItem('faithreflects_candles', JSON.stringify(prayers));
+            }, [prayers]);
+
+            // Handlers
+            const addPrayer = (text) => {
+                const newPrayer = {
+                    id: Date.now(),
+                    text,
+                    status: 'active', // active, paused, answered
+                    date: new Date().toLocaleDateString()
+                };
+                setPrayers(prev => [newPrayer, ...prev]);
+            };
+
+            const toggleStatus = (id, newStatus) => {
+                setPrayers(prev => prev.map(p => 
+                    p.id === id ? { ...p, status: newStatus } : p
+                ));
+            };
+
+            const deletePrayer = (id) => {
+                setPrayers(prev => prev.filter(p => p.id !== id));
+            };
+
+            const triggerReset = () => setShowResetConfirm(true);
+            const confirmReset = () => {
+                setPrayers([]);
+                setShowResetConfirm(false);
+            };
+
+            // Sort: Active first, then Paused, then Answered
+            const sortedPrayers = [...prayers].sort((a, b) => {
+                const statusOrder = { 'active': 1, 'paused': 2, 'answered': 3 };
+                return statusOrder[a.status] - statusOrder[b.status];
+            });
+
+            const activeCount = prayers.filter(p => p.status === 'active').length;
+
+            return (
+                <div className="min-h-screen bg-[#191919] text-[#E3E3E3] font-sans flex flex-col p-4 max-w-lg mx-auto">
+                    
+                    {/* Header */}
+                    <header className="flex justify-between items-center mb-6">
+                        <div className="flex items-center space-x-1.5 text-stone-300">
+                            <span className="text-xl">✨</span>
+                            <span className="font-semibold tracking-tight text-base font-serif">FaithReflects</span>
+                        </div>
+                        
+                        <div className="flex items-center gap-3">
+                            <span className="text-[10px] bg-[#2C2C2C] px-2 py-1 rounded text-[#9F6B53] border border-[#333]">
+                                {activeCount} Burning
+                            </span>
+                            {/* Reset Logic */}
+                            {showResetConfirm ? (
+                                <div className="flex items-center bg-[#2C2C2C] rounded-lg border border-[#333] p-1 shadow-lg animate-fade-in absolute right-4 top-4 z-50">
+                                    <span className="text-[10px] mr-2 text-stone-400 pl-2">Reset All?</span>
+                                    <button onClick={confirmReset} className="p-1 text-[#9F6B53] hover:text-white mr-1"><Icons.Check size={14} /></button>
+                                    <button onClick={() => setShowResetConfirm(false)} className="p-1 text-stone-500 hover:text-white"><Icons.X size={14} /></button>
+                                </div>
+                            ) : (
+                                <button onClick={triggerReset} className="text-stone-600 hover:text-stone-400 p-1.5 rounded hover:bg-[#2C2C2C] transition-colors">
+                                    <Icons.Refresh size={16} />
+                                </button>
+                            )}
+                        </div>
+                    </header>
+
+                    {/* Grid */}
+                    <div className="flex-1 overflow-y-auto pb-8 custom-scroll">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {/* Add Button always first */}
+                            <AddCard onAdd={addPrayer} />
+                            
+                            {/* Prayer Cards */}
+                            {sortedPrayers.map(prayer => (
+                                <Candle 
+                                    key={prayer.id} 
+                                    prayer={prayer} 
+                                    onToggle={toggleStatus} 
+                                    onDelete={deletePrayer} 
+                                />
+                            ))}
+                        </div>
+                        
+                        {prayers.length === 0 && (
+                            <div className="text-center mt-12 opacity-30">
+                                <p className="text-sm">"Let your light shine."</p>
+                                <p className="text-xs mt-1">Add a prayer to light a candle.</p>
+                            </div>
+                        )}
+                    </div>
+
+                    <footer className="mt-auto text-center opacity-30 text-[9px] pt-4 border-t border-[#2C2C2C]">
+                        FaithReflects • Active Prayers
+                    </footer>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
