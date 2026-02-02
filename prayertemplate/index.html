@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abide 2.0: Digital Sanctuary</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #fcfaf7;
+            --accent-sage: #8da18d;
+            --accent-clay: #d4a373;
+            --text-main: #4a443f;
+            --glass: rgba(255, 255, 255, 0.45);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 20px;
+            transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, .serif { font-family: 'Cormorant Garamond', serif; letter-spacing: -0.02em; }
+
+        /* Premium Gradient Mesh Background */
+        .mesh-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -2;
+            background: 
+                radial-gradient(at 0% 0%, rgba(141, 161, 141, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(212, 163, 115, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(141, 161, 141, 0.1) 0px, transparent 50%),
+                radial-gradient(at 0% 100%, rgba(212, 163, 115, 0.15) 0px, transparent 50%);
+            filter: blur(80px);
+            animation: meshMove 20s infinite alternate;
+        }
+
+        @keyframes meshMove {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1) translate(20px, 20px); }
+        }
+
+        /* Glass Card with Hover Lift */
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 28px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.03);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            perspective: 1000px;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-6px) scale(1.01);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Animated Breathing Ring */
+        .breath-ring-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .breath-circle {
+            width: 100px;
+            height: 100px;
+            background: var(--accent-sage);
+            border-radius: 50%;
+            opacity: 0.1;
+            animation: breathe 8s infinite ease-in-out;
+            box-shadow: 0 0 50px var(--accent-sage);
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); opacity: 0.1; }
+            50% { transform: scale(1.8); opacity: 0.3; }
+        }
+
+        /* Eternal Flame Glow */
+        .candle-flame {
+            width: 12px;
+            height: 24px;
+            background: linear-gradient(to bottom, #fff, #ffae00);
+            border-radius: 50% 50% 20% 20%;
+            box-shadow: 0 0 20px #ffae00, 0 0 40px rgba(255, 174, 0, 0.4);
+            animation: flicker 0.15s infinite alternate;
+            margin: 0 auto;
+        }
+
+        @keyframes flicker {
+            0% { transform: scale(1) rotate(-2deg); opacity: 0.8; }
+            100% { transform: scale(1.1) rotate(2deg); opacity: 1; }
+        }
+
+        /* Streak Progress Circle */
+        .streak-ring {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            border: 2px solid rgba(141, 161, 141, 0.1);
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+        .streak-ring::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 50%;
+            border: 2px solid var(--accent-sage);
+            clip-path: inset(0 0 0 50%); /* Mock progress */
+            animation: spin 3s linear infinite;
+            opacity: 0.4;
+        }
+
+        /* Mood Button Active Glow */
+        .mood-btn.active {
+            background: white;
+            color: var(--text-main);
+            box-shadow: 0 0 20px rgba(141, 161, 141, 0.2);
+            border: 1px solid var(--accent-sage);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: rgba(141, 161, 141, 0.2); border-radius: 10px; }
+
+        .success-flash { animation: successPulse 1.2s ease-out; }
+        @keyframes successPulse {
+            0% { color: var(--accent-sage); }
+            50% { text-shadow: 0 0 10px var(--accent-sage); }
+            100% { color: inherit; }
+        }
+
+        /* Mood Theme Classes */
+        body.mood-mist { --bg-color: #f0f4f4; --glass: rgba(255, 255, 255, 0.3); }
+        body.mood-golden { --bg-color: #fdf8f2; --accent-sage: #d4a373; }
+        body.mood-midnight { --bg-color: #1a1c1e; --text-main: #f0f0f0; --glass: rgba(255, 255, 255, 0.08); }
+        body.mood-midnight h1, body.mood-midnight h2 { color: #fff; }
+        body.mood-midnight .glass-card { border: 1px solid rgba(255, 255, 255, 0.1); }
+        body.mood-midnight input, body.mood-midnight textarea { color: #fff; }
+
+        .tag-remove { transition: all 0.2s; opacity: 0; }
+        .tag-item:hover .tag-remove { opacity: 0.6; }
+    </style>
+</head>
+<body class="max-w-7xl mx-auto pb-16">
+
+    <div class="mesh-bg"></div>
+
+    <header class="mb-12 flex flex-col md:flex-row justify-between items-end gap-6 fade-in px-4">
+        <div>
+            <h1 id="greeting" class="text-6xl italic mb-3 font-semibold leading-tight">Peace be with you.</h1>
+            <p id="current-date" class="text-xs tracking-[0.5em] uppercase opacity-40 font-bold"></p>
+        </div>
+        <div class="glass-card px-8 py-4 flex items-center gap-5">
+            <div class="streak-ring"><span class="text-[10px] font-bold">🕊️</span></div>
+            <div>
+                <span id="streak-counter" class="text-xs font-bold tracking-widest uppercase">0 DAYS OF ABIDING</span>
+                <p class="text-[9px] opacity-40 uppercase tracking-tighter">Consistency is Grace</p>
+            </div>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 px-4">
+        
+        <!-- SIDEBAR: Environment & Presence -->
+        <div class="lg:col-span-3 space-y-8">
+            <!-- Lighting Presets -->
+            <div class="glass-card p-7">
+                <h3 class="text-sm font-bold uppercase tracking-[0.2em] mb-6 opacity-60">Lighting</h3>
+                <div class="flex flex-col gap-3">
+                    <button onclick="setMood('default')" class="mood-btn active text-[11px] font-medium uppercase p-4 rounded-2xl border border-white/40 transition-all text-left flex items-center justify-between">
+                        <span>✨ Sanctuary White</span>
+                        <div class="w-2 h-2 rounded-full bg-white border border-gray-200"></div>
+                    </button>
+                    <button onclick="setMood('mist')" class="mood-btn text-[11px] font-medium uppercase p-4 rounded-2xl border border-white/40 transition-all text-left flex items-center justify-between">
+                        <span>☁️ Morning Mist</span>
+                        <div class="w-2 h-2 rounded-full bg-blue-50 border border-blue-100"></div>
+                    </button>
+                    <button onclick="setMood('golden')" class="mood-btn text-[11px] font-medium uppercase p-4 rounded-2xl border border-white/40 transition-all text-left flex items-center justify-between">
+                        <span>☀️ Golden Hour</span>
+                        <div class="w-2 h-2 rounded-full bg-amber-100 border border-amber-200"></div>
+                    </button>
+                    <button onclick="setMood('midnight')" class="mood-btn text-[11px] font-medium uppercase p-4 rounded-2xl border border-white/40 transition-all text-left flex items-center justify-between">
+                        <span>🌙 Midnight Prayer</span>
+                        <div class="w-2 h-2 rounded-full bg-slate-800"></div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Focus Element -->
+            <div class="glass-card p-7 flex flex-col items-center text-center">
+                <h3 class="text-sm font-bold uppercase tracking-[0.2em] mb-8 opacity-60">Focus</h3>
+                <div class="relative py-6">
+                    <div class="w-[2px] h-10 bg-gray-300 mx-auto rounded-full mb-0.5 opacity-30"></div>
+                    <div class="candle-flame"></div>
+                </div>
+                <p class="text-[10px] uppercase tracking-[0.3em] opacity-30 mt-6 italic">Be Still</p>
+            </div>
+
+            <!-- Identity truths -->
+            <div class="glass-card p-7 border-b-4 border-sage/40">
+                <h3 class="text-sm font-bold uppercase tracking-[0.2em] mb-6 opacity-60">Identity</h3>
+                <div id="identity-list" class="space-y-4 mb-6"></div>
+                <div class="relative">
+                    <input type="text" id="id-statement-input" placeholder="+ Add truth..." 
+                           class="bg-white/30 border-none rounded-xl w-full p-4 text-xs italic focus:bg-white/60 transition-all outline-none" 
+                           onkeydown="if(event.key==='Enter') addIdentity()">
+                </div>
+            </div>
+        </div>
+
+        <!-- CENTER: The Wall -->
+        <div class="lg:col-span-6 space-y-8">
+            <div class="glass-card p-10 min-h-[550px] flex flex-col">
+                <div class="flex justify-between items-end mb-10">
+                    <div>
+                        <h2 class="text-5xl italic leading-none">The Prayer Wall</h2>
+                        <p class="text-[11px] opacity-40 uppercase tracking-[0.3em] mt-3">Spoken & Unspoken</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-4 mb-10 group">
+                    <input type="text" id="prayer-input" placeholder="What is on your heart?" 
+                           class="flex-1 bg-white/40 border border-white/50 rounded-2xl px-6 py-4 text-sm focus:bg-white/80 transition-all outline-none shadow-inner">
+                    <button onclick="addPrayer()" class="bg-[#8da18d] text-white px-8 py-4 rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-[#7a8f7a] hover:scale-105 transition-all shadow-xl shadow-sage/20">Surrender</button>
+                </div>
+
+                <div id="prayer-list" class="space-y-5 flex-1 overflow-y-auto max-h-[380px] pr-4 custom-scroll"></div>
+            </div>
+
+            <!-- Gratitude Jar -->
+            <div class="glass-card p-10">
+                <div class="flex justify-between items-center mb-8">
+                    <h3 class="text-2xl italic">Gifts of Grace</h3>
+                    <div class="text-[10px] uppercase tracking-widest opacity-40">Count your blessings</div>
+                </div>
+                <div id="gratitude-items" class="flex flex-wrap gap-3 mb-8"></div>
+                <div class="flex gap-3">
+                    <input type="text" id="gratitude-input" placeholder="Today I am grateful for..." 
+                           class="flex-1 bg-white/30 border border-white/40 rounded-xl px-5 py-3 text-xs outline-none focus:bg-white/60 transition-all">
+                    <button onclick="addGratitude()" class="bg-white/60 text-sage p-3 rounded-xl hover:bg-white transition-all shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2.5" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Reflection -->
+        <div class="lg:col-span-3 space-y-8">
+            <!-- Breathing space with guiding text -->
+            <div class="glass-card p-8 flex flex-col items-center text-center overflow-hidden">
+                <h3 class="text-sm font-bold uppercase tracking-[0.2em] mb-8 opacity-60">Rhythm</h3>
+                <div class="breath-ring-container mb-10">
+                    <div class="breath-circle"></div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="w-16 h-16 border border-sage/20 rounded-full animate-ping opacity-20"></div>
+                    </div>
+                </div>
+                <p class="text-[11px] font-bold uppercase tracking-[0.4em] text-sage">
+                    <span id="breath-text">Receive His Grace</span>
+                </p>
+            </div>
+
+            <!-- Daily Bread -->
+            <div class="glass-card p-8 group">
+                <h3 class="text-sm font-bold uppercase tracking-[0.2em] mb-4 opacity-60">Daily Bread</h3>
+                <textarea id="daily-verse" class="w-full bg-transparent border-none text-base italic resize-none focus:ring-0 p-0 opacity-80 leading-relaxed font-medium" rows="4" placeholder="A verse for today..."></textarea>
+                <div class="mt-4 flex justify-end">
+                    <button id="save-daily-verse" onclick="saveField('daily-verse')" class="text-[10px] font-bold uppercase tracking-[0.2em] hover:text-sage transition-all opacity-40 group-hover:opacity-100">Save to Heart</button>
+                </div>
+            </div>
+
+            <!-- The One Thing -->
+            <div class="glass-card p-8 border-l-8 border-sage/30 group">
+                <h3 class="text-sm font-bold uppercase tracking-[0.2em] mb-4 opacity-60">The One Thing</h3>
+                <textarea id="sermon-note" class="w-full bg-transparent border-none text-sm font-medium focus:ring-0 p-0 opacity-80 leading-relaxed" rows="5" placeholder="If you remember only one thing..."></textarea>
+                <button id="save-sermon-note" onclick="saveField('sermon-note')" class="text-[10px] font-bold uppercase tracking-[0.2em] mt-4 hover:text-sage transition-all opacity-40 group-hover:opacity-100">Commit</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="mt-20 text-center fade-in pb-10">
+        <p class="text-[11px] font-bold tracking-[0.6em] uppercase opacity-20">The Digital Sanctuary &bull; FaithReflects</p>
+    </footer>
+
+    <script>
+        let prayers = JSON.parse(localStorage.getItem('fr_prayers_3')) || [];
+        let gratitude = JSON.parse(localStorage.getItem('fr_gratitude_3')) || [];
+        let identity = JSON.parse(localStorage.getItem('fr_identity_3')) || ["I am chosen", "I am redeemed", "I am deeply loved"];
+
+        window.onload = () => {
+            updateGreeting();
+            updateDate();
+            renderPrayers();
+            renderGratitude();
+            renderIdentity();
+            loadFields();
+            checkStreak();
+            startBreathCycle();
+        };
+
+        function updateGreeting() {
+            const hr = new Date().getHours();
+            const g = document.getElementById('greeting');
+            if (hr < 12) g.innerText = "Good morning, beloved.";
+            else if (hr < 18) g.innerText = "His peace be with you.";
+            else g.innerText = "Rest in His presence.";
+        }
+
+        function updateDate() {
+            const options = { weekday: 'long', month: 'long', day: 'numeric' };
+            document.getElementById('current-date').innerText = new Date().toLocaleDateString(undefined, options);
+        }
+
+        function setMood(mood) {
+            document.body.className = mood === 'default' ? '' : `mood-${mood}`;
+            document.querySelectorAll('.mood-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.innerText.toLowerCase().includes(mood.replace('mood-', ''))) btn.classList.add('active');
+            });
+            if(mood === 'default') document.querySelector('.mood-btn').classList.add('active');
+        }
+
+        function startBreathCycle() {
+            const text = document.getElementById('breath-text');
+            setInterval(() => {
+                text.style.opacity = 0;
+                setTimeout(() => {
+                    text.innerText = text.innerText === "Receive His Grace" ? "Release All Worry" : "Receive His Grace";
+                    text.style.opacity = 1;
+                }, 500);
+            }, 4000);
+        }
+
+        // --- IDENTITY ---
+        function addIdentity() {
+            const input = document.getElementById('id-statement-input');
+            if (!input.value.trim()) return;
+            identity.push(input.value.trim());
+            input.value = "";
+            localStorage.setItem('fr_identity_3', JSON.stringify(identity));
+            renderIdentity();
+        }
+
+        function removeIdentity(index) {
+            identity.splice(index, 1);
+            localStorage.setItem('fr_identity_3', JSON.stringify(identity));
+            renderIdentity();
+        }
+
+        function renderIdentity() {
+            const list = document.getElementById('identity-list');
+            list.innerHTML = identity.map((text, i) => `
+                <div class="flex justify-between items-center group fade-in">
+                    <li class="text-xs italic opacity-70 font-medium list-none">✨ ${text}</li>
+                    <button onclick="removeIdentity(${i})" class="opacity-0 group-hover:opacity-40 hover:!opacity-100 text-[10px] transition-all">✕</button>
+                </div>
+            `).join('');
+        }
+
+        // --- PRAYERS ---
+        function addPrayer() {
+            const input = document.getElementById('prayer-input');
+            if (!input.value.trim()) return;
+            prayers.unshift({ id: Date.now(), text: input.value, answered: false });
+            input.value = "";
+            savePrayers();
+        }
+
+        function savePrayers() {
+            localStorage.setItem('fr_prayers_3', JSON.stringify(prayers));
+            renderPrayers();
+        }
+
+        function renderPrayers() {
+            const list = document.getElementById('prayer-list');
+            list.innerHTML = prayers.map(p => `
+                <div class="flex items-center justify-between p-5 rounded-3xl bg-white/30 border border-white/40 group hover:bg-white/60 transition-all fade-in shadow-sm">
+                    <div class="flex items-center gap-4">
+                        <button onclick="toggleAnswer(${p.id})" class="w-6 h-6 rounded-full border-2 border-sage/40 flex items-center justify-center transition-all ${p.answered ? 'bg-sage border-sage scale-110 shadow-lg shadow-sage/30' : 'hover:border-sage'}">
+                            ${p.answered ? '<svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="4"/></svg>' : ''}
+                        </button>
+                        <span class="text-sm font-medium ${p.answered ? 'line-through opacity-20' : 'opacity-80'} transition-all">${p.text}</span>
+                    </div>
+                    <button onclick="deletePrayer(${p.id})" class="opacity-0 group-hover:opacity-20 hover:!opacity-60 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="2"/></svg>
+                    </button>
+                </div>
+            `).join('');
+            if(!prayers.length) list.innerHTML = `<div class="h-40 flex items-center justify-center opacity-20 italic font-medium uppercase tracking-widest text-xs">The wall is waiting</div>`;
+        }
+
+        function toggleAnswer(id) {
+            prayers = prayers.map(p => p.id === id ? {...p, answered: !p.answered} : p);
+            savePrayers();
+        }
+
+        function deletePrayer(id) {
+            prayers = prayers.filter(p => p.id !== id);
+            savePrayers();
+        }
+
+        // --- GRATITUDE ---
+        function addGratitude() {
+            const input = document.getElementById('gratitude-input');
+            if (!input.value.trim()) return;
+            gratitude.push(input.value.trim());
+            input.value = "";
+            localStorage.setItem('fr_gratitude_3', JSON.stringify(gratitude));
+            renderGratitude();
+        }
+
+        function removeGratitude(index) {
+            gratitude.splice(index, 1);
+            localStorage.setItem('fr_gratitude_3', JSON.stringify(gratitude));
+            renderGratitude();
+        }
+
+        function renderGratitude() {
+            const container = document.getElementById('gratitude-items');
+            container.innerHTML = gratitude.map((item, i) => `
+                <span class="tag-item bg-sage/10 text-sage text-[11px] font-bold px-4 py-2 rounded-full border border-sage/20 fade-in flex items-center gap-3 hover:bg-sage/20 transition-all">
+                    ${item}
+                    <button onclick="removeGratitude(${i})" class="tag-remove text-[10px] font-black">✕</button>
+                </span>
+            `).join('');
+        }
+
+        // --- FIELDS ---
+        function saveField(id) {
+            const val = document.getElementById(id).value;
+            localStorage.setItem(`fr_field_${id}_3`, val);
+            
+            const btn = document.getElementById(`save-${id}`);
+            const originalText = btn.innerText;
+            btn.innerText = "SAVED TO HEART";
+            btn.classList.add('success-flash');
+            
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.classList.remove('success-flash');
+            }, 2500);
+        }
+
+        function loadFields() {
+            ['daily-verse', 'sermon-note'].forEach(id => {
+                const saved = localStorage.getItem(`fr_field_${id}_3`);
+                if (saved) document.getElementById(id).value = saved;
+            });
+        }
+
+        function checkStreak() {
+            let streak = parseInt(localStorage.getItem('fr_streak_3')) || 0;
+            const last = localStorage.getItem('fr_last_visit_3');
+            const today = new Date().toLocaleDateString();
+
+            if (last !== today) {
+                if (isYesterday(last)) streak++;
+                else if (!last) streak = 1;
+                else streak = 1;
+                localStorage.setItem('fr_streak_3', streak);
+                localStorage.setItem('fr_last_visit_3', today);
+            }
+            document.getElementById('streak-counter').innerText = `${streak} DAY STREAK`;
+        }
+
+        function isYesterday(dateStr) {
+            if (!dateStr) return false;
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            return new Date(dateStr).toLocaleDateString() === yesterday.toLocaleDateString();
+        }
+    </script>
+</body>
+</html>
