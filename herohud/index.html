@@ -1,0 +1,276 @@
+import React, { useState, useEffect } from 'react';
+import { Shield, Sword, Heart, Coins, Zap, Clock, Save, User, Sparkles } from 'lucide-react';
+
+const Card = ({ children, className = "" }) => (
+  <div className={`bg-slate-900 border-2 border-slate-700 rounded-xl overflow-hidden shadow-2xl ${className}`}>
+    {children}
+  </div>
+);
+
+const Button = ({ onClick, children, variant = "primary", className = "", disabled = false }) => {
+  const baseStyle = "px-4 py-2 font-bold rounded-lg transition-all duration-200 active:scale-95 flex items-center justify-center gap-2";
+  const variants = {
+    primary: "bg-indigo-600 hover:bg-indigo-500 text-white shadow-[0_4px_0_rgb(55,48,163)] hover:shadow-[0_2px_0_rgb(55,48,163)] hover:translate-y-[2px]",
+    success: "bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_4px_0_rgb(6,95,70)] hover:shadow-[0_2px_0_rgb(6,95,70)] hover:translate-y-[2px]",
+    danger: "bg-rose-600 hover:bg-rose-500 text-white shadow-[0_4px_0_rgb(159,18,57)] hover:shadow-[0_2px_0_rgb(159,18,57)] hover:translate-y-[2px]",
+    ghost: "bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600",
+  };
+  
+  return (
+    <button onClick={onClick} disabled={disabled} className={`${baseStyle} ${variants[variant]} ${className}`}>
+      {children}
+    </button>
+  );
+};
+
+const ProgressBar = ({ current, max, color = "bg-blue-500", label, icon: Icon }) => {
+  const percentage = Math.min(100, Math.max(0, (current / max) * 100));
+  
+  return (
+    <div className="w-full mb-3 group">
+      <div className="flex justify-between text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">
+        <span className="flex items-center gap-1">
+          {Icon && <Icon size={12} />} {label}
+        </span>
+        <span>{current} / {max}</span>
+      </div>
+      <div className="h-4 bg-slate-800 rounded-full overflow-hidden border border-slate-700 relative">
+        <div 
+          className={`h-full ${color} transition-all duration-1000 ease-out relative overflow-hidden`}
+          style={{ width: `${percentage}%` }}
+        >
+          <div className="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]"></div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default function App() {
+  // State
+  const [heroName, setHeroName] = useState("Traveler");
+  const [level, setLevel] = useState(1);
+  const [xp, setXp] = useState(45);
+  const [gold, setGold] = useState(120);
+  const [isEditing, setIsEditing] = useState(false);
+  
+  // Timer State
+  const [timerActive, setTimerActive] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 minutes
+  const [timerMode, setTimerMode] = useState("FOCUS"); // FOCUS or BREAK
+
+  // Load from local storage on mount
+  useEffect(() => {
+    const savedData = localStorage.getItem('rpg-hud-data');
+    if (savedData) {
+      const parsed = JSON.parse(savedData);
+      setHeroName(parsed.heroName || "Traveler");
+      setLevel(parsed.level || 1);
+      setXp(parsed.xp || 0);
+      setGold(parsed.gold || 0);
+    }
+  }, []);
+
+  // Save to local storage
+  const saveData = () => {
+    const data = { heroName, level, xp, gold };
+    localStorage.setItem('rpg-hud-data', JSON.stringify(data));
+    setIsEditing(false);
+  };
+
+  // Timer Logic
+  useEffect(() => {
+    let interval = null;
+    if (timerActive && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+    } else if (timeLeft === 0) {
+      setTimerActive(false);
+      // Play sound or notification here could be added
+      if (timerMode === "FOCUS") {
+        setXp(prev => prev + 50); // Reward for finishing focus
+        setGold(prev => prev + 20);
+        setTimerMode("BREAK");
+        setTimeLeft(5 * 60);
+      } else {
+        setTimerMode("FOCUS");
+        setTimeLeft(25 * 60);
+      }
+    }
+    return () => clearInterval(interval);
+  }, [timerActive, timeLeft, timerMode]);
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const toggleTimer = () => setTimerActive(!timerActive);
+  const resetTimer = () => {
+    setTimerActive(false);
+    setTimeLeft(25 * 60);
+    setTimerMode("FOCUS");
+  };
+
+  const maxXp = level * 100;
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-200 p-4 font-sans selection:bg-indigo-500/30">
+      <div className="max-w-md mx-auto space-y-6">
+        
+        {/* Header / Avatar Section */}
+        <Card className="p-6 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-indigo-900/50 to-transparent"></div>
+          
+          <div className="relative flex items-end gap-4">
+            {/* Avatar Circle */}
+            <div className="w-24 h-24 bg-indigo-600 rounded-2xl border-4 border-slate-800 shadow-xl flex items-center justify-center text-4xl relative z-10 hover:scale-105 transition-transform cursor-pointer">
+              {level < 5 ? '🌱' : level < 10 ? '⚔️' : level < 20 ? '🛡️' : '👑'}
+              <div className="absolute -bottom-3 bg-slate-800 text-xs font-bold px-2 py-1 rounded border border-slate-600">
+                LVL {level}
+              </div>
+            </div>
+
+            <div className="flex-1 mb-1">
+              {isEditing ? (
+                <input 
+                  value={heroName}
+                  onChange={(e) => setHeroName(e.target.value)}
+                  className="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-lg font-bold w-full focus:outline-none focus:border-indigo-500"
+                />
+              ) : (
+                <h1 className="text-2xl font-black text-white tracking-tight">{heroName}</h1>
+              )}
+              <div className="text-indigo-400 text-sm font-medium flex items-center gap-1">
+                <Sparkles size={14} />
+                {level < 5 ? "Novice Explorer" : "Master of Habits"}
+              </div>
+            </div>
+
+            <button 
+              onClick={() => isEditing ? saveData() : setIsEditing(true)}
+              className="mb-2 p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            >
+              {isEditing ? <Save size={18} /> : <User size={18} />}
+            </button>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="mt-6 grid grid-cols-2 gap-3">
+             <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+               <div className="text-amber-400 text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-1">
+                 <Coins size={12} /> Gold
+               </div>
+               {isEditing ? (
+                 <input 
+                  type="number" 
+                  value={gold}
+                  onChange={(e) => setGold(Number(e.target.value))}
+                  className="w-full bg-slate-900 border border-slate-600 rounded px-1"
+                 />
+               ) : (
+                 <div className="text-xl font-mono text-white">{gold}</div>
+               )}
+             </div>
+             
+             <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+               <div className="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-1">
+                 <Shield size={12} /> XP Needed
+               </div>
+               <div className="text-xl font-mono text-white">{maxXp - xp}</div>
+             </div>
+          </div>
+        </Card>
+
+        {/* Progress Bars */}
+        <Card className="p-6">
+          <ProgressBar 
+            current={xp} 
+            max={maxXp} 
+            label="Experience" 
+            icon={Zap} 
+            color="bg-gradient-to-r from-violet-600 to-indigo-500" 
+          />
+          
+          {/* Controls for XP (Quick Add) */}
+          {!isEditing && (
+            <div className="flex gap-2 mt-2 justify-end">
+              <button 
+                onClick={() => {
+                  const newXp = xp + 10;
+                  if (newXp >= maxXp) {
+                    setXp(newXp - maxXp);
+                    setLevel(l => l + 1);
+                  } else {
+                    setXp(newXp);
+                  }
+                }}
+                className="text-xs bg-indigo-900/50 text-indigo-300 px-3 py-1 rounded hover:bg-indigo-900 transition-colors border border-indigo-800"
+              >
+                +10 XP (Quick Task)
+              </button>
+              <button 
+                 onClick={() => setGold(g => g + 5)}
+                 className="text-xs bg-amber-900/20 text-amber-500 px-3 py-1 rounded hover:bg-amber-900/40 transition-colors border border-amber-900/50"
+              >
+                +5 Gold
+              </button>
+            </div>
+          )}
+          
+          {isEditing && (
+             <div className="mt-4 pt-4 border-t border-slate-700">
+               <label className="text-xs text-slate-400 block mb-1">Set XP Manually</label>
+               <input 
+                  type="number" 
+                  value={xp}
+                  onChange={(e) => setXp(Number(e.target.value))}
+                  className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-white"
+               />
+               
+               <label className="text-xs text-slate-400 block mb-1 mt-2">Set Level Manually</label>
+               <input 
+                  type="number" 
+                  value={level}
+                  onChange={(e) => setLevel(Number(e.target.value))}
+                  className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-white"
+               />
+             </div>
+          )}
+        </Card>
+
+        {/* Quest Timer (Pomodoro) */}
+        <Card className="p-6 text-center">
+          <div className="flex items-center justify-center gap-2 mb-2 text-slate-400 font-bold uppercase tracking-widest text-xs">
+            <Clock size={14} /> Quest Timer
+          </div>
+          
+          <div className={`text-6xl font-black mb-6 font-mono tracking-tighter ${timerActive ? 'text-white scale-110' : 'text-slate-500'} transition-all duration-300`}>
+            {formatTime(timeLeft)}
+          </div>
+          
+          <div className="flex gap-3 justify-center">
+            <Button 
+              variant={timerActive ? "danger" : "success"}
+              onClick={toggleTimer}
+              className="w-32"
+            >
+              {timerActive ? "Retreat" : "Start Quest"}
+            </Button>
+            
+            <Button variant="ghost" onClick={resetTimer}>
+              Reset
+            </Button>
+          </div>
+          
+          <div className="mt-4 text-xs text-slate-500">
+            {timerMode === "FOCUS" ? "Complete the quest to earn 50 XP + 20 Gold" : "Rest at the campfire. Prepare for the next battle."}
+          </div>
+        </Card>
+
+      </div>
+    </div>
+  );
+}
