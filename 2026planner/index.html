@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aesthetic Anime Planner 2026</title>
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;600&family=Indie+Flower&family=Fredoka:wght@300;400;500&display=swap" rel="stylesheet">
+
+    <style>
+        /* Base Styles */
+        body {
+            font-family: 'Comfortaa', cursive;
+            margin: 0;
+            overflow-x: hidden;
+            color: #4a4a4a;
+            min-height: 100vh;
+            transition: background 1s ease;
+        }
+
+        /* --- Background Particles --- */
+        .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 100px;
+            z-index: -1;
+            filter: blur(8px);
+            animation: floatCloud linear infinite;
+        }
+
+        .sakura {
+            position: absolute;
+            background: #ffd7e6;
+            border-radius: 100% 0 100% 0;
+            z-index: -1;
+            opacity: 0.6;
+            animation: fall linear infinite;
+        }
+
+        .rain {
+            position: absolute;
+            background: #a5b4fc;
+            width: 2px;
+            height: 15px;
+            z-index: -1;
+            opacity: 0.6;
+            animation: rainFall linear infinite;
+        }
+
+        .sunray {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            z-index: -1;
+            box-shadow: 0 0 10px #fff, 0 0 20px #fbbf24;
+            animation: twinkle linear infinite;
+        }
+
+        .steam {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            filter: blur(10px);
+            z-index: -1;
+            animation: rise linear infinite;
+        }
+
+        /* --- Animations --- */
+        @keyframes floatCloud {
+            0% { transform: translateX(-200px); }
+            100% { transform: translateX(100vw); }
+        }
+
+        @keyframes fall {
+            0% { transform: translate(0, -10vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.8; }
+            100% { transform: translate(10vw, 110vh) rotate(360deg); opacity: 0; }
+        }
+
+        @keyframes rainFall {
+            0% { transform: translateY(-10vh); opacity: 0; }
+            10% { opacity: 0.8; }
+            100% { transform: translateY(110vh); opacity: 0; }
+        }
+
+        @keyframes twinkle {
+            0% { transform: scale(0.5); opacity: 0.3; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+            100% { transform: scale(0.5); opacity: 0.3; }
+        }
+
+        @keyframes rise {
+            0% { transform: translateY(110vh) scale(1); opacity: 0; }
+            50% { opacity: 0.5; }
+            100% { transform: translateY(-10vh) scale(2); opacity: 0; }
+        }
+
+        /* Interaction Animations */
+        @keyframes jump {
+            0% { transform: translateY(0) scale(1, 1); }
+            30% { transform: translateY(-20px) scale(1.1, 0.9); }
+            50% { transform: translateY(0) scale(0.9, 1.1); }
+            100% { transform: translateY(0) scale(1, 1); }
+        }
+        
+        @keyframes float { 
+            0% { transform: translateY(0px); } 
+            50% { transform: translateY(-10px); } 
+            100% { transform: translateY(0px); } 
+        }
+
+        .mascot-float { animation: float 4s ease-in-out infinite; transition: all 0.5s ease; }
+        .mascot-jump { animation: jump 0.5s ease-in-out; }
+
+        /* Speech Bubble Animation */
+        .bubble-pop {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.5) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* Glassmorphism Cards */
+        .glass-panel {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+            transition: all 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .glass-modal {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.1); }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.4); border-radius: 10px; }
+
+        .task-enter { animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .handwriting { font-family: 'Indie Flower', cursive; }
+        .title-font { font-family: 'Fredoka', sans-serif; }
+
+        input:focus, textarea:focus { outline: none; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5); }
+        
+        /* Album Art Rotate */
+        .album-rotate { animation: rotate 10s linear infinite; }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script type="text/babel">
+
+    const { useState, useEffect, useRef } = React;
+
+    // --- Icons ---
+    const Icons = {
+        sun: (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41-1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>),
+        target: (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>),
+        "book-heart": (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M12 8a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z" /></svg>),
+        activity: (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>),
+        plus: (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>),
+        check: (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>),
+        "trash-2": (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>),
+        coffee: (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/></svg>),
+        sparkles: (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M9 3v4"/><path d="M3 5h4"/><path d="M3 9h4"/></svg>),
+        smile: (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg>),
+        meh: (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" x2="16" y1="15" y2="15"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg>),
+        zap: (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>),
+        clock: (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>),
+        save: (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>),
+        "message-circle": (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>),
+        "music": (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>),
+        "play": (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>),
+        "pause": (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>),
+        "help-circle": (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>),
+        "edit-2": (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>)
+    };
+
+    const Icon = ({ name, size = 20, className = "" }) => {
+        const IconComponent = Icons[name];
+        if (!IconComponent) return null;
+        return <IconComponent width={size} height={size} className={className} />;
+    };
+
+    // --- Data & Config ---
+    const THEMES = {
+        happy: { 
+            gradient: "linear-gradient(to bottom, #FF8008, #FFC837)",
+            glass: "rgba(255, 255, 255, 0.5)",
+            accent: "text-orange-500",
+            bgAccent: "bg-orange-400",
+            particle: "sunray",
+            musicUrl: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Tours/Enthusiast/Tours_-_01_-_Enthusiast.mp3"
+        },
+        content: { 
+            gradient: "linear-gradient(to bottom, #a18cd1 0%, #fbc2eb 100%)",
+            glass: "rgba(255, 255, 255, 0.45)",
+            accent: "text-purple-500",
+            bgAccent: "bg-purple-400",
+            particle: "sakura",
+            musicUrl: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Chad_Crouch/Arps/Chad_Crouch_-_Algorithms.mp3"
+        },
+        meh: { 
+            gradient: "linear-gradient(to bottom, #2c3e50, #4ca1af)",
+            glass: "rgba(30, 41, 59, 0.4)", 
+            accent: "text-blue-300",
+            bgAccent: "bg-blue-400",
+            particle: "rain",
+            textColor: "text-white",
+            musicUrl: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Kai_Engel/Satin/Kai_Engel_-_04_-_Sentinel.mp3"
+        },
+        tired: { 
+            gradient: "linear-gradient(to bottom, #eacda3, #d6ae7b)",
+            glass: "rgba(255, 248, 240, 0.6)",
+            accent: "text-amber-700",
+            bgAccent: "bg-amber-600",
+            particle: "steam",
+            textColor: "text-amber-900",
+            musicUrl: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/WFMU/Broke_For_Free/Directionless_EP/Broke_For_Free_-_01_-_Night_Owl.mp3"
+        }
+    };
+
+    const VERSES = {
+        happy: [
+            { text: "The joy of the Lord is your strength.", ref: "Nehemiah 8:10" },
+            { text: "Rejoice in the Lord always.", ref: "Philippians 4:4" },
+            { text: "This is the day the Lord has made.", ref: "Psalm 118:24" }
+        ],
+        content: [
+            { text: "He leads me beside quiet waters.", ref: "Psalm 23:2" },
+            { text: "Godliness with contentment is great gain.", ref: "1 Timothy 6:6" },
+            { text: "Be still, and know that I am God.", ref: "Psalm 46:10" }
+        ],
+        meh: [
+            { text: "The Lord is close to the brokenhearted.", ref: "Psalm 34:18" },
+            { text: "Cast all your anxiety on Him.", ref: "1 Peter 5:7" },
+            { text: "Weeping may stay for the night, but rejoicing comes in the morning.", ref: "Psalm 30:5" }
+        ],
+        tired: [
+            { text: "Come to me, all you who are weary.", ref: "Matthew 11:28" },
+            { text: "Those who hope in the Lord will renew their strength.", ref: "Isaiah 40:31" },
+            { text: "In peace I will lie down and sleep.", ref: "Psalm 4:8" }
+        ]
+    };
+
+    // --- Components ---
+
+    const WelcomeModal = ({ onClose }) => {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-fade">
+                <div className="glass-modal p-8 rounded-3xl max-w-md w-full relative border border-white/50 text-center">
+                    <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-white p-3 rounded-full shadow-xl">
+                        <Icon name="sparkles" size={32} className="text-purple-500" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-700 mt-4 mb-2 title-font">Welcome to 2026! ✨</h2>
+                    <p className="text-gray-600 handwriting text-lg mb-6">Your new spiritual & productivity companion is ready.</p>
+                    
+                    <div className="text-left space-y-3 mb-8 text-sm text-gray-600 bg-white/50 p-4 rounded-xl">
+                        <p className="flex items-center gap-2"><Icon name="sun" size={16} /> <strong>Vibe Check:</strong> Changing your mood changes the entire theme & music!</p>
+                        <p className="flex items-center gap-2"><Icon name="message-circle" size={16} /> <strong>Prayer Wall:</strong> Check prayers to move them to your 'Answered' jar.</p>
+                        <p className="flex items-center gap-2"><Icon name="smile" size={16} /> <strong>Mascot:</strong> Click the cat for encouragement!</p>
+                    </div>
+
+                    <button 
+                        onClick={onClose}
+                        className="w-full py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-xl"
+                    >
+                        Let's Begin
+                    </button>
+                    <p className="mt-4 text-xs text-gray-400">Designed with love by @faithreflects</p>
+                </div>
+            </div>
+        );
+    };
+
+    const AnimatedBackground = ({ type }) => {
+        const [elements, setElements] = useState([]);
+
+        useEffect(() => {
+            const clouds = [...Array(4)].map((_, i) => ({
+                id: `cloud-${i}`,
+                type: 'cloud',
+                width: Math.random() * 100 + 100,
+                height: Math.random() * 40 + 30,
+                top: Math.random() * 60,
+                duration: Math.random() * 20 + 20, 
+                delay: Math.random() * -20,
+            }));
+            
+            const particleCount = type === 'rain' ? 40 : 10;
+            const particles = [...Array(particleCount)].map((_, i) => ({
+                id: `particle-${i}`,
+                type: type, 
+                left: Math.random() * 100,
+                size: Math.random() * 10 + 5,
+                duration: Math.random() * (type === 'rain' ? 1 : 10) + (type === 'rain' ? 0.5 : 5),
+                delay: Math.random() * 5,
+            }));
+
+            setElements([...clouds, ...particles]);
+        }, [type]);
+
+        return (
+            <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+                {elements.map(el => {
+                    if (el.type === 'cloud') {
+                        return (
+                             <div
+                                key={el.id}
+                                className="cloud"
+                                style={{
+                                    width: `${el.width}px`,
+                                    height: `${el.height}px`,
+                                    top: `${el.top}%`,
+                                    animationDuration: `${el.duration}s`,
+                                    animationDelay: `${el.delay}s`,
+                                    opacity: type === 'rain' ? 0.3 : 0.6 
+                                }}
+                            />
+                        );
+                    } else {
+                        return (
+                            <div 
+                                key={el.id}
+                                className={type}
+                                style={{
+                                    left: `${el.left}%`,
+                                    width: `${el.size}px`,
+                                    height: `${el.size}px`,
+                                    animationDuration: `${el.duration}s`,
+                                    animationDelay: `${el.delay}s`,
+                                }}
+                            />
+                        );
+                    }
+                })}
+            </div>
+        );
+    };
+
+    const Clock = () => {
+        const [time, setTime] = useState(new Date());
+
+        useEffect(() => {
+            const timer = setInterval(() => setTime(new Date()), 1000);
+            return () => clearInterval(timer);
+        }, []);
+
+        return (
+            <div className="text-center p-4">
+                <div className="text-6xl font-bold title-font text-white drop-shadow-md tracking-wider transition-colors">
+                    {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </div>
+                <div className="text-white/90 text-lg font-medium tracking-widest uppercase mt-1">
+                    {time.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+                </div>
+            </div>
+        );
+    };
+
+    const Mascot = ({ mood }) => {
+        const [interaction, setInteraction] = useState({ active: false, message: "" });
+        const [bounce, setBounce] = useState(false);
+
+        const MESSAGES = {
+            happy: ["Joy of the Lord! ✨", "Shine bright!", "You glow girl!", "Praise Him!"],
+            content: ["Grace abounds.", "Blessed day.", "Steady steps.", "God is good!"],
+            meh: ["He is near.", "Peace in the storm.", "One step at a time.", "You are loved."],
+            tired: ["Come to Me & rest.", "Sabbath mode.", "Refill your cup.", "His strength."]
+        };
+
+        const handleInteract = () => {
+            if (bounce) return; 
+
+            setBounce(true);
+            const moodMsgs = MESSAGES[mood] || MESSAGES.content;
+            const randomMsg = moodMsgs[Math.floor(Math.random() * moodMsgs.length)];
+            setInteraction({ active: true, message: randomMsg });
+
+            setTimeout(() => {
+                setBounce(false);
+                setInteraction({ active: false, message: "" });
+            }, 3000);
+        };
+
+        return (
+             <div 
+                className={`absolute bottom-[-10px] right-[-10px] w-40 h-40 z-20 hidden md:block cursor-pointer hover:opacity-50 transition-opacity ${bounce ? 'mascot-jump opacity-100' : 'mascot-float opacity-90'}`}
+                onClick={handleInteract}
+                title="Click me for encouragement!"
+            >
+                {interaction.active && (
+                    <div className="absolute -top-16 right-8 bg-white/90 backdrop-blur px-4 py-3 rounded-2xl rounded-br-none shadow-xl border border-white/50 bubble-pop z-30 transform origin-bottom-right">
+                        <p className="text-xs font-bold text-gray-600 whitespace-nowrap handwriting text-lg leading-none">{interaction.message}</p>
+                    </div>
+                )}
+
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    {mood === 'meh' ? (
+                        <g>
+                             <path d="M50 90 Q30 120 70 100" fill="white" stroke="#a18cd1" strokeWidth="3" />
+                             <path d="M140 100 Q180 120 160 90" fill="white" stroke="#a18cd1" strokeWidth="3" />
+                        </g>
+                    ) : (
+                        <g>
+                             <path d="M50 70 Q40 40 70 55" fill="white" stroke="#a18cd1" strokeWidth="3" />
+                             <path d="M140 55 Q170 40 150 70" fill="white" stroke="#a18cd1" strokeWidth="3" />
+                        </g>
+                    )}
+
+                    <path d="M50 160 Q30 140 40 100 Q45 60 80 50 Q120 40 160 60 Q180 80 170 120 Q160 160 120 170 Q80 180 50 160 Z" fill="white" stroke="#a18cd1" strokeWidth="3" />
+                    
+                    {mood === 'meh' && (
+                        <g>
+                             <path d="M70 100 Q80 95 90 100" fill="none" stroke="#4a4a4a" strokeWidth="3" />
+                             <path d="M120 100 Q130 95 140 100" fill="none" stroke="#4a4a4a" strokeWidth="3" />
+                             <path d="M100 120 Q105 115 110 120" fill="none" stroke="#4a4a4a" strokeWidth="3" />
+                             <path d="M85 110 Q85 120 80 115" fill="#a5b4fc" />
+                        </g>
+                    )}
+                    
+                    {mood === 'content' && (
+                        <g>
+                             <circle cx="80" cy="100" r="6" fill="#4a4a4a" />
+                             <circle cx="130" cy="100" r="6" fill="#4a4a4a" />
+                             <path d="M100 110 Q105 115 110 110" fill="none" stroke="#4a4a4a" strokeWidth="3" />
+                             <ellipse cx="70" cy="115" rx="8" ry="4" fill="#ffb7b2" opacity="0.6" />
+                             <ellipse cx="140" cy="115" rx="8" ry="4" fill="#ffb7b2" opacity="0.6" />
+                        </g>
+                    )}
+
+                    {mood === 'happy' && (
+                        <g>
+                             <path d="M75 100 L80 90 L85 100 L95 105 L85 110 L80 120 L75 110 L65 105 Z" fill="#fbbf24" />
+                             <path d="M125 100 L130 90 L135 100 L145 105 L135 110 L130 120 L125 110 L115 105 Z" fill="#fbbf24" />
+                             <path d="M95 120 Q105 130 115 120" fill="none" stroke="#4a4a4a" strokeWidth="3" />
+                             <ellipse cx="70" cy="115" rx="8" ry="4" fill="#ffb7b2" opacity="0.6" />
+                             <ellipse cx="140" cy="115" rx="8" ry="4" fill="#ffb7b2" opacity="0.6" />
+                        </g>
+                    )}
+
+                    {mood === 'tired' && (
+                        <g>
+                             <circle cx="80" cy="100" r="6" fill="#4a4a4a" />
+                             <circle cx="130" cy="100" r="6" fill="#4a4a4a" />
+                             <path d="M100 110 Q105 115 110 110" fill="none" stroke="#4a4a4a" strokeWidth="3" />
+                             <rect x="120" y="130" width="30" height="25" rx="5" fill="#78350f" />
+                             <path d="M150 135 Q160 140 150 150" fill="none" stroke="#78350f" strokeWidth="3" />
+                        </g>
+                    )}
+                </svg>
+            </div>
+        );
+    };
+
+    const MusicWidget = ({ mood }) => {
+        const [playing, setPlaying] = useState(false);
+        const audioRef = useRef(null);
+
+        // Update audio source when mood changes
+        useEffect(() => {
+            if (audioRef.current) {
+                const newUrl = THEMES[mood]?.musicUrl || THEMES.content.musicUrl;
+                // Only change if different to prevent reloading same track
+                if (audioRef.current.src !== newUrl) {
+                    audioRef.current.src = newUrl;
+                    audioRef.current.load(); // Required to load the new source
+                    if (playing) {
+                        audioRef.current.play().catch(e => console.error("Audio play failed:", e));
+                    }
+                }
+            }
+        }, [mood]);
+
+        // Handle play/pause
+        const togglePlay = () => {
+            if (playing) {
+                audioRef.current.pause();
+            } else {
+                audioRef.current.play().catch(e => console.error("Audio play failed:", e));
+            }
+            setPlaying(!playing);
+        };
+
+        return (
+            <div className="bg-white/30 rounded-2xl p-4 border border-white/40 mt-6 relative overflow-hidden group">
+                <audio ref={audioRef} loop />
+                
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-400/20 to-pink-400/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="flex items-center gap-3 relative z-10">
+                    <div className={`w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-white ${playing ? 'album-rotate' : ''}`}>
+                        <Icon name="music" size={16} />
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                        <p className="text-xs font-bold whitespace-nowrap">Lo-Fi Faith Beats</p>
+                        <p className="text-[10px] opacity-70 capitalize">{mood} Vibes</p>
+                    </div>
+                    <button onClick={togglePlay} className="p-2 bg-white/50 rounded-full hover:bg-white/80 transition-colors">
+                        <Icon name={playing ? "pause" : "play"} size={14} />
+                    </button>
+                </div>
+            </div>
+        );
+    };
+
+    const FocusTimer = ({ accent }) => {
+        const [minutes, setMinutes] = useState(25);
+        const [seconds, setSeconds] = useState(0);
+        const [isActive, setIsActive] = useState(false);
+
+        useEffect(() => {
+            let interval = null;
+            if (isActive) {
+                interval = setInterval(() => {
+                    if (seconds === 0) {
+                        if (minutes === 0) {
+                            setIsActive(false);
+                        } else {
+                            setMinutes(minutes - 1);
+                            setSeconds(59);
+                        }
+                    } else {
+                        setSeconds(seconds - 1);
+                    }
+                }, 1000);
+            } else {
+                clearInterval(interval);
+            }
+            return () => clearInterval(interval);
+        }, [isActive, minutes, seconds]);
+
+        const toggleTimer = () => setIsActive(!isActive);
+        const resetTimer = () => {
+            setIsActive(false);
+            setMinutes(25);
+            setSeconds(0);
+        };
+
+        return (
+            <div className="bg-white/30 rounded-2xl p-4 border border-white/40 mt-6">
+                <div className="flex items-center gap-2 mb-2 opacity-80 font-bold text-sm">
+                     <Icon name="clock" size={16} /> <span>Focus Timer</span>
+                </div>
+                <div className="text-3xl font-bold text-center mb-2 font-mono tracking-wider">
+                    {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+                </div>
+                <div className="flex gap-2">
+                    <button onClick={toggleTimer} className={`flex-1 py-1.5 rounded-lg text-sm font-bold text-white transition-all ${isActive ? 'bg-red-400 hover:bg-red-500' : 'bg-green-400 hover:bg-green-500'}`}>
+                        {isActive ? 'Pause' : 'Start'}
+                    </button>
+                    <button onClick={resetTimer} className="px-3 py-1.5 rounded-lg bg-white/40 hover:bg-white/60 text-sm">
+                        Reset
+                    </button>
+                </div>
+            </div>
+        );
+    };
+
+    const PlannerApp = () => {
+        // --- State ---
+        const [tasks, setTasks] = useState(() => {
+            const saved = localStorage.getItem('animePlannerTasks');
+            return saved ? JSON.parse(saved) : [
+                { id: 1, text: "Pray & Quiet Time ✨", completed: false },
+                { id: 2, text: "Check Etsy Orders", completed: false }
+            ];
+        });
+        const [habits, setHabits] = useState(() => {
+             const saved = localStorage.getItem('animePlannerHabits');
+             return saved ? JSON.parse(saved) : [
+                 { id: 1, text: "Bible Reading", completed: false },
+                 { id: 2, text: "Drink Water", completed: false },
+                 { id: 3, text: "Walk 10 mins", completed: false }
+             ];
+        });
+        
+        const [prayers, setPrayers] = useState(() => {
+            const saved = localStorage.getItem('animePlannerPrayers');
+            return saved ? JSON.parse(saved) : [
+                { id: 1, text: "Guidance for new business", answered: false },
+                { id: 2, text: "Healing for Mom", answered: true }
+            ];
+        });
+
+        const [goals, setGoals] = useState(() => {
+            const saved = localStorage.getItem('animePlannerGoals');
+            return saved ? JSON.parse(saved) : { Faith: [], Business: [], Health: [], Personal: [] };
+        });
+
+        const [journalEntries, setJournalEntries] = useState(() => {
+            const saved = localStorage.getItem('animePlannerJournal');
+            return saved ? JSON.parse(saved) : [];
+        });
+
+        const [newTask, setNewTask] = useState("");
+        const [newHabit, setNewHabit] = useState("");
+        const [newPrayer, setNewPrayer] = useState("");
+        const [newEntryText, setNewEntryText] = useState(""); 
+        const [editingEntryId, setEditingEntryId] = useState(null);
+        
+        const [mood, setMood] = useState(() => localStorage.getItem('animePlannerMood') || "content");
+        const [activeTab, setActiveTab] = useState("daily"); 
+        
+        // Onboarding State
+        const [showOnboarding, setShowOnboarding] = useState(false);
+
+        // --- Effects ---
+        useEffect(() => { localStorage.setItem('animePlannerTasks', JSON.stringify(tasks)); }, [tasks]);
+        useEffect(() => { localStorage.setItem('animePlannerHabits', JSON.stringify(habits)); }, [habits]);
+        useEffect(() => { localStorage.setItem('animePlannerPrayers', JSON.stringify(prayers)); }, [prayers]);
+        useEffect(() => { localStorage.setItem('animePlannerGoals', JSON.stringify(goals)); }, [goals]);
+        useEffect(() => { localStorage.setItem('animePlannerJournal', JSON.stringify(journalEntries)); }, [journalEntries]);
+        useEffect(() => { localStorage.setItem('animePlannerMood', mood); }, [mood]);
+        
+        // Check for first visit
+        useEffect(() => {
+            const hasVisited = localStorage.getItem('animePlannerHasVisited');
+            if (!hasVisited) {
+                setShowOnboarding(true);
+            }
+        }, []);
+
+        const closeOnboarding = () => {
+            setShowOnboarding(false);
+            localStorage.setItem('animePlannerHasVisited', 'true');
+        };
+        
+        // --- Handlers ---
+        const theme = THEMES[mood] || THEMES.content;
+        
+        const [dailyVerse, setDailyVerse] = useState(VERSES.content[0]);
+        useEffect(() => {
+            const verses = VERSES[mood] || VERSES.content;
+            setDailyVerse(verses[Math.floor(Math.random() * verses.length)]);
+        }, [mood]);
+
+        // Tasks & Habits
+        const addTask = (e) => {
+            e.preventDefault();
+            if (!newTask.trim()) return;
+            setTasks([...tasks, { id: Date.now(), text: newTask, completed: false }]);
+            setNewTask("");
+        };
+
+        const addHabit = (e) => {
+            e.preventDefault();
+            if (!newHabit.trim()) return;
+            setHabits([...habits, { id: Date.now(), text: newHabit, completed: false }]);
+            setNewHabit("");
+        };
+
+        // Prayer Handlers
+        const addPrayer = (e) => {
+            e.preventDefault();
+            if (!newPrayer.trim()) return;
+            setPrayers([{ id: Date.now(), text: newPrayer, answered: false }, ...prayers]);
+            setNewPrayer("");
+        };
+
+        const togglePrayer = (id) => {
+            setPrayers(prayers.map(p => p.id === id ? { ...p, answered: !p.answered } : p));
+        };
+
+        const deletePrayer = (id) => {
+            setPrayers(prayers.filter(p => p.id !== id));
+        };
+
+        const toggleTask = (id) => { setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t)); };
+        const toggleHabit = (id) => { setHabits(habits.map(t => t.id === id ? { ...t, completed: !t.completed } : t)); };
+        const deleteTask = (id) => { setTasks(tasks.filter(t => t.id !== id)); };
+        const deleteHabit = (id) => { setHabits(habits.filter(t => t.id !== id)); };
+        const clearCompleted = () => { setTasks(tasks.filter(t => !t.completed)); };
+        
+        // Goals Handlers
+        const addGoal = (category, text) => {
+             const newGoal = { id: Date.now(), text: text };
+             setGoals(prev => ({
+                 ...prev,
+                 [category]: [...(prev[category] || []), newGoal]
+             }));
+        };
+
+        const removeGoal = (category, id) => {
+            setGoals(prev => ({
+                ...prev,
+                [category]: prev[category].filter(g => g.id !== id)
+            }));
+        };
+
+        // Journal Handlers
+        const saveJournalEntry = () => {
+            if (!newEntryText.trim()) return;
+            
+            if (editingEntryId) {
+                // Update existing entry
+                setJournalEntries(journalEntries.map(entry => 
+                    entry.id === editingEntryId 
+                        ? { ...entry, text: newEntryText } 
+                        : entry
+                ));
+                setEditingEntryId(null);
+            } else {
+                // Create new entry
+                const newEntry = {
+                    id: Date.now(),
+                    text: newEntryText,
+                    date: new Date().toLocaleString(),
+                    mood: mood
+                };
+                setJournalEntries([newEntry, ...journalEntries]);
+            }
+            setNewEntryText(""); // Clear editor
+        };
+
+        const deleteJournalEntry = (id) => {
+            setJournalEntries(journalEntries.filter(e => e.id !== id));
+            if (editingEntryId === id) {
+                cancelEdit();
+            }
+        };
+
+        const startEditing = (entry) => {
+            setNewEntryText(entry.text);
+            setEditingEntryId(entry.id);
+        };
+
+        const cancelEdit = () => {
+            setEditingEntryId(null);
+            setNewEntryText("");
+        };
+
+        const exportData = () => {
+            const data = { tasks, habits, goals, prayers, journalEntries, mood };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'faithreflects-planner-backup.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+
+        useEffect(() => {
+            document.body.style.background = theme.gradient;
+        }, [theme]);
+
+        // --- Render ---
+        return (
+            <div className={`relative min-h-screen p-4 md:p-8 flex flex-col items-center z-10 transition-colors duration-1000 ${theme.textColor || 'text-gray-700'}`}>
+                <AnimatedBackground type={theme.particle} />
+                
+                {/* Onboarding Modal */}
+                {showOnboarding && <WelcomeModal onClose={closeOnboarding} />}
+
+                {/* Navbar Buttons */}
+                <div className="fixed top-4 right-4 z-50 flex gap-2">
+                    <button onClick={() => setShowOnboarding(true)} className="bg-white/20 hover:bg-white/40 backdrop-blur p-2 rounded-full text-white transition-all" title="Help / Welcome">
+                        <Icon name="help-circle" size={20} />
+                    </button>
+                    <button onClick={exportData} className="bg-white/20 hover:bg-white/40 backdrop-blur p-2 rounded-full text-white transition-all" title="Save Backup">
+                        <Icon name="save" size={20} />
+                    </button>
+                </div>
+
+                <div className="w-full max-w-2xl mb-8 floating z-10">
+                    <Clock />
+                </div>
+
+                <div 
+                    className="w-full max-w-6xl glass-panel p-6 md:p-8 z-10 min-h-[60vh] flex flex-col md:flex-row gap-8 transition-all duration-1000"
+                    style={{ backgroundColor: theme.glass }}
+                >
+                    
+                    <Mascot mood={mood} />
+
+                    <div className="w-full md:w-1/4 flex md:flex-col flex-col gap-6">
+                        <div className="flex md:flex-col gap-2 overflow-x-auto md:overflow-visible pb-2 md:pb-0">
+                            {[
+                                { id: 'daily', icon: 'sun', label: 'Daily View' },
+                                { id: 'prayer', icon: 'message-circle', label: 'Prayer Wall' },
+                                { id: 'habits', icon: 'activity', label: 'Habits' },
+                                { id: 'goals', icon: 'target', label: 'Vision' },
+                                { id: 'notes', icon: 'book-heart', label: 'Journal' }
+                            ].map(tab => (
+                                <button 
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)} 
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold whitespace-nowrap ${activeTab === tab.id ? `bg-white/70 ${theme.accent} shadow-sm` : 'hover:bg-white/30 opacity-70'}`}
+                                >
+                                    <Icon name={tab.icon} size={20} /> {tab.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="bg-white/30 rounded-2xl p-4 border border-white/40">
+                            <h3 className="text-sm font-bold opacity-80 mb-3 title-font text-center">Vibe Check</h3>
+                            <div className="flex justify-between px-2">
+                                <button onClick={() => setMood('happy')} className={`p-2 rounded-full transition-all hover:scale-110 ${mood === 'happy' ? 'bg-white shadow-md text-orange-500' : 'opacity-50'}`} title="Sun/Excited"><Icon name="sun" size={20} /></button>
+                                <button onClick={() => setMood('content')} className={`p-2 rounded-full transition-all hover:scale-110 ${mood === 'content' ? 'bg-white shadow-md text-pink-500' : 'opacity-50'}`} title="Default"><Icon name="smile" size={20} /></button>
+                                <button onClick={() => setMood('meh')} className={`p-2 rounded-full transition-all hover:scale-110 ${mood === 'meh' ? 'bg-white shadow-md text-blue-500' : 'opacity-50'}`} title="Sad/Rain"><Icon name="meh" size={20} /></button>
+                                <button onClick={() => setMood('tired')} className={`p-2 rounded-full transition-all hover:scale-110 ${mood === 'tired' ? 'bg-white shadow-md text-amber-800' : 'opacity-50'}`} title="Cozy/Coffee"><Icon name="coffee" size={20} /></button>
+                            </div>
+                        </div>
+
+                        <MusicWidget mood={mood} />
+                        <FocusTimer accent={theme.bgAccent} />
+                    </div>
+
+                    <div className="flex-1 flex flex-col relative z-10">
+                        
+                        <div className="mb-6 bg-white/40 p-4 rounded-xl border border-white/50 flex items-start gap-4">
+                            <div className={`mt-1 ${theme.accent}`}><Icon name="sparkles" size={20} /></div>
+                            <div>
+                                <h4 className="font-bold text-sm opacity-80 uppercase tracking-wider mb-1">Word for You</h4>
+                                <p className="handwriting text-lg leading-tight">"{dailyVerse.text}"</p>
+                                <p className="text-xs font-bold opacity-60 mt-1">— {dailyVerse.ref}</p>
+                            </div>
+                        </div>
+
+                        {activeTab === 'daily' && (
+                            <div className="flex flex-col h-full animate-fade">
+                                <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 title-font">
+                                    <span className={theme.accent}>✨</span> Today's Focus
+                                </h2>
+                                
+                                <form onSubmit={addTask} className="relative mb-6">
+                                    <input 
+                                        type="text" 
+                                        value={newTask}
+                                        onChange={(e) => setNewTask(e.target.value)}
+                                        placeholder="Add a new task..." 
+                                        className="w-full pl-5 pr-12 py-3 rounded-2xl bg-white/50 border border-white focus:bg-white/80 transition-all placeholder-gray-400 text-gray-700"
+                                    />
+                                    <button type="submit" className={`absolute right-2 top-2 p-1.5 rounded-xl text-white transition-colors ${theme.bgAccent}`}>
+                                        <Icon name="plus" size={20} />
+                                    </button>
+                                </form>
+
+                                <div className="flex-1 overflow-y-auto max-h-[400px] pr-2 pb-32 custom-scrollbar">
+                                    {tasks.length === 0 ? (
+                                        <div className="text-center py-10 opacity-60">
+                                            <div className={`mx-auto w-12 h-12 mb-2 flex justify-center ${theme.accent}`}>
+                                                <Icon name="sparkles" size={48} />
+                                            </div>
+                                            <p className="handwriting text-xl">All caught up! Time to create.</p>
+                                        </div>
+                                    ) : (
+                                        tasks.map(task => (
+                                            <div key={task.id} className="flex items-center gap-3 p-3 bg-white/40 rounded-xl mb-2 task-enter hover:bg-white/60 transition-colors group">
+                                                <button 
+                                                    onClick={() => toggleTask(task.id)}
+                                                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${task.completed ? `${theme.bgAccent} border-transparent` : 'border-white/50 bg-white/30'}`}
+                                                >
+                                                    {task.completed && <Icon name="check" size={12} className="text-white" />}
+                                                </button>
+                                                <span className={`flex-1 ${task.completed ? 'line-through opacity-50' : ''}`}>
+                                                    {task.text}
+                                                </span>
+                                                <button 
+                                                    onClick={() => deleteTask(task.id)}
+                                                    className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-opacity"
+                                                >
+                                                    <Icon name="trash-2" size={16} />
+                                                </button>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+
+                                {tasks.some(t => t.completed) && (
+                                    <button onClick={clearCompleted} className={`mt-4 text-xs opacity-60 hover:opacity-100 self-end transition-colors`}>
+                                        Clear completed
+                                    </button>
+                                )}
+                            </div>
+                        )}
+
+                        {activeTab === 'prayer' && (
+                            <div className="flex flex-col h-full animate-fade">
+                                <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 title-font">
+                                    <span className={theme.accent}>🙏</span> Prayer Wall
+                                </h2>
+                                
+                                <form onSubmit={addPrayer} className="relative mb-6">
+                                    <input 
+                                        type="text" 
+                                        value={newPrayer}
+                                        onChange={(e) => setNewPrayer(e.target.value)}
+                                        placeholder="Add a prayer request..." 
+                                        className="w-full pl-5 pr-12 py-3 rounded-2xl bg-white/50 border border-white focus:bg-white/80 transition-all placeholder-gray-400 text-gray-700"
+                                    />
+                                    <button type="submit" className={`absolute right-2 top-2 p-1.5 rounded-xl text-white transition-colors ${theme.bgAccent}`}>
+                                        <Icon name="plus" size={20} />
+                                    </button>
+                                </form>
+
+                                <div className="flex-1 overflow-y-auto max-h-[400px] pr-2 pb-32 custom-scrollbar grid grid-cols-1 md:grid-cols-2 gap-4 content-start">
+                                    {/* Active Prayers */}
+                                    <div className="flex flex-col gap-2">
+                                        <h3 className="font-bold opacity-60 text-xs uppercase tracking-wider mb-2">Asking</h3>
+                                        {prayers.filter(p => !p.answered).map(p => (
+                                            <div key={p.id} className="bg-white/40 p-4 rounded-xl border-l-4 border-yellow-400 hover:bg-white/60 transition-all group relative">
+                                                <p className="handwriting text-lg">{p.text}</p>
+                                                <div className="flex justify-end gap-2 mt-2 opacity-50 group-hover:opacity-100 transition-opacity">
+                                                    <button onClick={() => deletePrayer(p.id)} className="text-red-400 text-xs hover:text-red-600">Delete</button>
+                                                    <button onClick={() => togglePrayer(p.id)} className="text-green-500 text-xs font-bold hover:text-green-700">Mark Answered</button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {prayers.filter(p => !p.answered).length === 0 && <p className="text-sm opacity-40 italic">No active requests.</p>}
+                                    </div>
+
+                                    {/* Answered Prayers */}
+                                    <div className="flex flex-col gap-2">
+                                        <h3 className="font-bold opacity-60 text-xs uppercase tracking-wider mb-2 text-green-600">Answered</h3>
+                                        {prayers.filter(p => p.answered).map(p => (
+                                            <div key={p.id} className="bg-green-50/50 p-4 rounded-xl border-l-4 border-green-400 hover:bg-green-100/50 transition-all group">
+                                                <div className="flex items-start gap-2">
+                                                    <Icon name="sparkles" size={16} className="text-green-500 mt-1 shrink-0" />
+                                                    <p className="handwriting text-lg text-gray-600 line-through decoration-green-400/50">{p.text}</p>
+                                                </div>
+                                                <div className="flex justify-end gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button onClick={() => deletePrayer(p.id)} className="text-red-400 text-xs hover:text-red-600">Delete</button>
+                                                    <button onClick={() => togglePrayer(p.id)} className="text-gray-400 text-xs hover:text-gray-600">Undo</button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'habits' && (
+                            <div className="flex flex-col h-full animate-fade">
+                                <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 title-font">
+                                    <span className={theme.accent}>🌿</span> Daily Habits
+                                </h2>
+                                
+                                <form onSubmit={addHabit} className="relative mb-6">
+                                    <input 
+                                        type="text" 
+                                        value={newHabit}
+                                        onChange={(e) => setNewHabit(e.target.value)}
+                                        placeholder="Add a new habit..." 
+                                        className="w-full pl-5 pr-12 py-3 rounded-2xl bg-white/50 border border-white focus:bg-white/80 transition-all placeholder-gray-400 text-gray-700"
+                                    />
+                                    <button type="submit" className={`absolute right-2 top-2 p-1.5 rounded-xl text-white transition-colors ${theme.bgAccent}`}>
+                                        <Icon name="plus" size={20} />
+                                    </button>
+                                </form>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 overflow-y-auto max-h-[400px] pr-2 pb-32 custom-scrollbar">
+                                    {habits.map(habit => (
+                                        <div key={habit.id} onClick={() => toggleHabit(habit.id)} className={`cursor-pointer flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${habit.completed ? 'bg-white/60 border-white/50' : 'bg-white/20 border-transparent hover:bg-white/30'}`}>
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${habit.completed ? `${theme.bgAccent} text-white` : 'bg-white/40 opacity-50'}`}>
+                                                <Icon name={habit.completed ? "zap" : "circle"} size={16} />
+                                            </div>
+                                            <span className={`font-bold ${habit.completed ? '' : 'opacity-80'}`}>{habit.text}</span>
+                                            <button onClick={(e) => { e.stopPropagation(); deleteHabit(habit.id); }} className="ml-auto opacity-40 hover:text-red-400 hover:opacity-100"><Icon name="trash-2" size={14} /></button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'notes' && (
+                            <div className="h-full flex flex-col animate-fade">
+                                <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 title-font">
+                                    <span className={theme.accent}>🌸</span> Digital Diary
+                                </h2>
+                                
+                                {/* New Entry Editor */}
+                                <div className="flex-1 flex flex-col mb-6 bg-white/30 rounded-2xl p-4 border border-white/50">
+                                    <textarea
+                                        value={newEntryText}
+                                        onChange={(e) => setNewEntryText(e.target.value)}
+                                        placeholder="Write your prayers, thoughts, or quick reminders here..."
+                                        className="w-full flex-1 resize-none bg-transparent border-none focus:outline-none handwriting text-lg leading-relaxed text-gray-700 placeholder-gray-500/50 mb-2"
+                                        style={{ backgroundImage: 'linear-gradient(transparent 95%, rgba(255,255,255,0.3) 95%)', backgroundSize: '100% 2rem', lineHeight: '2rem', minHeight: '150px' }}
+                                    ></textarea>
+                                    <div className="flex justify-end gap-2">
+                                        {editingEntryId && (
+                                            <button 
+                                                onClick={cancelEdit}
+                                                className="px-4 py-2 rounded-xl text-gray-600 font-bold text-sm bg-white/40 hover:bg-white/60 transition-all"
+                                            >
+                                                Cancel
+                                            </button>
+                                        )}
+                                        <button 
+                                            onClick={saveJournalEntry}
+                                            className={`px-6 py-2 rounded-xl text-white font-bold text-sm flex items-center gap-2 transition-all ${newEntryText.trim() ? `${theme.bgAccent} hover:scale-105` : 'bg-gray-400 opacity-50 cursor-not-allowed'}`}
+                                            disabled={!newEntryText.trim()}
+                                        >
+                                            <Icon name="save" size={16} /> {editingEntryId ? "Update Entry" : "Save Entry"}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Entries List */}
+                                <div className="flex-1 overflow-y-auto max-h-[300px] pr-2 pb-32 custom-scrollbar space-y-3">
+                                    {journalEntries.length === 0 ? (
+                                        <p className="text-center opacity-50 text-sm mt-4">No entries yet. Start writing above!</p>
+                                    ) : (
+                                        journalEntries.map(entry => (
+                                            <div key={entry.id} className="bg-white/40 p-4 rounded-xl border border-white/50 hover:bg-white/60 transition-colors group">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs font-bold opacity-50 uppercase tracking-wider">{entry.date}</span>
+                                                        {/* Small mood dot */}
+                                                        <div className={`w-2 h-2 rounded-full ${entry.mood === 'happy' ? 'bg-orange-400' : entry.mood === 'meh' ? 'bg-blue-400' : entry.mood === 'tired' ? 'bg-amber-700' : 'bg-pink-400'}`}></div>
+                                                    </div>
+                                                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button onClick={() => startEditing(entry)} className="text-gray-500 hover:text-blue-500 transition-colors">
+                                                            <Icon name="edit-2" size={14} />
+                                                        </button>
+                                                        <button onClick={() => deleteJournalEntry(entry.id)} className="text-red-400 hover:text-red-600 transition-colors">
+                                                            <Icon name="trash-2" size={14} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <p className="handwriting text-gray-700 whitespace-pre-wrap">{entry.text}</p>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'goals' && (
+                            <div className="h-full flex flex-col animate-fade">
+                                <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 title-font">
+                                    <span className={theme.accent}>🚀</span> 2026 Vision
+                                </h2>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-y-auto max-h-[500px] pr-2 pb-32 custom-scrollbar">
+                                    {["Faith", "Business", "Health", "Personal"].map((cat) => (
+                                        <div key={cat} className="bg-white/40 p-4 rounded-2xl border border-white/50 flex flex-col h-64">
+                                            <div className="flex justify-between items-center mb-3">
+                                                <h3 className="font-bold opacity-80">{cat}</h3>
+                                                <Icon name="sparkles" size={14} className={theme.accent} />
+                                            </div>
+                                            
+                                            {/* Cards List */}
+                                            <div className="flex-1 overflow-y-auto custom-scrollbar mb-3 space-y-2">
+                                                {(goals[cat] || []).length === 0 && (
+                                                    <p className="text-xs opacity-40 italic text-center mt-4">Add a goal...</p>
+                                                )}
+                                                {(goals[cat] || []).map(goal => (
+                                                    <div key={goal.id} className="bg-white/60 p-2 rounded-lg text-sm flex justify-between items-start group shadow-sm">
+                                                        <span className="handwriting font-bold leading-tight">{goal.text}</span>
+                                                        <button 
+                                                            onClick={() => removeGoal(cat, goal.id)}
+                                                            className="text-red-400 opacity-0 group-hover:opacity-100 hover:text-red-600 ml-2"
+                                                        >
+                                                            <Icon name="trash-2" size={12} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {/* Input Area */}
+                                            <input 
+                                                type="text" 
+                                                placeholder="Type & Press Enter..." 
+                                                className="w-full bg-white/50 rounded-lg px-3 py-2 text-sm focus:bg-white/80 transition-colors"
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' && e.target.value.trim()) {
+                                                        addGoal(cat, e.target.value.trim());
+                                                        e.target.value = '';
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="mt-4 text-center text-sm opacity-60">
+                                    "Commit to the Lord whatever you do, and he will establish your plans."
+                                </div>
+                            </div>
+                        )}
+
+                    </div>
+                </div>
+
+                <div className="mt-8 text-white/60 text-sm font-light z-10">
+                    Designed by @faithreflects • Auto-saves to device
+                </div>
+            </div>
+        );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<PlannerApp />);
+
+</script>
+
+</body>
+</html>
