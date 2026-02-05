@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FaithReflects RPG Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;800&family=Cinzel:wght@400;700;900&family=Rajdhani:wght@500;600;700&family=Rye&family=Courier+Prime:wght@400;700&family=Exo+2:ital,wght@0,400;0,700;0,900;1,700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['var(--font-body)', 'sans-serif'],
+                        display: ['var(--font-display)', 'sans-serif'],
+                    },
+                    colors: {
+                        rpg: {
+                            bg: 'var(--bg-color)',
+                            card: 'var(--card-bg)',
+                            accent: 'var(--accent)',
+                            text: 'var(--text-main)',
+                            muted: 'var(--text-muted)',
+                            border: 'var(--border-color)'
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'bg-pan': 'bgPan 30s linear infinite',
+                        'limit-break': 'limitBreak 2s infinite',
+                        'float-up-fade': 'floatUpFade 1s ease-out forwards',
+                        'rain': 'rain 1s linear infinite',
+                        'shimmer': 'shimmer 2s linear infinite',
+                        'boss-rage': 'bossRage 0.2s infinite',
+                    },
+                    keyframes: {
+                        float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-10px)' } },
+                        limitBreak: { '0%': { boxShadow: '0 0 0 0 var(--accent)' }, '70%': { boxShadow: '0 0 20px 10px transparent' }, '100%': { boxShadow: '0 0 0 0 transparent' } },
+                        floatUpFade: { '0%': { transform: 'translateY(0) scale(1)', opacity: '1' }, '100%': { transform: 'translateY(-40px) scale(1.5)', opacity: '0' } },
+                        rain: { '0%': { transform: 'translateY(-100%)' }, '100%': { transform: 'translateY(100%)' } },
+                        shimmer: { '0%': { transform: 'translateX(-100%)' }, '100%': { transform: 'translateX(100%)' } },
+                        bossRage: { '0%': { transform: 'translate(1px, 1px) rotate(0deg)' }, '50%': { transform: 'translate(-1px, -1px) rotate(-1deg)' }, '100%': { transform: 'translate(-1px, 1px) rotate(1deg)' } }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root { --radius: 1.5rem; --font-display: 'Outfit'; --font-body: 'Outfit'; --card-glass: blur(12px); }
+
+        /* --- THEMES --- */
+        .theme-cyber {
+            --bg-color: #fdf4ff; --card-bg: rgba(255, 255, 255, 0.6); --accent: #d946ef; --text-main: #4a044e; --text-muted: #86198f;
+            --border-color: rgba(217, 70, 239, 0.4); --font-display: 'Rajdhani'; --font-body: 'Outfit'; --radius: 1.5rem; 
+            --bg-image: linear-gradient(135deg, #f0abfc 0%, #a78bfa 50%, #4ade80 100%);
+        }
+        .theme-rdr {
+            --bg-color: #e6dccf; --card-bg: rgba(245, 240, 230, 0.9); --accent: #8b4513; --text-main: #3e2723; --text-muted: #795548;
+            --border-color: #d7ccc8; --font-display: 'Rye'; --font-body: 'Courier Prime'; --radius: 0.5rem;
+            --bg-image: url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E"), linear-gradient(to bottom, #f5f5dc, #e6dccf);
+        }
+        .theme-fc {
+            --bg-color: #d1fae5; --card-bg: rgba(255, 255, 255, 0.85); --accent: #10b981; --text-main: #064e3b; --text-muted: #34d399;
+            --border-color: #ffffff; --font-display: 'Exo 2'; --font-body: 'Outfit'; --radius: 1.5rem;
+            --bg-image: linear-gradient(to bottom right, #6ee7b7, #d1fae5);
+        }
+        .theme-gate {
+            --bg-color: #f3e8ff; --card-bg: rgba(255, 255, 255, 0.6); --accent: #a855f7; --text-main: #4c1d95; --text-muted: #868e96;
+            --border-color: rgba(255, 255, 255, 0.8); --font-display: 'Outfit'; --font-body: 'Outfit'; --radius: 1.5rem;
+            --bg-image: linear-gradient(135deg, #fbcfe8 0%, #d8b4fe 100%);
+        }
+        
+        body.is-night .glass-panel { background: rgba(0, 0, 0, 0.7); border-color: rgba(255,255,255,0.1); }
+        body.is-night { color: white; --text-main: white; --text-muted: #cbd5e1; }
+        body.is-night.theme-gate { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); }
+
+        /* --- NIGHT MODE INPUT VISIBILITY --- */
+        body.is-night input[type="text"], 
+        body.is-night input[type="number"], 
+        body.is-night select, 
+        body.is-night textarea {
+            background-color: rgba(0, 0, 0, 0.5) !important;
+            color: white !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+        body.is-night input::placeholder {
+            color: rgba(255, 255, 255, 0.4) !important;
+        }
+        body.is-night option {
+            background-color: #1e293b;
+            color: white;
+        }
+
+        body {
+            background: var(--bg-image); background-size: cover; background-attachment: fixed;
+            color: var(--text-main); font-family: var(--font-body); transition: all 1s ease; cursor: default;
+        }
+
+        .glass-panel {
+            background: var(--card-bg); backdrop-filter: var(--card-glass); -webkit-backdrop-filter: var(--card-glass);
+            border: 1px solid var(--border-color); border-radius: var(--radius);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.05); transition: transform 0.1s ease-out, box-shadow 0.2s;
+            transform-style: preserve-3d; perspective: 1000px;
+        }
+        .glass-panel:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(0,0,0,0.1); }
+        
+        .glass-panel::after {
+            content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: var(--radius);
+            background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(255,255,255,0.4) 0%, transparent 50%);
+            opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 10;
+        }
+        .glass-panel:hover::after { opacity: 1; }
+
+        .limit-break-active { animation: limit-break 2s infinite; border: 2px solid var(--accent); }
+        .damage-text { position: fixed; pointer-events: none; font-weight: 900; font-size: 1.5rem; z-index: 100; animation: float-up-fade 0.8s ease-out forwards; text-shadow: 0 2px 0 rgba(0,0,0,0.5); }
+        .weather-particle { position: absolute; pointer-events: none; }
+        
+        /* Auras and Visuals */
+        .aura-level-5 { box-shadow: 0 0 0 2px var(--accent); }
+        .aura-level-10 { box-shadow: 0 0 0 4px var(--accent), 0 0 20px var(--accent); }
+        .aura-level-20 { box-shadow: 0 0 0 4px var(--accent), 0 0 40px var(--accent); animation: limit-break 3s infinite; }
+        .boss-enraged { animation: boss-rage 0.2s infinite; filter: saturate(2) hue-rotate(-20deg); }
+
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--text-muted); opacity: 0.2; border-radius: 10px; }
+
+        .rpg-checkbox { appearance: none; width: 1.5em; height: 1.5em; border: 2px solid var(--text-muted); border-radius: 0.4em; cursor: pointer; display: grid; place-content: center; transition: 0.2s; }
+        .rpg-checkbox:checked { background: var(--accent); border-color: var(--accent); }
+        .rpg-checkbox::before { content: "\f00c"; font-family: "Font Awesome 6 Free"; font-weight: 900; color: white; font-size: 0.8em; transform: scale(0); transition: 0.2s; }
+        .rpg-checkbox:checked::before { transform: scale(1); }
+
+        .pet-container { position: absolute; bottom: 20px; right: 20px; font-size: 4.5rem; cursor: pointer; z-index: 30; filter: drop-shadow(0 8px 8px rgba(0,0,0,0.15)); transition: transform 0.2s; }
+        .pet-container:hover { transform: scale(1.1) rotate(5deg); }
+        .pet-zzz { position: absolute; top: -10px; right: 0; font-size: 1.5rem; opacity: 0; animation: float 2s infinite; color: var(--accent); }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 flex flex-col gap-6 theme-gate" id="app-body">
+
+    <!-- Fixed Layer Name -->
+    <div id="weather-layer" class="fixed inset-0 pointer-events-none z-0 overflow-hidden"></div>
+
+    <!-- Header -->
+    <header class="glass-panel p-6 flex flex-col xl:flex-row justify-between items-center gap-8 z-10 relative overflow-hidden">
+        <!-- Profile -->
+        <div class="flex items-center gap-6 w-full md:w-auto">
+            <div class="relative group cursor-pointer" onclick="randomizeAvatar()" title="Click to generate new look">
+                <div id="player-avatar-container" class="w-20 h-20 rounded-full p-1 border-2 border-[var(--accent)] shadow-xl overflow-hidden bg-white hover:scale-105 transition-transform relative z-10">
+                    <img id="avatar-img" src="" class="w-full h-full object-cover rounded-full">
+                </div>
+                <div class="absolute -top-1 -right-1 bg-white text-[var(--accent)] rounded-full p-1 shadow-md z-20">
+                    <i class="fa-solid fa-arrows-rotate text-xs animate-spin-slow"></i>
+                </div>
+                <div class="absolute -bottom-2 -right-2 bg-[var(--accent)] text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg border-2 border-white font-display z-20">
+                    LVL <span id="level-display">1</span>
+                </div>
+            </div>
+            <div class="flex-1">
+                <h1 class="text-3xl md:text-4xl font-display font-bold tracking-tight outline-none text-[var(--text-main)]" id="player-name" contenteditable="true" onblur="saveName()">Player One</h1>
+                <div class="flex items-center gap-4 mt-2">
+                    <div id="streak-container" class="flex items-center gap-2 text-orange-500 font-bold text-sm bg-orange-100 px-3 py-1 rounded-lg transition-all duration-500">
+                        <i class="fa-solid fa-fire animate-pulse"></i> <span id="streak-display">1 Day Streak</span>
+                    </div>
+                    <button onclick="openCharSheet()" class="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors flex items-center gap-1">
+                        View Stats <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- HUD -->
+        <div class="flex flex-col gap-4 w-full md:max-w-lg">
+            <!-- XP -->
+            <div class="relative group">
+                <div class="flex justify-between text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1.5">
+                    <span>Progression</span> <span id="xp-text">0 / 100</span>
+                </div>
+                <div class="w-full h-4 bg-black/5 rounded-full overflow-hidden border border-[var(--border-color)]">
+                    <div id="xp-bar" class="h-full bg-[var(--accent)] w-0 transition-all duration-1000 relative shadow-inner">
+                        <div class="absolute inset-0 bg-white/30 animate-shine w-full h-full"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Bars -->
+            <div class="grid grid-cols-2 gap-6">
+                <div>
+                    <div class="flex justify-between text-xs font-bold text-[var(--text-muted)] mb-1.5"><span>Health</span> <span id="hp-text">50/50</span></div>
+                    <div class="w-full h-2 bg-black/5 rounded-full overflow-hidden"><div id="hp-bar" class="h-full bg-red-500 transition-all w-full"></div></div>
+                </div>
+                <div class="cursor-pointer group" onclick="openFocusModal()">
+                    <div class="flex justify-between text-xs font-bold text-[var(--text-muted)] mb-1.5 group-hover:text-blue-500 transition-colors"><span>Focus</span> <span id="mana-text">20/20</span></div>
+                    <div class="w-full h-2 bg-black/5 rounded-full overflow-hidden"><div id="mana-bar" class="h-full bg-blue-500 transition-all w-full"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Master Controls -->
+        <div class="flex flex-wrap items-center gap-3 justify-center xl:justify-end">
+            <!-- Theme Buttons -->
+            <div class="glass-panel p-2 flex gap-2 rounded-2xl bg-white/50">
+                <button onclick="setTheme('theme-cyber')" class="w-10 h-10 rounded-xl hover:bg-pink-500 hover:text-white transition-all text-pink-500 shadow-sm border border-transparent hover:border-pink-300"><i class="fa-solid fa-bolt"></i></button>
+                <button onclick="setTheme('theme-rdr')" class="w-10 h-10 rounded-xl hover:bg-[#8b4513] hover:text-white transition-all text-[#8b4513] shadow-sm border border-transparent hover:border-[#8b4513]"><i class="fa-solid fa-hat-cowboy"></i></button>
+                <button onclick="setTheme('theme-fc')" class="w-10 h-10 rounded-xl hover:bg-[#10b981] hover:text-white transition-all text-[#10b981] shadow-sm border border-transparent hover:border-[#10b981]"><i class="fa-regular fa-futbol"></i></button>
+                <button onclick="setTheme('theme-gate')" class="w-10 h-10 rounded-xl hover:bg-[#a855f7] hover:text-white transition-all text-[#a855f7] shadow-sm border border-transparent hover:border-[#a855f7]"><i class="fa-solid fa-church"></i></button>
+            </div>
+            
+            <!-- Features: Manna, Inventory, Map, Settings -->
+            <div class="glass-panel p-2 flex gap-2 rounded-2xl bg-white/50">
+                 <button onclick="openMannaModal()" id="manna-btn" class="w-10 h-10 rounded-xl hover:bg-yellow-500 hover:text-white text-yellow-500 transition-all shadow-sm animate-bounce relative" title="Daily Manna">
+                    <i class="fa-solid fa-gift"></i>
+                    <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-white" id="manna-badge"></span>
+                </button>
+                <button onclick="openInventoryModal()" class="w-10 h-10 rounded-xl hover:bg-[var(--accent)] hover:text-white text-[var(--text-muted)] transition-all shadow-sm" title="Inventory"><i class="fa-solid fa-suitcase"></i></button>
+                <button onclick="openMapModal()" class="w-10 h-10 rounded-xl hover:bg-[var(--accent)] hover:text-white text-[var(--text-muted)] transition-all shadow-sm" title="Journey Map"><i class="fa-solid fa-map"></i></button>
+                <button onclick="openSettingsModal()" class="w-10 h-10 rounded-xl hover:bg-[var(--accent)] hover:text-white text-[var(--text-muted)] transition-all shadow-sm" title="Settings / Save"><i class="fa-solid fa-gear"></i></button>
+            </div>
+
+            <!-- Gold -->
+            <div class="glass-panel px-4 py-2 flex items-center gap-3 rounded-2xl border-l-4 border-[var(--accent)] min-w-[100px] justify-center bg-white/80">
+                <i class="fa-solid fa-coins text-yellow-500 text-lg"></i>
+                <span id="gold-display" class="text-xl font-display font-bold text-[var(--text-main)]">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full z-10">
+        <!-- Left: Boss & Quests -->
+        <div class="lg:col-span-8 flex flex-col gap-8">
+            <!-- Boss Arena -->
+            <section id="boss-arena" class="glass-panel p-8 relative hidden overflow-hidden group">
+                <div class="absolute inset-0 bg-gradient-to-r from-red-500/10 to-transparent z-0"></div>
+                <div class="relative z-10 flex flex-col md:flex-row items-center gap-8">
+                    <div class="relative cursor-pointer active:scale-95 transition-transform" onclick="damageBoss(10, event)">
+                        <div id="boss-avatar-container" class="w-32 h-32 bg-white/40 backdrop-blur-xl rounded-2xl border-4 border-red-500 shadow-xl flex items-center justify-center text-6xl transition-all">👹</div>
+                        <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[10px] font-bold px-4 py-1 rounded-full shadow-lg uppercase tracking-widest">Target</div>
+                    </div>
+                    <div class="flex-1 w-full">
+                        <div class="flex justify-between items-end mb-3">
+                            <div>
+                                <div class="text-[10px] font-bold text-red-500 uppercase tracking-widest">Active Encounter</div>
+                                <h2 id="boss-name" class="text-3xl font-display font-bold text-[var(--text-main)]">Project Deadline</h2>
+                            </div>
+                            <span id="boss-hp-text" class="font-mono text-3xl font-bold text-red-500">500</span>
+                        </div>
+                        <div class="w-full h-8 bg-black/5 rounded-lg overflow-hidden border border-black/5">
+                            <div id="boss-hp-bar" class="h-full bg-gradient-to-r from-red-500 to-red-400 w-full transition-all duration-300"></div>
+                        </div>
+                    </div>
+                    <button onclick="defeatBoss(false)" class="text-xs font-bold text-[var(--text-muted)] hover:text-red-500 uppercase tracking-widest">Give Up</button>
+                </div>
+            </section>
+
+            <!-- Boss Spawner -->
+            <section id="boss-spawner" class="glass-panel p-12 flex flex-col items-center justify-center text-center border-2 border-dashed border-[var(--border-color)] hover:border-[var(--accent)] transition-all group cursor-pointer bg-white/40 hover:bg-white/60 hover:scale-[1.01]" onclick="openBossModal()">
+                <div class="w-24 h-24 rounded-3xl bg-[var(--accent)]/10 text-[var(--accent)] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-sm">
+                    <span class="text-5xl" id="spawner-icon">👹</span>
+                </div>
+                <h3 class="text-3xl font-display font-bold text-[var(--text-main)]">Summon Boss</h3>
+                <p class="text-sm text-[var(--text-muted)] mt-2 max-w-xs mx-auto font-medium">Gamify your biggest real-life project.</p>
+            </section>
+
+            <!-- Quests -->
+            <section class="glass-panel p-8 flex-1 flex flex-col min-h-[500px] relative">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-2xl font-display font-bold flex items-center gap-3 text-[var(--text-main)]">
+                        <span class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center text-lg"><i class="fa-solid fa-scroll"></i></span>
+                        Quest Log
+                    </h2>
+                    <button onclick="openQuestModal()" class="bg-[var(--accent)] text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg hover:brightness-110 transition-all active:translate-y-1 hover:shadow-xl">
+                        <i class="fa-solid fa-plus mr-2"></i>New Quest
+                    </button>
+                </div>
+                <div id="quest-list" class="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar relative pb-32"></div>
+                <div id="pet-container" class="pet-container animate-float" onclick="petInteraction()" onmouseenter="wakePet()">
+                    <div class="pet-zzz absolute -top-4 right-0 text-xl font-bold opacity-0 transition-opacity text-[var(--accent)]">zZz</div>
+                    <div id="pet-sprite" class="drop-shadow-xl transform transition-transform hover:scale-110">🦊</div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Right: Habits & Shop -->
+        <aside class="lg:col-span-4 flex flex-col gap-8">
+            <!-- Habits -->
+            <div class="glass-panel p-8">
+                <h2 class="text-xl font-display font-bold mb-2 flex items-center gap-3 text-[var(--text-main)]">
+                    <span class="w-10 h-10 rounded-xl bg-green-500/10 text-green-500 flex items-center justify-center text-lg"><i class="fa-solid fa-leaf"></i></span>
+                    Daily Stewardship
+                </h2>
+                <!-- Garden Growth Bar -->
+                <div class="mb-4 h-2 w-full bg-black/5 rounded-full overflow-hidden border border-black/5" title="Daily Completion">
+                    <div id="garden-growth" class="h-full bg-green-500 w-0 transition-all duration-1000"></div>
+                </div>
+                <div id="habit-list" class="space-y-3"></div>
+                <div class="mt-6 pt-6 border-t border-[var(--border-color)] flex gap-3">
+                    <select id="new-habit-attr" class="bg-white/50 border border-[var(--border-color)] rounded-xl text-xs font-bold p-3 outline-none cursor-pointer text-[var(--text-muted)] focus:border-[var(--accent)] transition-colors">
+                        <option value="str">STR</option>
+                        <option value="int">INT</option>
+                        <option value="dex">DEX</option>
+                        <option value="cha">CHA</option>
+                        <option value="wis">WIS</option>
+                        <option value="fth">FTH</option>
+                    </select>
+                    <input type="text" id="new-habit-input" placeholder="Add new habit..." class="w-full bg-white/50 border border-transparent rounded-xl px-4 py-3 text-sm font-medium outline-none text-[var(--text-main)] placeholder:text-[var(--text-muted)]/50 focus:bg-white transition-colors" onkeypress="handleHabitInput(event)">
+                </div>
+            </div>
+
+            <!-- Shop -->
+            <div class="glass-panel p-8 flex-1">
+                <h2 class="text-xl font-display font-bold mb-6 flex items-center gap-3 text-[var(--text-main)]">
+                    <span class="w-10 h-10 rounded-xl bg-yellow-500/10 text-yellow-600 flex items-center justify-center text-lg"><i class="fa-solid fa-store"></i></span>
+                    Merchant
+                </h2>
+                <div id="shop-list" class="space-y-4"></div>
+                <input type="text" id="new-reward-input" placeholder="+ Add reward (50 Gold)..." class="w-full mt-8 bg-white/50 rounded-xl px-5 py-4 text-sm font-medium outline-none border border-transparent focus:border-[var(--accent)] text-[var(--text-main)] transition-all" onkeypress="handleRewardInput(event)">
+            </div>
+        </aside>
+    </main>
+    
+    <footer class="text-center py-8 text-[var(--text-muted)] text-sm font-bold relative z-10 opacity-70 hover:opacity-100 transition-opacity tracking-widest font-display">
+        <a href="https://instagram.com/faithreflects" target="_blank" class="hover:text-[var(--accent)] transition-colors">@faithreflects</a>
+    </footer>
+
+    <!-- MODALS -->
+    
+    <!-- Manna Modal (Fixed Colors) -->
+    <div id="manna-modal" class="fixed inset-0 bg-black/80 z-[80] hidden flex items-center justify-center p-4 backdrop-blur-xl">
+        <div class="glass-panel w-full max-w-lg p-12 text-center bg-[var(--card-bg)] border border-yellow-400 shadow-[0_0_50px_rgba(250,204,21,0.5)]">
+             <i class="fa-solid fa-gift text-6xl text-yellow-400 mb-6 animate-bounce"></i>
+             <h2 class="text-3xl font-display font-bold mb-2 text-[var(--text-main)]">Daily Manna</h2>
+             <p class="text-[var(--text-muted)] mb-8">You found 50 Gold & 100 XP!</p>
+             <div class="bg-[var(--bg-color)] p-6 rounded-xl border border-[var(--border-color)] mb-8">
+                 <p class="font-serif italic text-lg text-[var(--text-main)]" id="daily-verse">"The Lord is my shepherd; I shall not want."</p>
+                 <p class="text-xs font-bold text-[var(--text-muted)] mt-2 uppercase tracking-widest" id="daily-verse-ref">Psalm 23:1</p>
+             </div>
+             <button onclick="claimManna()" class="w-full py-4 bg-yellow-500 text-white rounded-xl font-bold uppercase tracking-widest shadow-lg hover:brightness-110">Claim Blessing</button>
+        </div>
+    </div>
+    
+    <!-- Quest Modal -->
+    <div id="quest-modal" class="fixed inset-0 bg-white/70 backdrop-blur-md z-[60] hidden flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-md p-10 relative shadow-2xl border border-[var(--border-color)] bg-[var(--card-bg)] animate-float-up">
+            <h3 class="text-3xl font-display font-bold mb-8 text-center text-[var(--text-main)]">New Contract</h3>
+            <div class="mb-8"><input type="text" id="quest-title" class="w-full bg-[var(--bg-color)] border border-[var(--border-color)] rounded-xl p-4 font-bold text-lg outline-none focus:border-[var(--accent)] text-[var(--text-main)]" placeholder="e.g. Morning Prayer"></div>
+            <div class="mb-8"><div class="flex gap-2 overflow-x-auto pb-2 custom-scrollbar" id="quest-attr-select"></div></div>
+            <div class="grid grid-cols-3 gap-3 mb-10">
+                <button onclick="setDifficulty('easy')" class="difficulty-btn p-4 rounded-xl border border-transparent bg-green-100 text-green-600 font-bold hover:bg-green-500 hover:text-white transition-all text-xs uppercase tracking-wide">Easy</button>
+                <button onclick="setDifficulty('medium')" class="difficulty-btn p-4 rounded-xl border border-transparent bg-blue-100 text-blue-600 font-bold hover:bg-blue-500 hover:text-white transition-all text-xs uppercase tracking-wide">Normal</button>
+                <button onclick="setDifficulty('hard')" class="difficulty-btn p-4 rounded-xl border border-transparent bg-red-100 text-red-600 font-bold hover:bg-red-500 hover:text-white transition-all text-xs uppercase tracking-wide">Hard</button>
+            </div>
+            <button onclick="addQuest()" class="w-full py-4 bg-[var(--accent)] text-white rounded-xl font-bold text-lg shadow-lg hover:brightness-110 transform active:scale-[0.98] transition-all uppercase tracking-widest">Accept Quest</button>
+            <button onclick="document.getElementById('quest-modal').classList.add('hidden');" class="w-full mt-4 py-2 text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] uppercase tracking-widest">Dismiss</button>
+        </div>
+    </div>
+    
+    <div id="boss-modal" class="fixed inset-0 bg-white/80 z-[60] hidden flex items-center justify-center p-4"><div class="glass-panel w-full max-w-md p-10 text-center bg-[var(--card-bg)] border-2 border-[var(--accent)]"><input type="text" id="boss-title-input" class="w-full border p-4 mb-4 text-[var(--text-main)] bg-[var(--bg-color)]" placeholder="Name"><input type="range" id="boss-hp-input" min="100" max="1000" value="300" class="w-full"><button onclick="createBoss()" class="w-full py-4 bg-red-600 text-white font-bold mt-4">SUMMON</button><button onclick="document.getElementById('boss-modal').classList.add('hidden')" class="mt-4 block w-full text-[var(--text-muted)]">Cancel</button></div></div>
+    <div id="focus-modal" class="fixed inset-0 bg-white/95 z-[60] hidden flex flex-col items-center justify-center p-6 backdrop-blur-xl"><div class="text-center"><div class="text-9xl font-mono font-bold mb-8 text-slate-800" id="timer-display">25:00</div><button onclick="startTimer()" class="px-12 py-5 bg-blue-600 text-white font-bold rounded-full">BEGIN</button><button onclick="cancelFocus()" class="block mt-8 text-slate-500">Exit</button></div></div>
+    <div id="char-modal" class="fixed inset-0 bg-white/90 backdrop-blur-xl z-[70] hidden flex items-center justify-center p-4"><div class="glass-panel w-full max-w-5xl p-12 relative flex flex-col md:flex-row gap-12 bg-[var(--card-bg)] border border-[var(--accent)]/20 shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar"><button onclick="document.getElementById('char-modal').classList.add('hidden')" class="absolute top-6 right-6 text-3xl text-[var(--text-muted)] hover:text-[var(--accent)]"><i class="fa-solid fa-times"></i></button><div class="flex-1 flex flex-col items-center border-r border-[var(--border-color)] pr-8"><div class="w-48 h-48 rounded-full p-2 border-4 border-[var(--accent)] shadow-xl mb-6 relative"><img id="char-img-big" class="w-full h-full object-cover rounded-full"><div class="absolute bottom-0 right-0 bg-[var(--accent)] text-white font-bold px-4 py-1 rounded-full text-sm border-2 border-white">Lvl <span id="char-lvl-modal">1</span></div></div><h2 class="text-5xl font-display font-bold mb-2 text-[var(--text-main)]" id="char-name-big">Player</h2><div class="mt-8 w-full"><h4 class="font-bold text-sm uppercase text-[var(--text-muted)] mb-4 text-center">Weekly Prophecy (XP)</h4><div class="h-32 w-full flex items-end gap-2 justify-between" id="analytics-graph"></div></div></div><div class="flex-1"><h3 class="text-2xl font-display font-bold mb-6 border-b border-[var(--border-color)] pb-2 text-[var(--text-main)]">Attributes</h3><div class="space-y-4 mb-8" id="stats-container"></div><div class="w-full aspect-square max-w-[300px] mx-auto"><svg id="radar-chart" viewBox="-20 -20 140 140" class="w-full h-full drop-shadow-lg overflow-visible"></svg></div></div></div></div>
+    <div id="inv-modal" class="fixed inset-0 bg-white/80 backdrop-blur-xl z-[70] hidden flex items-center justify-center p-4"><div class="glass-panel w-full max-w-2xl p-10 relative bg-[var(--card-bg)] border border-[var(--accent)]/20 shadow-2xl"><button onclick="document.getElementById('inv-modal').classList.add('hidden')" class="absolute top-6 right-6 text-2xl text-[var(--text-muted)]"><i class="fa-solid fa-times"></i></button><h3 class="text-3xl font-display font-bold mb-2 text-[var(--text-main)]">Inventory</h3><p class="text-[var(--text-muted)] mb-8">Unlocks every 5 levels.</p><div id="inv-grid" class="grid grid-cols-4 gap-4"></div></div></div>
+    <div id="map-modal" class="fixed inset-0 bg-white/90 backdrop-blur-xl z-[70] hidden flex items-center justify-center p-4"><div class="glass-panel w-full max-w-3xl p-8 relative bg-[var(--card-bg)] shadow-2xl overflow-hidden flex flex-col items-center"><button onclick="document.getElementById('map-modal').classList.add('hidden')" class="absolute top-6 right-6 text-2xl text-[var(--text-muted)]"><i class="fa-solid fa-times"></i></button><h3 class="text-3xl font-display font-bold mb-8 text-[var(--text-main)]">Your Journey</h3><div class="w-full h-64 relative flex items-center justify-center"><svg width="100%" height="200" viewBox="0 0 800 200"><path d="M50 100 Q 200 50 350 100 T 750 100" class="map-path" stroke-width="4" stroke="#e5e7eb" fill="none" stroke-dasharray="10"/><circle cx="50" cy="100" r="15" class="map-node active" /><circle cx="350" cy="100" r="15" class="map-node" id="node-10" /><circle cx="750" cy="100" r="15" class="map-node" id="node-50" /><text x="50" y="140" text-anchor="middle" font-size="12" fill="#9ca3af" font-weight="bold">START</text><text x="350" y="140" text-anchor="middle" font-size="12" fill="#9ca3af" font-weight="bold">LVL 10</text><text x="750" y="140" text-anchor="middle" font-size="12" fill="#9ca3af" font-weight="bold">LVL 50</text><circle id="map-marker" cx="50" cy="100" r="8" fill="var(--accent)" stroke="white" stroke-width="2" class="transition-all duration-1000"/></svg></div></div></div>
+    <div id="settings-modal" class="fixed inset-0 bg-white/80 backdrop-blur-xl z-[70] hidden flex items-center justify-center p-4"><div class="glass-panel w-full max-w-md p-10 relative bg-[var(--card-bg)] shadow-2xl"><button onclick="document.getElementById('settings-modal').classList.add('hidden')" class="absolute top-6 right-6 text-2xl text-[var(--text-muted)]"><i class="fa-solid fa-times"></i></button><h3 class="text-2xl font-display font-bold mb-6 text-[var(--text-main)]">Data Management</h3><label class="block text-xs font-bold uppercase text-[var(--text-muted)] mb-2">Save Code</label><textarea id="save-code-out" readonly class="w-full bg-[var(--bg-color)] p-3 rounded-lg text-xs font-mono h-24 mb-4 text-[var(--text-main)] outline-none" onclick="this.select()"></textarea><label class="block text-xs font-bold uppercase text-[var(--text-muted)] mb-2">Load Code</label><textarea id="save-code-in" class="w-full bg-[var(--bg-color)] p-3 rounded-lg text-xs font-mono h-24 mb-6 text-[var(--text-main)] outline-none placeholder:text-gray-400" placeholder="Paste code here..."></textarea><button onclick="importSave()" class="w-full py-3 bg-[var(--accent)] text-white rounded-xl font-bold hover:brightness-110">LOAD DATA</button></div></div>
+    
+    <!-- Victory Modal -->
+    <div id="victory-modal" class="fixed inset-0 bg-black/90 z-[90] hidden flex-col items-center justify-center p-4 backdrop-blur-md opacity-0 transition-opacity duration-500 pointer-events-none">
+        <h1 class="text-6xl md:text-8xl font-display font-black text-yellow-400 animate-victory-pop drop-shadow-[0_0_20px_rgba(250,204,21,0.8)]">VICTORY!</h1>
+        <p class="text-white text-xl mt-4 font-bold tracking-widest">BOSS DEFEATED</p>
+    </div>
+
+    <script>
+        // --- 3D TILT LOGIC ---
+        document.addEventListener('mousemove', (e) => {
+            document.querySelectorAll('.glass-panel').forEach(card => {
+                const rect = card.getBoundingClientRect(); const x = e.clientX - rect.left; const y = e.clientY - rect.top;
+                if (x >= -50 && x <= rect.width+50 && y >= -50 && y <= rect.height+50) {
+                    card.style.setProperty('--x', `${x}px`); card.style.setProperty('--y', `${y}px`);
+                    card.style.transform = `perspective(1000px) rotateX(${((y - rect.height/2)/rect.height/2)*-1.5}deg) rotateY(${((x - rect.width/2)/rect.width/2)*1.5}deg) translateY(-2px)`;
+                } else card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0)';
+            });
+        });
+
+        // --- CONFIG ---
+        const THEME_CONFIG = {
+            'theme-cyber': { pet: '🤖', boss: '👾' },
+            'theme-rdr': { pet: '🐎', boss: '🤠' },
+            'theme-fc': { pet: '⚽', boss: '🏆' },
+            'theme-gate': { pet: '🕊️', boss: '🐍' }
+        };
+
+        const VERSES = [
+            { t: "I can do all things through Christ.", r: "Phil 4:13" },
+            { t: "Be strong and courageous.", r: "Joshua 1:9" }
+        ];
+
+        // --- AUDIO ENGINE (SFX Only) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let soundEnabled = true;
+
+        document.addEventListener('click', function() { if (audioCtx.state === 'suspended') audioCtx.resume(); }, { once: true });
+
+        function getWaveType() {
+            const currentTheme = state.theme || 'theme-gate';
+            if(currentTheme === 'theme-cyber') return 'sawtooth';
+            if(currentTheme === 'theme-rdr') return 'triangle'; // Folk/Guitar
+            if(currentTheme === 'theme-fc') return 'square'; // Arcade/Sport
+            return 'sine'; // Gate/Faith
+        }
+
+        function playTone(freq, type, duration, vol=0.1) {
+            if (!soundEnabled) return;
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + duration);
+        }
+
+        const SFX = {
+            click: () => {
+                const theme = state.theme || 'theme-gate';
+                if(theme === 'theme-cyber') playTone(800, 'sawtooth', 0.05, 0.05);
+                else if(theme === 'theme-rdr') playTone(200, 'square', 0.05, 0.05);
+                else if(theme === 'theme-fc') playTone(600, 'triangle', 0.05, 0.1);
+                else playTone(1000, 'sine', 0.1, 0.05);
+            },
+            success: () => {
+                const theme = state.theme || 'theme-gate';
+                if(theme === 'theme-cyber') {
+                    playTone(440, 'square', 0.1); setTimeout(()=>playTone(880, 'square', 0.1), 50); setTimeout(()=>playTone(1760, 'square', 0.2), 100);
+                } else if(theme === 'theme-rdr') {
+                    playTone(196, 'triangle', 0.3); setTimeout(()=>playTone(246, 'triangle', 0.3), 60); setTimeout(()=>playTone(293, 'triangle', 0.4), 120);
+                } else if(theme === 'theme-fc') {
+                     playTone(600, 'sawtooth', 0.2); setTimeout(()=>playTone(800, 'sawtooth', 0.4), 100);
+                } else {
+                    playTone(523, 'sine', 0.5); setTimeout(()=>playTone(659, 'sine', 0.5), 150); setTimeout(()=>playTone(784, 'sine', 0.8), 300);
+                }
+            },
+            levelUp: () => {
+                [440, 554, 659, 880, 1108].forEach((f, i) => setTimeout(() => playTone(f, getWaveType(), 0.5, 0.2), i*150));
+            },
+            pet: () => { 
+                const wave = getWaveType();
+                playTone(800, wave, 0.1, 0.05); setTimeout(() => playTone(1200, wave, 0.1, 0.05), 100); 
+            },
+            victory: () => {
+                // Fanfare
+                [523, 523, 523, 659, 784, 1046].forEach((f, i) => setTimeout(() => playTone(f, getWaveType(), 0.4, 0.3), i*120));
+            }
+        };
+
+        // --- STATE ---
+        const starterQuests = [
+            { id: 1, title: "Morning Devotional", difficulty: 'easy', xp: 20, gold: 10, attr: 'fth' },
+            { id: 2, title: "Complete Project", difficulty: 'medium', xp: 50, gold: 25, attr: 'int' },
+            { id: 3, title: "30 Min Workout", difficulty: 'hard', xp: 100, gold: 50, attr: 'str' }
+        ];
+        const starterHabits = [
+            { id: 1, title: "Read Bible", attr: 'wis', active: false },
+            { id: 2, title: "Drink Water", attr: 'str', active: false }
+        ];
+        const starterRewards = [{ id: 1, title: "Coffee", cost: 50 }];
+
+        let state = JSON.parse(localStorage.getItem('rpgLifeStateUlt')) || {
+            name: "Player One", theme: "theme-gate", avatarSeed: "Felix", level: 1, xp: 0, xpToNext: 100, hp: 50, maxHp: 50, mana: 20, maxMana: 20, gold: 0, streak: 1,
+            stats: { str: 5, int: 5, dex: 5, cha: 5, wis: 5, fth: 5 },
+            lastLogin: new Date().toDateString(), lastManna: null, inventory: [], xpHistory: [],
+            quests: starterQuests, habits: starterHabits, rewards: starterRewards
+        };
+
+        function getAuraClass(level) {
+            if(level >= 20) return 'aura-level-20';
+            if(level >= 10) return 'aura-level-10';
+            if(level >= 5) return 'aura-level-5';
+            return '';
+        }
+
+        // Day/Night Logic
+        const hour = new Date().getHours();
+        if(hour < 6 || hour > 18) document.body.classList.add('is-night');
+
+        function setTheme(t) {
+            state.theme = t; document.body.className = `min-h-screen p-4 md:p-8 flex flex-col gap-6 font-sans ${t} ${hour < 6 || hour > 18 ? 'is-night' : ''}`;
+            createBgElements(); SFX.success(); render(); saveState();
+        }
+        document.body.className += " " + state.theme;
+
+        function saveState() { localStorage.setItem('rpgLifeStateUlt', JSON.stringify(state)); render(); }
+        
+        function addXp(amount, attr) {
+            state.xp += amount;
+            if(attr && state.stats[attr]) state.stats[attr]++;
+            
+            // Analytics
+            const today = new Date().toLocaleDateString('en-US', {weekday:'short'});
+            const historyEntry = state.xpHistory.find(h => h.day === today);
+            if(historyEntry) historyEntry.val += amount;
+            else { 
+                if(state.xpHistory.length >= 7) state.xpHistory.shift(); 
+                state.xpHistory.push({day: today, val: amount}); 
+            }
+
+            if(state.xp >= state.xpToNext) {
+                state.level++; state.xp=0; state.xpToNext=Math.floor(state.xpToNext*1.2);
+                state.hp=state.maxHp; state.mana=state.maxMana;
+                if(state.level % 5 === 0) { state.inventory.push(`Reward Lvl ${state.level}`); alert("Loot Found!"); }
+                SFX.levelUp(); confetti();
+            }
+            saveState();
+        }
+
+        // --- MANNA ---
+        function openMannaModal() {
+            const today = new Date().toDateString();
+            if(state.lastManna === today) { alert("Already claimed today."); return; }
+            const verse = VERSES[Math.floor(Math.random()*VERSES.length)];
+            document.getElementById('daily-verse').innerText = `"${verse.t}"`; document.getElementById('daily-verse-ref').innerText = verse.r;
+            document.getElementById('manna-modal').classList.remove('hidden'); document.getElementById('manna-modal').classList.add('flex'); SFX.click();
+        }
+        function claimManna() {
+            state.gold += 50; addXp(100, 'fth'); state.lastManna = new Date().toDateString();
+            document.getElementById('manna-modal').classList.add('hidden'); saveState(); confetti(); SFX.success();
+        }
+
+        // --- ANIMATIONS ---
+        function createBgElements() {
+            const container = document.getElementById('weather-layer'); if(!container) return; container.innerHTML = '';
+            for(let i=0; i<15; i++) {
+                const el = document.createElement('div'); el.className = 'weather-particle absolute rounded-full';
+                el.style.left = Math.random()*100+'%'; el.style.width = '4px'; el.style.height = '4px';
+                el.style.background = state.theme === 'theme-gate' ? 'white' : 'var(--accent)';
+                el.style.opacity = 0.3; el.style.top = Math.random()*100+'%';
+                el.style.animation = `float ${Math.random()*5+5}s infinite ease-in-out`;
+                container.appendChild(el);
+            }
+        }
+
+        // --- RENDER ---
+        function render() {
+            if(!document.getElementById('player-name')) return;
+            document.getElementById('player-name').innerText = state.name;
+            document.getElementById('level-display').innerText = state.level;
+            if(document.getElementById('char-lvl-modal')) document.getElementById('char-lvl-modal').innerText = state.level;
+            document.getElementById('gold-display').innerText = state.gold;
+            document.getElementById('xp-bar').style.width = (state.xp/state.xpToNext*100)+'%';
+            document.getElementById('hp-bar').style.width = (state.hp/state.maxHp*100)+'%';
+            document.getElementById('mana-bar').style.width = (state.mana/state.maxMana*100)+'%';
+            document.getElementById('xp-text').innerText = `${state.xp}/${state.xpToNext}`;
+            document.getElementById('avatar-img').src = `https://api.dicebear.com/9.x/notionists/svg?seed=${state.avatarSeed}`;
+            if(document.getElementById('char-img-big')) document.getElementById('char-img-big').src = `https://api.dicebear.com/9.x/notionists/svg?seed=${state.avatarSeed}`;
+            
+            // Aura Update
+            const aura = getAuraClass(state.level);
+            const avContainer = document.getElementById('player-avatar-container');
+            if(avContainer) avContainer.className = `w-20 h-20 rounded-full p-1 border-2 border-[var(--accent)] shadow-xl overflow-hidden bg-white hover:scale-105 transition-transform relative z-10 ${aura}`;
+
+            if(state.streak >= 3) document.getElementById('streak-container').classList.add('limit-break-active');
+            document.getElementById('streak-display').innerText = state.streak + " Day Streak";
+
+            const gardenPct = (state.habits.filter(h=>h.active).length / Math.max(1, state.habits.length)) * 100;
+            const gardenBar = document.getElementById('garden-growth'); if(gardenBar) gardenBar.style.width = gardenPct + '%';
+            
+            const today = new Date().toDateString();
+            document.getElementById('manna-badge').style.display = state.lastManna === today ? 'none' : 'block';
+
+            const cfg = THEME_CONFIG[state.theme] || THEME_CONFIG['theme-gate'];
+            if(document.getElementById('pet-sprite')) document.getElementById('pet-sprite').innerText = cfg.pet;
+            if(document.getElementById('spawner-icon')) document.getElementById('spawner-icon').innerText = cfg.boss;
+            if(document.getElementById('boss-modal-icon')) document.getElementById('boss-modal-icon').innerText = cfg.boss;
+            if(document.getElementById('boss-avatar-container')) {
+                document.getElementById('boss-avatar-container').innerText = cfg.boss;
+                if(state.activeBoss && state.activeBoss.hp < state.activeBoss.maxHp * 0.5) {
+                    document.getElementById('boss-avatar-container').classList.add('boss-enraged');
+                } else {
+                    document.getElementById('boss-avatar-container').classList.remove('boss-enraged');
+                }
+            }
+            
+            if(state.activeBoss) {
+                document.getElementById('boss-arena').classList.remove('hidden'); document.getElementById('boss-spawner').classList.add('hidden');
+                document.getElementById('boss-name').innerText = state.activeBoss.name;
+                document.getElementById('boss-hp-text').innerText = state.activeBoss.hp;
+                document.getElementById('boss-hp-bar').style.width = (state.activeBoss.hp/state.activeBoss.maxHp*100)+'%';
+            } else {
+                 document.getElementById('boss-arena').classList.add('hidden'); document.getElementById('boss-spawner').classList.remove('hidden');
+            }
+            
+            // Analytics Graph
+            const graph = document.getElementById('analytics-graph');
+            if(graph) {
+                graph.innerHTML = '';
+                state.xpHistory.forEach(h => {
+                    const hPx = Math.min(100, h.val / 2);
+                    graph.innerHTML += `<div class="w-8 bg-[var(--accent)]/50 rounded-t-md relative group"><div class="absolute -top-4 text-[10px] w-full text-center hidden group-hover:block">${h.val}</div><div style="height:${hPx}px" class="bg-[var(--accent)] rounded-t-md w-full absolute bottom-0"></div><div class="absolute -bottom-4 text-[10px] text-center w-full">${h.day}</div></div>`;
+                });
+            }
+
+            const qList = document.getElementById('quest-list'); qList.innerHTML = '';
+            state.quests.forEach(q => {
+                const badge = q.difficulty==='easy'?'text-green-600 bg-green-100':q.difficulty==='medium'?'text-blue-600 bg-blue-100':'text-red-600 bg-red-100';
+                qList.innerHTML += `<div class="glass-panel p-4 mb-3 flex justify-between items-center group hover:bg-black/5 transition-colors"><div><div class="font-bold text-[var(--text-main)]">${q.title}</div><div class="flex gap-2 mt-1"><span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${badge}">${q.difficulty}</span><span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-[var(--accent)]/10 text-[var(--accent)]">+${q.xp} XP</span></div></div><div class="flex gap-2 opacity-50 group-hover:opacity-100 transition-opacity"><button onclick="completeQuest(${q.id}, event)" class="w-8 h-8 rounded-full bg-[var(--accent)] text-white shadow-md flex items-center justify-center hover:scale-110"><i class="fa-solid fa-check"></i></button><button onclick="deleteQuest(${q.id})" class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center hover:text-red-500"><i class="fa-solid fa-trash"></i></button></div></div>`;
+            });
+
+            const hList = document.getElementById('habit-list'); hList.innerHTML = '';
+            state.habits.forEach(h => {
+                // Garden Flowers
+                const flower = h.active ? ['🌻','🌷','🌹','🪷'][Math.floor(Math.random()*4)] : '';
+                hList.innerHTML += `<div class="flex items-center justify-between p-3 bg-white/30 rounded-xl hover:bg-white/50 transition-all group border border-transparent hover:border-[var(--accent)]/30"><label class="flex items-center gap-4 cursor-pointer flex-1"><input type="checkbox" class="rpg-checkbox" ${h.active?'checked':''} onclick="toggleHabit(${h.id})"><div><div class="${h.active?'line-through opacity-50':''} font-bold text-sm text-[var(--text-main)]">${h.title}</div><div class="text-[10px] font-bold uppercase text-[var(--text-muted)] opacity-70">${h.attr}</div></div></label><span class="text-xl animate-bounce">${flower}</span><button onclick="deleteHabit(${h.id})" class="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-all ml-2"><i class="fa-solid fa-times"></i></button></div>`;
+            });
+
+            const sList = document.getElementById('shop-list'); sList.innerHTML = '';
+            state.rewards.forEach(r => {
+                sList.innerHTML += `<div class="flex justify-between items-center p-3 border-b border-[var(--border-color)] last:border-0 hover:bg-white/20 transition-colors"><span class="font-bold text-sm text-[var(--text-main)]">${r.title}</span><button onclick="buyReward(${r.id})" class="px-3 py-1 bg-yellow-100 text-yellow-600 font-bold text-xs rounded-lg hover:bg-yellow-500 hover:text-white transition-colors border border-yellow-200">${r.cost} <i class="fa-solid fa-coins text-[10px]"></i></button></div>`;
+            });
+            const stContainer = document.getElementById('stats-container');
+            if(stContainer) {
+                stContainer.innerHTML = '';
+                const statIcons = {str:'dumbbell', int:'brain', dex:'feather', cha:'comments', wis:'eye', fth:'cross'};
+                Object.entries(state.stats).forEach(([k,v]) => {
+                    stContainer.innerHTML += `<div class="flex justify-between items-center p-2 rounded-lg hover:bg-black/5"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] flex items-center justify-center"><i class="fa-solid fa-${statIcons[k]}"></i></div><span class="font-bold text-sm text-[var(--text-main)] uppercase">${k}</span></div><span class="font-mono font-bold text-xl text-[var(--text-main)]">${v}</span></div>`;
+                });
+            }
+            drawRadarChart();
+        }
+
+        function drawRadarChart() {
+            const svg = document.getElementById('radar-chart'); if(!svg) return;
+            const stats = Object.values(state.stats); const maxVal = Math.max(...stats, 20); 
+            const center = 50, radius = 45, points = [];
+            const labels = ["STR","INT","DEX","CHA","WIS","FTH"];
+            let bgHex = "";
+            for(let i=0; i<6; i++) {
+                const angle = (Math.PI*2*i)/6 - Math.PI/2;
+                bgHex += `${center+Math.cos(angle)*radius},${center+Math.sin(angle)*radius} `;
+            }
+            for(let i=0; i<6; i++) {
+                const angle = (Math.PI*2*i)/6 - Math.PI/2;
+                const val = (stats[i]/maxVal)*radius;
+                points.push(`${center+Math.cos(angle)*val},${center+Math.sin(angle)*val}`);
+            }
+            const accent = getComputedStyle(document.body).getPropertyValue('--accent').trim();
+            let svgContent = `<polygon points="${bgHex}" fill="none" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="2" /><polygon points="${points.join(' ')}" fill="${accent}" fill-opacity="0.2" stroke="${accent}" stroke-width="2" /><circle cx="50" cy="50" r="2" fill="${accent}"/>`;
+            for(let i=0; i<6; i++) {
+                const angle = (Math.PI*2*i)/6 - Math.PI/2;
+                const lx = center + Math.cos(angle)*(radius+15); const ly = center + Math.sin(angle)*(radius+15);
+                svgContent += `<text x="${lx}" y="${ly}" font-size="8" font-weight="bold" fill="#9ca3af" text-anchor="middle" dominant-baseline="middle">${labels[i]}</text>`;
+            }
+            svg.innerHTML = svgContent;
+        }
+
+        function openCharSheet() { 
+            document.getElementById('char-modal').classList.remove('hidden'); 
+            document.getElementById('char-modal').classList.add('flex'); 
+            render(); 
+            SFX.click(); 
+        }
+        function openQuestModal() { 
+            document.getElementById('quest-modal').classList.remove('hidden'); document.getElementById('quest-modal').classList.add('flex');
+            document.getElementById('quest-title').value = ''; 
+            const c = document.getElementById('quest-attr-select'); c.innerHTML='';
+            ['str','int','dex','cha','wis','fth'].forEach(a => c.innerHTML+=`<button onclick="selectedQuestAttr='${a}'; this.parentElement.childNodes.forEach(n=>n.classList?.remove('ring-2')); this.classList.add('ring-2')" class="p-3 bg-black/5 rounded-xl min-w-[50px] uppercase text-xs font-bold hover:bg-[var(--accent)] hover:text-white transition-colors ring-[var(--accent)]">${a}</button>`);
+            SFX.click(); 
+        }
+        function addQuest() {
+            state.quests.push({id: Date.now(), title: document.getElementById('quest-title').value||'Quest', difficulty:selectedDifficulty, xp:20, gold:10, attr:selectedQuestAttr||'str'});
+            document.getElementById('quest-modal').classList.add('hidden'); saveState(); confetti(); SFX.success();
+        }
+        function completeQuest(id, e) {
+            const q = state.quests.find(x=>x.id===id);
+            if(q) { state.gold+=q.gold; addXp(q.xp, q.attr); state.quests = state.quests.filter(x=>x.id!==id); }
+            createFloatingText(e.clientX, e.clientY, `+${q.xp} XP`, '#22c55e');
+            if(state.activeBoss) { damageBoss(10, e); }
+            saveState(); SFX.success();
+        }
+        function createFloatingText(x, y, txt, color) {
+            const el = document.createElement('div'); el.innerText=txt; el.className='damage-text';
+            el.style.left=x+'px'; el.style.top=y+'px'; el.style.color=color;
+            document.body.appendChild(el); setTimeout(()=>el.remove(),1000);
+        }
+        function deleteQuest(id) { state.quests = state.quests.filter(x=>x.id!==id); saveState(); }
+        function handleHabitInput(e) { if(e.key==='Enter'){ state.habits.push({id:Date.now(), title:e.target.value, attr:document.getElementById('new-habit-attr').value, active:false}); e.target.value=''; saveState(); SFX.success(); } }
+        function toggleHabit(id) { const h=state.habits.find(x=>x.id===id); h.active=!h.active; if(h.active){addXp(10,h.attr); confetti(); SFX.success();} saveState(); }
+        function deleteHabit(id) { state.habits=state.habits.filter(x=>x.id!==id); saveState(); }
+        function handleRewardInput(e) { if(e.key==='Enter'){ state.rewards.push({id:Date.now(), title:e.target.value, cost:50}); e.target.value=''; saveState(); SFX.success(); } }
+        function buyReward(id) { const r=state.rewards.find(x=>x.id===id); if(state.gold>=r.cost){state.gold-=r.cost; confetti(); saveState(); SFX.success();} }
+        function saveName() { state.name=document.getElementById('player-name').innerText; saveState(); }
+        function randomizeAvatar() { state.avatarSeed = Math.random().toString(36).substring(7); saveState(); SFX.click(); }
+        function openBossModal() { document.getElementById('boss-modal').classList.remove('hidden'); document.getElementById('boss-modal').classList.add('flex'); SFX.click(); }
+        function createBoss() { state.activeBoss={name: document.getElementById('boss-title-input').value, hp:300, maxHp:300}; document.getElementById('boss-modal').classList.add('hidden'); saveState(); SFX.success(); }
+        function damageBoss(amt, e) { 
+            const bar=document.getElementById('boss-hp-bar'); if(bar) { bar.parentElement.classList.add('animate-shake'); setTimeout(()=>bar.parentElement.classList.remove('animate-shake'),500); }
+            if(state.activeBoss) { state.activeBoss.hp -= amt; if(state.activeBoss.hp <= 0) defeatBoss(); saveState(); }
+            createFloatingText(e.clientX, e.clientY, `-${amt}`, '#ef4444'); SFX.pet(); 
+        }
+        function defeatBoss() { 
+            state.activeBoss=null; 
+            saveState(); 
+            SFX.victory(); 
+            const victoryModal = document.getElementById('victory-modal');
+            if(victoryModal) {
+                victoryModal.classList.remove('hidden', 'pointer-events-none', 'opacity-0');
+                victoryModal.classList.add('flex', 'opacity-100');
+                confetti({ particleCount: 200, spread: 150, origin: { y: 0.6 } });
+                setTimeout(() => {
+                    victoryModal.classList.add('hidden', 'pointer-events-none', 'opacity-0');
+                    victoryModal.classList.remove('flex', 'opacity-100');
+                }, 4000);
+            }
+        }
+        function setDifficulty(d) { selectedDifficulty=d; SFX.click(); }
+        function openFocusModal() { document.getElementById('focus-modal').classList.remove('hidden'); document.getElementById('focus-modal').classList.add('flex'); SFX.click(); }
+        function cancelFocus() { document.getElementById('focus-modal').classList.add('hidden'); }
+        function startTimer() { setTimeout(()=>{cancelFocus(); addXp(50,'int'); confetti(); SFX.success();},2000); }
+        function openInventoryModal() { document.getElementById('inv-modal').classList.remove('hidden'); document.getElementById('inv-modal').classList.add('flex'); renderInventory(); SFX.click(); }
+        function renderInventory() { const grid = document.getElementById('inv-grid'); grid.innerHTML=''; if(state.inventory.length === 0) grid.innerHTML = '<div class="col-span-4 text-center text-gray-400 italic">Inventory is empty. Reach Level 5 to find items.</div>'; state.inventory.forEach(item => { grid.innerHTML += `<div class="p-4 bg-gray-100 rounded-xl text-center border border-gray-200"><i class="fa-solid fa-gem text-2xl text-[var(--accent)] mb-2"></i><div class="text-xs font-bold">${item}</div></div>`; }); }
+        function openMapModal() { document.getElementById('map-modal').classList.remove('hidden'); document.getElementById('map-modal').classList.add('flex'); SFX.click(); }
+        function openSettingsModal() { document.getElementById('settings-modal').classList.remove('hidden'); document.getElementById('settings-modal').classList.add('flex'); document.getElementById('save-code-out').value = btoa(JSON.stringify(state)); SFX.click(); }
+        function importSave() { try { const code = document.getElementById('save-code-in').value; if(!code) return; state = JSON.parse(atob(code)); saveState(); alert('Save Loaded Successfully!'); location.reload(); } catch(e) { alert('Invalid Save Code'); } }
+
+        let selectedQuestAttr='str', selectedDifficulty='easy';
+
+        // --- PET LOGIC ---
+        let petIdleTimer;
+        function wakePet() {
+            clearTimeout(petIdleTimer);
+            const pet = document.getElementById('pet-container'); const zzz = document.querySelector('.pet-zzz');
+            if(!pet || !zzz) return;
+            pet.classList.remove('grayscale', 'opacity-70', 'animate-pet-bounce'); zzz.style.opacity = '0';
+            petIdleTimer = setTimeout(() => { pet.classList.add('grayscale', 'opacity-70', 'animate-pet-bounce'); zzz.style.opacity = '1'; }, 8000); 
+        }
+        function petInteraction() {
+            SFX.pet(); 
+            const pet = document.getElementById('pet-container'); pet.classList.add('animate-pet-happy');
+            confetti({ particleCount: 15, scalar: 0.7, shapes: ['star'], colors: [getComputedStyle(document.body).getPropertyValue('--accent')], origin: { x: pet.getBoundingClientRect().left/window.innerWidth, y: pet.getBoundingClientRect().top/window.innerHeight } });
+            setTimeout(() => pet.classList.remove('animate-pet-happy'), 1000); wakePet();
+        }
+
+        // --- INIT ---
+        createBgElements();
+        render();
+        setInterval(()=> {
+            const pet = document.getElementById('pet-container');
+            if(pet) { pet.classList.add('animate-pet-bounce'); setTimeout(()=>pet.classList.remove('animate-pet-bounce'), 2000); }
+        }, 10000);
+    </script>
+</body>
+</html>
