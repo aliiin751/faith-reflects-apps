@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FaithReflects: Health & Grace Dashboard</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Outfit', sans-serif; overflow: hidden; }
+        h1, h2, h3, h4, .serif { font-family: 'Playfair Display', serif; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(16, 185, 129, 0.5); }
+
+        .fade-in { animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Breathing Animation */
+        @keyframes breatheSize { 
+            0%, 100% { transform: scale(1); } 
+            50% { transform: scale(1.6); } 
+        }
+        @keyframes breatheOpacity { 
+            0%, 100% { opacity: 0.4; } 
+            50% { opacity: 0.1; } 
+        }
+        .breathe-core { animation: breatheSize 6s infinite ease-in-out; }
+        .breathe-ring { animation: breatheSize 6s infinite ease-in-out, breatheOpacity 6s infinite ease-in-out; }
+
+        /* Water Wave Animation */
+        @keyframes wave {
+            0% { transform: translateX(0) translateZ(0) scaleY(1); }
+            50% { transform: translateX(-25%) translateZ(0) scaleY(0.8); }
+            100% { transform: translateX(-50%) translateZ(0) scaleY(1); }
+        }
+        .wave-bg {
+            background: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"%3E%3Cpath d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity=".25" fill="%23FFFFFF"/%3E%3Cpath d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" opacity=".5" fill="%23FFFFFF"/%3E%3Cpath d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z" fill="%23FFFFFF"/%3E%3C/svg%3E');
+            background-size: 200% 100%;
+            animation: wave 10s linear infinite;
+        }
+
+        /* Prayer Particles */
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1); opacity: 0.8; }
+            100% { transform: translateY(-100px) scale(0); opacity: 0; }
+        }
+        .prayer-particle {
+            position: absolute;
+            width: 8px; height: 8px; background: #FBBF24; border-radius: 50%;
+            animation: floatUp 2s ease-out forwards;
+        }
+
+        /* Candle Flame Animation */
+        .candle-container { position: relative; width: 40px; height: 100px; display: flex; flex-direction: column; align-items: center; }
+        .flame {
+            width: 15px; height: 35px; border-radius: 50% 50% 20% 20%;
+            background: radial-gradient(white 80%, transparent);
+            background-color: #ffad00;
+            box-shadow: 0 0 10px #ffad00, 0 0 20px #ffad00, 0 0 60px #ffad00, 0 0 80px #ffad00;
+            position: absolute; top: -30px;
+            animation: flicker 0.1s infinite alternate;
+            transform-origin: bottom center;
+            opacity: 1; 
+        }
+        .wick { height: 10px; width: 2px; background: #333; position: absolute; top: 0; }
+        .wax {
+            width: 100%; height: 100%; background: linear-gradient(#fef9e7, #e8dfc4);
+            border-radius: 4px; box-shadow: inset 0 -5px 5px rgba(0,0,0,0.1);
+        }
+        @keyframes flicker {
+            0% { transform: skewX(2deg) scaleY(1); opacity: 0.9; }
+            100% { transform: skewX(-2deg) scaleY(1.1); opacity: 1; }
+        }
+
+        /* Living Border Pulse */
+        @keyframes borderPulse {
+            0% { border-color: rgba(255,255,255,0.5); box-shadow: 0 0 0 rgba(255,215,0,0); }
+            50% { border-color: rgba(255,215,0,0.4); box-shadow: 0 0 15px rgba(255,215,0,0.1); }
+            100% { border-color: rgba(255,255,255,0.5); box-shadow: 0 0 0 rgba(255,215,0,0); }
+        }
+        .living-card { animation: borderPulse 4s infinite ease-in-out; }
+
+        /* Body Map Interactive - Fixed */
+        .body-part { fill: #e5e7eb; transition: fill 0.3s; cursor: pointer; }
+        .body-part:hover { fill: #d1d5db; }
+        .body-part.active { fill: #f43f5e !important; }
+
+        /* 3D Tilt Effect applied by JS, base style here */
+        .tilt-card { transition: transform 0.1s ease-out; transform-style: preserve-3d; }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800 h-screen w-screen relative overflow-hidden">
+
+    <div id="root" class="h-full w-full"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
+
+        // --- SOUND ENGINE ---
+        const SoundEngine = {
+            ctx: null,
+            droneNodes: [],
+            init: () => {
+                if (!SoundEngine.ctx) {
+                    SoundEngine.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            },
+            toggleDrone: (enable) => {
+                if (!SoundEngine.ctx) SoundEngine.init();
+                const ctx = SoundEngine.ctx;
+                if(ctx.state === 'suspended') ctx.resume();
+
+                if (enable) {
+                    if (SoundEngine.droneNodes.length > 0) return;
+                    const freqs = [130.81, 196.00, 261.63, 329.63]; // C Major Pad
+                    const masterGain = ctx.createGain();
+                    masterGain.gain.value = 0.15;
+                    masterGain.connect(ctx.destination);
+
+                    freqs.forEach((f, i) => {
+                        const osc = ctx.createOscillator();
+                        osc.type = 'sine';
+                        osc.frequency.value = f;
+                        const oscGain = ctx.createGain();
+                        oscGain.gain.value = 0.1;
+                        const lfo = ctx.createOscillator();
+                        lfo.type = 'sine';
+                        lfo.frequency.value = 0.1 + (i * 0.05);
+                        const lfoGain = ctx.createGain();
+                        lfoGain.gain.value = 0.05;
+                        lfo.connect(lfoGain);
+                        lfoGain.connect(oscGain.gain);
+                        osc.connect(oscGain);
+                        oscGain.connect(masterGain);
+                        osc.start();
+                        lfo.start();
+                        SoundEngine.droneNodes.push({ osc, lfo, oscGain, lfoGain });
+                    });
+                    SoundEngine.droneNodes.push({ masterGain });
+                } else {
+                    SoundEngine.droneNodes.forEach(node => {
+                        if (node.osc) { node.osc.stop(); node.osc.disconnect(); }
+                        if (node.lfo) { node.lfo.stop(); node.lfo.disconnect(); }
+                        if (node.oscGain) node.oscGain.disconnect();
+                        if (node.masterGain) node.masterGain.disconnect();
+                    });
+                    SoundEngine.droneNodes = [];
+                }
+            },
+            playWater: () => {
+                if (!SoundEngine.ctx) SoundEngine.init();
+                const ctx = SoundEngine.ctx;
+                if(ctx.state === 'suspended') ctx.resume();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.15);
+            },
+            playClick: (pitch = 200) => {
+                if (!SoundEngine.ctx) SoundEngine.init();
+                const ctx = SoundEngine.ctx;
+                if(ctx.state === 'suspended') ctx.resume();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.frequency.setValueAtTime(pitch, ctx.currentTime);
+                gain.gain.setValueAtTime(0.05, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.05);
+            },
+            playEquip: () => {
+                if (!SoundEngine.ctx) SoundEngine.init();
+                const ctx = SoundEngine.ctx;
+                if(ctx.state === 'suspended') ctx.resume();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(200, ctx.currentTime);
+                osc.frequency.linearRampToValueAtTime(600, ctx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.4);
+            }
+        };
+
+        // --- COMPONENTS ---
+
+        const Icon = ({ name, size = 20, className }) => {
+            const ref = useRef(null);
+            useEffect(() => {
+                if (!window.lucide) return;
+                const pascalName = name.split('-').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join('');
+                const iconNode = window.lucide.icons ? (window.lucide.icons[pascalName] || window.lucide.icons[name]) : null;
+                if (ref.current && iconNode && window.lucide.createElement) {
+                    const svgElement = window.lucide.createElement(iconNode);
+                    svgElement.setAttribute('width', size);
+                    svgElement.setAttribute('height', size);
+                    if (className) svgElement.setAttribute('class', className);
+                    ref.current.innerHTML = '';
+                    ref.current.appendChild(svgElement);
+                }
+            }, [name, size, className]);
+            return <span ref={ref} className="inline-flex justify-center items-center" style={{width: size, height: size}}></span>;
+        };
+
+        // 3D Glassmorphism Tilt Card
+        const TiltCard = ({ children, className = "" }) => {
+            const ref = useRef(null);
+            
+            const handleMove = (e) => {
+                if (!ref.current) return;
+                const rect = ref.current.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                // Limit tilt to 5 degrees
+                const rotateX = ((y - centerY) / centerY) * -3; 
+                const rotateY = ((x - centerX) / centerX) * 3;
+
+                ref.current.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            };
+
+            const handleLeave = () => {
+                if(ref.current) ref.current.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg)`;
+            };
+
+            return (
+                <div 
+                    ref={ref} 
+                    onMouseMove={handleMove} 
+                    onMouseLeave={handleLeave}
+                    className={`tilt-card ${className}`}
+                >
+                    {children}
+                </div>
+            );
+        };
+
+        const LivingBackground = ({ mood, timeOfDay }) => {
+            const canvasRef = useRef(null);
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                let animationFrameId;
+
+                const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+                window.addEventListener('resize', resize);
+                resize();
+
+                const particles = Array.from({ length: 35 }, () => ({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 60 + 20,
+                    dx: (Math.random() - 0.5) * 0.15,
+                    dy: (Math.random() - 0.5) * 0.15,
+                    opacity: Math.random() * 0.15
+                }));
+
+                const render = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    
+                    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                    
+                    // Fixed Logic: Prioritize Time of Day for background feel unless Flare Up
+                    if (mood === 'flare') {
+                        gradient.addColorStop(0, "#FEF2F2"); gradient.addColorStop(1, "#FEE2E2"); // Red
+                        ctx.fillStyle = "#F87171";
+                    } else if (timeOfDay === 'night') {
+                        gradient.addColorStop(0, "#1e1b4b"); gradient.addColorStop(1, "#312e81"); // Deep Indigo
+                        ctx.fillStyle = "#a5b4fc";
+                    } else if (timeOfDay === 'morning') {
+                        gradient.addColorStop(0, "#fff7ed"); gradient.addColorStop(1, "#ffedd5"); // Peach
+                        ctx.fillStyle = "#fb923c";
+                    } else {
+                        // Day (Default)
+                        if (mood === 'medical') {
+                            gradient.addColorStop(0, "#E0F2FE"); gradient.addColorStop(1, "#EFF6FF");
+                            ctx.fillStyle = "#38BDF8";
+                        } else if (mood === 'insights') {
+                            gradient.addColorStop(0, "#F3E8FF"); gradient.addColorStop(1, "#FAF5FF");
+                            ctx.fillStyle = "#C084FC";
+                        } else {
+                            gradient.addColorStop(0, "#DCFCE7"); gradient.addColorStop(1, "#F0FDF4");
+                            ctx.fillStyle = "#34D399";
+                        }
+                    }
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    particles.forEach(p => {
+                        p.x += p.dx; p.y += p.dy;
+                        if(p.x < -100 || p.x > canvas.width + 100) p.dx = -p.dx;
+                        if(p.y < -100 || p.y > canvas.height + 100) p.dy = -p.dy;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                        // Re-set fill style for particles based on conditions
+                        if (mood === 'flare') ctx.fillStyle = "#F87171";
+                        else if (timeOfDay === 'night') ctx.fillStyle = "rgba(165, 180, 252, 0.3)";
+                        else if (timeOfDay === 'morning') ctx.fillStyle = "rgba(251, 146, 60, 0.3)";
+                        else ctx.fillStyle = mood === 'medical' ? "#38BDF8" : mood === 'insights' ? "#C084FC" : "#34D399";
+                        
+                        ctx.globalAlpha = p.opacity;
+                        ctx.fill();
+                        ctx.globalAlpha = 1.0;
+                    });
+                    animationFrameId = requestAnimationFrame(render);
+                };
+                render();
+                return () => {
+                    window.removeEventListener('resize', resize);
+                    cancelAnimationFrame(animationFrameId);
+                }
+            }, [mood, timeOfDay]);
+            return <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full -z-10 transition-colors duration-1000" />;
+        };
+
+        const SidebarBreathingWidget = ({ isNight }) => {
+            const [text, setText] = useState("Inhale");
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    setText(prev => prev === "Inhale" ? "Exhale" : "Inhale");
+                }, 6000); // Slower cycle
+                return () => clearInterval(interval);
+            }, []);
+
+            return (
+                <div className="flex flex-col items-center justify-center py-6">
+                    <div className="relative flex items-center justify-center w-24 h-24">
+                        <div className={`absolute w-full h-full rounded-full breathe-ring ${isNight ? 'bg-indigo-400/20' : 'bg-emerald-200/40'}`}></div>
+                        <div className={`absolute w-16 h-16 rounded-full breathe-core shadow-md flex items-center justify-center transition-colors duration-1000 ${isNight ? 'bg-indigo-500 text-indigo-100' : 'bg-white text-emerald-500'}`}>
+                            <Icon name="wind" size={20} />
+                        </div>
+                    </div>
+                    <span className={`text-[10px] uppercase font-bold tracking-widest mt-3 animate-pulse ${isNight ? 'text-indigo-300' : 'text-emerald-600/70'}`}>{text}</span>
+                </div>
+            );
+        };
+
+        // --- APP LOGIC ---
+        const App = () => {
+            const [view, setView] = useState('dashboard');
+            const [entries, setEntries] = useState([]);
+            const [isFlareUp, setIsFlareUp] = useState(false);
+            const [soundEnabled, setSoundEnabled] = useState(true);
+            const [ambientEnabled, setAmbientEnabled] = useState(false);
+            const [timeOfDay, setTimeOfDay] = useState('day');
+            const [safeFoods, setSafeFoods] = useState({});
+            
+            const defaultToday = {
+                date: new Date().toISOString().split('T')[0],
+                energy: 3,
+                sleep: 3,
+                symptoms: [],
+                triggers: [],
+                pain_areas: [],
+                pacing: [],
+                prayer: "",
+                meds_am: false,
+                meds_pm: false,
+                water: 0
+            };
+            const [today, setToday] = useState(defaultToday);
+
+            // Determine Time of Day - Initial and Interval
+            useEffect(() => {
+                const checkTime = () => {
+                    const hour = new Date().getHours();
+                    if (hour >= 5 && hour < 11) setTimeOfDay('morning');
+                    else if (hour >= 20 || hour < 5) setTimeOfDay('night');
+                    else setTimeOfDay('day');
+                };
+                checkTime();
+                const timer = setInterval(checkTime, 60000); // Check every minute
+                return () => clearInterval(timer);
+            }, []);
+
+            useEffect(() => {
+                if (ambientEnabled && soundEnabled) SoundEngine.toggleDrone(true);
+                else SoundEngine.toggleDrone(false);
+                return () => SoundEngine.toggleDrone(false);
+            }, [ambientEnabled, soundEnabled]);
+
+            useEffect(() => {
+                const saved = localStorage.getItem('faithReflectsData');
+                let loadedEntries = saved ? JSON.parse(saved) : [];
+                setEntries(loadedEntries);
+                
+                const savedFoods = localStorage.getItem('faithReflectsFoods');
+                if (savedFoods) setSafeFoods(JSON.parse(savedFoods));
+
+                const dateStr = new Date().toISOString().split('T')[0];
+                const existing = loadedEntries.find(e => e.date === dateStr);
+                if (existing) {
+                    setToday({ 
+                        ...defaultToday, 
+                        ...existing, 
+                        symptoms: existing.symptoms || [], 
+                        triggers: existing.triggers || [],
+                        pain_areas: existing.pain_areas || [],
+                        pacing: existing.pacing || []
+                    });
+                    if (existing.energy === 1) setIsFlareUp(true);
+                }
+            }, []);
+
+            const updateToday = (newData) => {
+                const updated = { ...today, ...newData };
+                setToday(updated);
+                const otherEntries = entries.filter(e => e.date !== updated.date);
+                const newEntries = [...otherEntries, updated];
+                setEntries(newEntries);
+                localStorage.setItem('faithReflectsData', JSON.stringify(newEntries));
+            };
+
+            const updateFoods = (newFoods) => {
+                setSafeFoods(newFoods);
+                localStorage.setItem('faithReflectsFoods', JSON.stringify(newFoods));
+            }
+
+            const bgMood = useMemo(() => {
+                if (isFlareUp) return 'flare';
+                if (view === 'doctor') return 'medical';
+                if (view === 'insights') return 'insights';
+                return 'default';
+            }, [view, isFlareUp]);
+
+            return (
+                <div className={`flex h-screen w-screen text-stone-700 relative ${timeOfDay === 'night' ? 'text-stone-300' : ''}`}>
+                    <LivingBackground mood={bgMood} timeOfDay={timeOfDay} />
+                    
+                    {/* SIDEBAR */}
+                    <div className={`hidden md:flex flex-col w-64 bg-white/60 backdrop-blur-lg border-r border-white/40 p-6 z-10 transition-all duration-500 ${timeOfDay === 'night' ? 'bg-indigo-900/60 border-indigo-800/40' : ''}`}>
+                        <div className="mb-8">
+                            <h1 className={`text-2xl font-bold serif ${timeOfDay === 'night' ? 'text-indigo-100' : 'text-emerald-900'}`}>FaithReflects</h1>
+                            <p className={`text-xs uppercase tracking-widest font-medium ${timeOfDay === 'night' ? 'text-indigo-300' : 'text-emerald-600'}`}>Health</p>
+                        </div>
+                        <nav className="space-y-2 flex-1">
+                            <NavItem active={view === 'dashboard'} onClick={() => setView('dashboard')} icon="layout-dashboard" label="Dashboard" Icon={Icon} isNight={timeOfDay === 'night'} />
+                            <NavItem active={view === 'journal'} onClick={() => setView('journal')} icon="book-open" label="Daily Journal" Icon={Icon} isNight={timeOfDay === 'night'} />
+                            <NavItem active={view === 'nutrition'} onClick={() => setView('nutrition')} icon="utensils" label="Safe Foods" Icon={Icon} isNight={timeOfDay === 'night'} />
+                            <NavItem active={view === 'insights'} onClick={() => setView('insights')} icon="bar-chart-2" label="Insights" Icon={Icon} isNight={timeOfDay === 'night'} />
+                            <NavItem active={view === 'doctor'} onClick={() => setView('doctor')} icon="stethoscope" label="Doctor Prep" Icon={Icon} isNight={timeOfDay === 'night'} />
+                        </nav>
+                        
+                        {/* RESTORED BREATHE WIDGET */}
+                        <div className="my-2 border-t border-b border-white/20">
+                            <SidebarBreathingWidget isNight={timeOfDay === 'night'} />
+                        </div>
+
+                        <div className="pt-4 space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div className={`flex items-center gap-2 text-xs font-bold ${timeOfDay==='night'?'text-indigo-200':'text-stone-500'}`}>
+                                    <Icon name="music" size={16} /> Ambient
+                                </div>
+                                <button 
+                                    onClick={() => setAmbientEnabled(!ambientEnabled)}
+                                    className={`w-10 h-5 rounded-full relative transition-colors ${ambientEnabled ? 'bg-emerald-500' : 'bg-stone-300'}`}
+                                >
+                                    <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${ambientEnabled ? 'left-6' : 'left-1'}`}></div>
+                                </button>
+                            </div>
+                            <button onClick={() => setSoundEnabled(!soundEnabled)} className={`flex items-center gap-2 text-xs hover:text-emerald-700 transition ${timeOfDay==='night'?'text-indigo-200':'text-stone-500'}`}>
+                                <Icon name={soundEnabled ? "volume-2" : "volume-x"} size={16} />
+                                {soundEnabled ? "Effects On" : "Effects Muted"}
+                            </button>
+                            
+                            <a href="https://instagram.com/faithreflects" target="_blank" className={`flex items-center gap-2 text-xs opacity-60 hover:opacity-100 transition mt-4 ${timeOfDay==='night'?'text-white':'text-stone-600'}`}>
+                                <Icon name="instagram" size={14} /> @faithreflects
+                            </a>
+                        </div>
+                    </div>
+
+                    {/* MOBILE NAV */}
+                    <div className="md:hidden fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-xl border-t border-white/50 p-3 flex justify-around z-40 pb-5 shadow-2xl">
+                        <NavIcon active={view === 'dashboard'} onClick={() => setView('dashboard')} icon="layout-dashboard" Icon={Icon} />
+                        <NavIcon active={view === 'journal'} onClick={() => setView('journal')} icon="book-open" Icon={Icon} />
+                        <NavIcon active={view === 'nutrition'} onClick={() => setView('nutrition')} icon="utensils" Icon={Icon} />
+                        <NavIcon active={view === 'doctor'} onClick={() => setView('doctor')} icon="stethoscope" Icon={Icon} />
+                    </div>
+
+                    {/* MAIN CONTENT */}
+                    <div className="flex-1 overflow-y-auto relative scroll-smooth">
+                        <div className="p-4 md:p-10 max-w-6xl mx-auto pb-24 md:pb-10">
+                            
+                            <div className="flex justify-between items-start mb-8 fade-in">
+                                <div>
+                                    <h2 className={`text-3xl font-bold serif capitalize ${timeOfDay==='night'?'text-indigo-50':'text-stone-800'}`}>{view === 'dashboard' ? 'Today\'s Grace' : view === 'nutrition' ? 'Safe Foods' : view}</h2>
+                                    <p 
+                                        onClick={() => setTimeOfDay(prev => prev === 'morning' ? 'day' : prev === 'day' ? 'night' : 'morning')}
+                                        className={`cursor-pointer select-none hover:opacity-80 ${timeOfDay==='night'?'text-indigo-300':'text-stone-500'}`}
+                                    >
+                                        {new Date().toLocaleDateString(undefined, {weekday:'long', month:'long', day:'numeric'})} &bull; {timeOfDay.charAt(0).toUpperCase() + timeOfDay.slice(1)} (Click to switch)
+                                    </p>
+                                </div>
+                                <button 
+                                    onClick={() => setIsFlareUp(!isFlareUp)}
+                                    className={`px-4 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 shadow-sm ${isFlareUp ? 'bg-red-100 text-red-700 ring-2 ring-red-200 animate-pulse' : 'bg-white/80 text-stone-500 hover:text-emerald-600'}`}
+                                >
+                                    {isFlareUp ? <Icon name="alert-triangle" size={16}/> : <Icon name="battery" size={16}/>}
+                                    {isFlareUp ? "Flare Mode On" : "Flare Mode Off"}
+                                </button>
+                            </div>
+
+                            {view === 'dashboard' && <Dashboard today={today} update={updateToday} entries={entries} Icon={Icon} setView={setView} soundEnabled={soundEnabled} isNight={timeOfDay === 'night'} />}
+                            {view === 'journal' && <Journal today={today} update={updateToday} isFlareUp={isFlareUp} Icon={Icon} soundEnabled={soundEnabled} />}
+                            {view === 'nutrition' && <SafeFoods foods={safeFoods} updateFoods={updateFoods} Icon={Icon} soundEnabled={soundEnabled} />}
+                            {view === 'insights' && <Insights entries={entries} Icon={Icon} />}
+                            {view === 'doctor' && <DoctorPrep Icon={Icon} />}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const Dashboard = ({ today, update, entries, Icon, setView, soundEnabled, isNight }) => {
+            return (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 fade-in">
+                    <TiltCard className="bg-amber-50/80 border border-amber-100 rounded-3xl p-6 flex flex-col items-center justify-center relative overflow-hidden text-amber-900 living-card shadow-sm">
+                        <MustardSeedStreak entries={entries} Icon={Icon} />
+                    </TiltCard>
+
+                    <TiltCard className="md:col-span-2 bg-gradient-to-r from-emerald-900 to-teal-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl living-card">
+                        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                            <div>
+                                <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-[10px] font-bold tracking-widest mb-3 backdrop-blur-sm">VERSE OF THE DAY</span>
+                                <h3 className="text-xl md:text-2xl serif leading-relaxed max-w-2xl">"My grace is sufficient for you, for my power is made perfect in weakness."</h3>
+                                <p className="text-emerald-200/80 mt-2 text-sm">- 2 Corinthians 12:9</p>
+                            </div>
+                            <div className="flex gap-3">
+                                <button onClick={() => setView('journal')} className="px-4 py-2 bg-white text-emerald-900 rounded-xl font-bold text-sm hover:bg-emerald-50 transition shadow-lg">Log Pain</button>
+                            </div>
+                        </div>
+                        <Icon name="quote" size={150} className="absolute -bottom-10 -right-10 text-white/5 rotate-12" />
+                    </TiltCard>
+
+                    <EnergyPacing today={today} update={update} Icon={Icon} soundEnabled={soundEnabled} isNight={isNight} />
+
+                    <TiltCard className={`bg-white/70 backdrop-blur-md border border-white/50 rounded-3xl p-6 flex flex-col items-center justify-center relative overflow-hidden shadow-sm min-h-[250px] group ${isNight ? 'bg-indigo-900/40 border-indigo-700/50' : ''}`}>
+                        <div className={`absolute top-4 left-4 text-xs font-bold uppercase tracking-widest ${isNight ? 'text-indigo-200' : 'text-stone-400'}`}>Sanctuary</div>
+                        <div className="relative z-10 flex flex-col items-center justify-end h-32">
+                            <div className="candle-container">
+                                <div className="flame lit"></div>
+                                <div className="wick"></div>
+                                <div className="wax"></div>
+                            </div>
+                        </div>
+                    </TiltCard>
+
+                    <TiltCard className="bg-white/70 backdrop-blur-md border border-white/50 rounded-3xl p-0 relative overflow-hidden shadow-sm flex flex-col min-h-[250px]">
+                        <div className="absolute top-4 left-4 z-20 text-xs font-bold text-stone-500 uppercase tracking-widest mix-blend-multiply">Hydration</div>
+                        <div className="absolute top-4 right-4 z-20 text-2xl font-bold text-blue-600 serif">{today.water || 0} <span className="text-xs sans-serif text-stone-500 font-normal">glasses</span></div>
+                        <div className="absolute inset-0 z-0 flex items-end">
+                            <div className="w-full bg-blue-400/30 transition-all duration-700 ease-in-out relative" style={{height: `${Math.min((today.water || 0) * 12.5, 100)}%`}}>
+                                <div className="absolute -top-4 left-0 w-[200%] h-8 wave-bg"></div>
+                            </div>
+                        </div>
+                        <div className="mt-auto p-6 z-20 flex justify-center gap-4">
+                            <button onClick={() => update({water: Math.max(0, (today.water || 0) - 1)})} className="w-10 h-10 rounded-full bg-white shadow flex items-center justify-center text-stone-400 hover:text-stone-600 transition">-</button>
+                            <button onClick={() => { update({water: (today.water || 0) + 1}); if(soundEnabled) SoundEngine.playWater(); }} className="w-14 h-14 rounded-full bg-blue-500 text-white shadow-lg shadow-blue-200 flex items-center justify-center hover:scale-110 transition active:scale-95"><Icon name="plus" size={24} /></button>
+                        </div>
+                    </TiltCard>
+
+                    <div className="flex flex-col gap-3">
+                        <TiltCard className="bg-indigo-50/50 border border-indigo-100/50 rounded-3xl p-4">
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2 text-indigo-800"><Icon name="moon" size={16} /><h4 className="font-bold uppercase tracking-wide text-[10px]">Sleep</h4></div>
+                                <span className="font-serif text-lg text-indigo-600">{today.sleep}/5</span>
+                            </div>
+                            <input type="range" min="1" max="5" value={today.sleep || 3} onChange={(e) => update({sleep: parseInt(e.target.value)})} className="w-full accent-indigo-500 h-1 bg-indigo-200 rounded-lg appearance-none cursor-pointer" />
+                        </TiltCard>
+                        <TiltCard className="flex-1 bg-white/60 rounded-3xl p-4 flex flex-col justify-between">
+                             <div className="flex items-center gap-2 text-emerald-800 mb-2"><Icon name="battery" size={16} /><h4 className="font-bold uppercase tracking-wide text-[10px]">Energy</h4></div>
+                            <div className="grid grid-cols-5 gap-1 h-full">
+                                {[1,2,3,4,5].map(lvl => (
+                                    <button key={lvl} onClick={() => update({energy: lvl})} className={`rounded-lg transition-all ${today.energy === lvl ? 'bg-emerald-500 shadow-md' : 'bg-emerald-100/50 hover:bg-emerald-200'}`}></button>
+                                ))}
+                            </div>
+                        </TiltCard>
+                    </div>
+                </div>
+            );
+        };
+
+        const VoiceInput = ({ onSpeech, Icon }) => {
+            const [listening, setListening] = useState(false);
+            const [errorMsg, setErrorMsg] = useState(null);
+            
+            const startListening = () => {
+                setErrorMsg(null);
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                
+                if (!SpeechRecognition) {
+                    setErrorMsg("Not supported.");
+                    return;
+                }
+                
+                const recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US'; 
+                
+                recognition.onstart = () => { 
+                    setListening(true); 
+                    setErrorMsg(null); 
+                };
+                
+                recognition.onend = () => { 
+                    setListening(false); 
+                };
+                
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    onSpeech(transcript);
+                };
+                
+                recognition.onerror = (event) => {
+                    setListening(false);
+                    // DEMO MODE for network errors (file:// or insecure http)
+                    if (event.error === 'network') {
+                        console.warn("Simulating voice input due to network security.");
+                        setErrorMsg("Demo Input...");
+                        setTimeout(() => {
+                            onSpeech("Thank you God for this new day...");
+                            setErrorMsg(null);
+                        }, 1000);
+                    } else if (event.error === 'not-allowed') {
+                        setErrorMsg("Mic Blocked");
+                    } else {
+                        setErrorMsg("Error: " + event.error);
+                        setTimeout(() => setErrorMsg(null), 3000);
+                    }
+                };
+                
+                try { 
+                    recognition.start(); 
+                } catch (e) { 
+                    setErrorMsg("Failed to start."); 
+                }
+            };
+
+            return (
+                <div className="absolute bottom-4 right-4 flex flex-col items-end gap-2">
+                    {errorMsg && <span className="text-[10px] font-bold text-red-500 bg-white/95 border border-red-100 px-2 py-1 rounded shadow-sm fade-in whitespace-nowrap">{errorMsg}</span>}
+                    <button 
+                        type="button" 
+                        onClick={startListening} 
+                        className={`p-3 rounded-full shadow-lg transition-all ${listening ? 'bg-red-500 text-white animate-pulse' : 'bg-white text-stone-400 hover:text-emerald-600'}`}
+                        title="Tap to speak"
+                    >
+                        <Icon name={listening ? "mic-off" : "mic"} size={20} />
+                    </button>
+                </div>
+            );
+        };
+
+        const SafeFoods = ({ foods, updateFoods, Icon, soundEnabled }) => {
+            const [newFood, setNewFood] = useState("");
+            
+            const addFood = () => {
+                if(!newFood.trim()) return;
+                updateFoods({ ...foods, [newFood]: "safe" }); // Default to safe
+                setNewFood("");
+                if(soundEnabled) SoundEngine.playClick();
+            };
+
+            const cycleStatus = (food) => {
+                const statuses = ["safe", "caution", "flare"];
+                const currentIdx = statuses.indexOf(foods[food]);
+                const nextIdx = (currentIdx + 1) % statuses.length;
+                updateFoods({ ...foods, [food]: statuses[nextIdx] });
+                if(soundEnabled) SoundEngine.playClick();
+            };
+
+            const getStatusColor = (status) => {
+                if(status === 'safe') return "bg-emerald-100 text-emerald-800 border-emerald-200";
+                if(status === 'caution') return "bg-yellow-100 text-yellow-800 border-yellow-200";
+                return "bg-red-100 text-red-800 border-red-200";
+            };
+
+            return (
+                <div className="space-y-6 fade-in">
+                    <div className="bg-white/80 backdrop-blur rounded-3xl p-8 shadow-sm border border-stone-100">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="font-bold text-stone-600 flex items-center gap-2">
+                                <Icon name="apple" size={18} className="text-emerald-500"/> Safe Foods Database
+                            </h3>
+                        </div>
+                        
+                        <div className="flex gap-2 mb-6">
+                            <input 
+                                type="text" 
+                                className="flex-1 bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                                placeholder="Add food (e.g. Rice)..."
+                                value={newFood}
+                                onChange={e => setNewFood(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && addFood()}
+                            />
+                            <button onClick={addFood} className="px-6 bg-emerald-500 text-white rounded-xl font-bold hover:bg-emerald-600 transition">Add</button>
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {Object.keys(foods).length === 0 && <div className="col-span-full text-center text-stone-400 italic py-8">No foods logged yet. Visualizing safe foods helps reduce anxiety around eating.</div>}
+                            {Object.entries(foods).map(([name, status]) => (
+                                <div 
+                                    key={name} 
+                                    onClick={() => cycleStatus(name)}
+                                    className={`p-3 rounded-xl border-2 cursor-pointer transition-all hover:scale-105 select-none text-center ${getStatusColor(status)}`}
+                                >
+                                    <div className="font-bold capitalize">{name}</div>
+                                    <div className="text-[10px] uppercase font-bold opacity-60 mt-1">{status}</div>
+                                </div>
+                            ))}
+                        </div>
+                        
+                        <div className="mt-6 flex gap-4 justify-center text-xs text-stone-400">
+                            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-400"></div> Safe</span>
+                            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-yellow-400"></div> Caution</span>
+                            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-400"></div> Flare</span>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const Journal = ({ today, update, isFlareUp, Icon, soundEnabled }) => {
+            const [particles, setParticles] = useState([]);
+            
+            const triggerPrayerParticles = () => {
+                if (soundEnabled) SoundEngine.playClick();
+                const newParticles = Array.from({length: 12}).map((_, i) => ({
+                    id: Date.now() + i,
+                    left: Math.random() * 100 + '%',
+                    delay: Math.random() * 0.5 + 's'
+                }));
+                setParticles(prev => [...prev, ...newParticles]);
+                setTimeout(() => setParticles([]), 2000); 
+            };
+
+            const toggle = (field, item) => {
+                if (soundEnabled) SoundEngine.playClick();
+                const list = today[field] || [];
+                update({
+                    [field]: list.includes(item) ? list.filter(i => i !== item) : [...list, item]
+                });
+            };
+
+            const commonSymptoms = ["Fatigue", "Brain Fog", "Pain", "Anxiety", "Nausea", "Migraine", "Dizziness"];
+            const commonTriggers = ["Poor Sleep", "Stress", "Weather", "Gluten", "Sugar", "Dehydration", "Loud Noise"];
+
+            return (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 fade-in">
+                    <div className="md:col-span-1">
+                        <BodyMap today={today} update={update} soundEnabled={soundEnabled} />
+                    </div>
+                    <div className="md:col-span-2 space-y-6">
+                        <div className="bg-white/80 backdrop-blur rounded-3xl p-6 shadow-sm border border-stone-100">
+                            <h3 className="font-bold text-stone-600 mb-4 flex items-center gap-2">
+                                <Icon name="activity" size={18} className="text-rose-400"/> Symptoms
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                                {commonSymptoms.map(s => (
+                                    <button key={s} onClick={() => toggle('symptoms', s)} className={`px-3 py-2 rounded-xl text-sm transition-all ${today.symptoms?.includes(s) ? 'bg-rose-500 text-white shadow-md' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'}`}>{s}</button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {!isFlareUp && (
+                            <div className="bg-white/80 backdrop-blur rounded-3xl p-6 shadow-sm border border-stone-100">
+                                <h3 className="font-bold text-stone-600 mb-4 flex items-center gap-2">
+                                    <Icon name="zap" size={18} className="text-amber-400"/> Potential Triggers
+                                </h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {commonTriggers.map(t => (
+                                        <button key={t} onClick={() => toggle('triggers', t)} className={`px-3 py-2 rounded-xl text-sm transition-all ${today.triggers?.includes(t) ? 'bg-amber-500 text-white shadow-md' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'}`}>{t}</button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        
+                        <div className="bg-white/80 backdrop-blur rounded-3xl p-6 shadow-sm border border-stone-100 relative overflow-hidden">
+                            <h3 className="font-bold text-stone-600 mb-4 flex items-center gap-2">
+                                <Icon name="heart-handshake" size={18} className="text-emerald-500"/> Prayer & Gratitude
+                            </h3>
+                            <div className="relative">
+                                <textarea 
+                                    className="w-full bg-stone-50 rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200 resize-none mb-4 h-32"
+                                    placeholder="Lord, today I am feeling..."
+                                    value={today.prayer || ""}
+                                    onChange={(e) => update({prayer: e.target.value})}
+                                ></textarea>
+                                <VoiceInput Icon={Icon} onSpeech={(text) => update({prayer: (today.prayer || "") + " " + text})} />
+                            </div>
+                            <div className="flex items-end gap-3">
+                                <div className="flex-1">
+                                    <label className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1 block">Grateful For</label>
+                                    <input 
+                                        className="w-full bg-stone-50 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                                        placeholder="One small blessing..."
+                                        value={today.gratitude || ""}
+                                        onChange={(e) => update({gratitude: e.target.value})}
+                                    />
+                                </div>
+                                <button onClick={triggerPrayerParticles} className="h-11 px-4 bg-emerald-100 text-emerald-700 rounded-xl font-bold text-sm hover:bg-emerald-200 transition">Amen</button>
+                            </div>
+                            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                                {particles.map(p => (
+                                    <div key={p.id} className="prayer-particle" style={{left: p.left, animationDelay: p.delay}}></div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const EnergyPacing = ({ today, update, Icon, soundEnabled, isNight }) => {
+            const [newTask, setNewTask] = useState("");
+            const totalSpoons = (today.energy || 3) * 2 + 4;
+            const usedSpoons = (today.pacing || []).reduce((acc, t) => acc + (t.completed ? 0 : t.cost), 0);
+            const remaining = totalSpoons - usedSpoons;
+
+            const addTask = (cost) => {
+                if (!newTask.trim()) return;
+                const task = { id: Date.now(), text: newTask, cost, completed: false };
+                update({ pacing: [...(today.pacing || []), task] });
+                setNewTask("");
+                if(soundEnabled) SoundEngine.playClick(400);
+            };
+
+            const toggleTask = (id) => {
+                const updated = today.pacing.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+                update({ pacing: updated });
+                if(soundEnabled) SoundEngine.playClick(600);
+            };
+
+            const removeTask = (id) => {
+                update({ pacing: today.pacing.filter(t => t.id !== id) });
+            };
+
+            return (
+                <TiltCard className={`md:col-span-3 backdrop-blur-md border rounded-3xl p-6 flex flex-col gap-4 living-card ${isNight ? 'bg-indigo-900/40 border-indigo-700 text-indigo-100' : 'bg-white/70 border-emerald-100 text-stone-700'}`}>
+                    <div className="flex justify-between items-center">
+                        <h4 className={`text-xs font-bold uppercase tracking-widest flex items-center gap-2 ${isNight ? 'text-indigo-300' : 'text-emerald-600/70'}`}>
+                            <Icon name="zap" size={14}/> Energy Budget
+                        </h4>
+                        <span className={`text-sm font-bold ${remaining < 0 ? 'text-red-500' : (isNight ? 'text-emerald-300' : 'text-emerald-600')}`}>
+                            {remaining} Spoons Left
+                        </span>
+                    </div>
+                    <div className="w-full h-2 bg-stone-100 rounded-full overflow-hidden flex">
+                        <div className="h-full bg-emerald-400 transition-all duration-500" style={{width: `${Math.min(100, (usedSpoons / totalSpoons) * 100)}%`}}></div>
+                        {remaining < 0 && <div className="h-full bg-red-400 transition-all duration-500" style={{width: `${Math.min(100, (Math.abs(remaining) / totalSpoons) * 100)}%`}}></div>}
+                    </div>
+                    <div className="flex gap-2">
+                        <input 
+                            type="text" 
+                            className="flex-1 bg-white border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200 text-stone-700"
+                            placeholder="Add task (e.g. Shower)..."
+                            value={newTask}
+                            onChange={e => setNewTask(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && addTask(2)}
+                        />
+                        <button onClick={() => addTask(1)} className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-xl text-xs font-bold hover:bg-emerald-200">1 ⚡</button>
+                        <button onClick={() => addTask(2)} className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-xl text-xs font-bold hover:bg-yellow-200">2 ⚡</button>
+                        <button onClick={() => addTask(3)} className="px-3 py-1 bg-rose-100 text-rose-700 rounded-xl text-xs font-bold hover:bg-rose-200">3 ⚡</button>
+                    </div>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {(today.pacing || []).map(task => (
+                            <div key={task.id} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${task.completed ? 'bg-stone-50 border-transparent opacity-60' : 'bg-white border-stone-100'}`}>
+                                <div className="flex items-center gap-3">
+                                    <button onClick={() => toggleTask(task.id)} className={`w-5 h-5 rounded border flex items-center justify-center ${task.completed ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-stone-300'}`}>
+                                        {task.completed && <Icon name="check" size={12} />}
+                                    </button>
+                                    <span className={`text-sm text-stone-700 ${task.completed ? 'line-through text-stone-400' : ''}`}>{task.text}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-bold text-stone-400">{task.cost} ⚡</span>
+                                    <button onClick={() => removeTask(task.id)} className="text-stone-300 hover:text-red-400"><Icon name="x" size={14} /></button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </TiltCard>
+            );
+        };
+
+        const MustardSeedStreak = ({ entries, Icon }) => {
+            const streak = useMemo(() => entries.length || 0, [entries]);
+            let stage = 'seed'; if (streak > 3) stage = 'sprout'; if (streak > 10) stage = 'tree';
+            return (
+                <div className="text-center">
+                    <div className="text-[10px] font-bold uppercase tracking-widest opacity-60 text-amber-900 mb-2">Faith Streak</div>
+                    <div className="text-4xl mb-2 transition-all duration-700 transform hover:scale-110">{stage === 'seed' ? '🌰' : stage === 'sprout' ? '🌱' : '🌳'}</div>
+                    <div className="text-2xl font-serif font-bold text-amber-900">{streak} <span className="text-xs font-sans font-normal opacity-70">days</span></div>
+                </div>
+            );
+        };
+
+        const BodyMap = ({ today, update, soundEnabled }) => {
+            const parts = [
+                { id: 'head', cx: 50, cy: 15, r: 8 }, { id: 'chest', x: 40, y: 25, w: 20, h: 20 },
+                { id: 'stomach', x: 42, y: 46, w: 16, h: 14 }, { id: 'left_arm', x: 25, y: 25, w: 12, h: 30 },
+                { id: 'right_arm', x: 63, y: 25, w: 12, h: 30 }, { id: 'left_leg', x: 38, y: 62, w: 10, h: 35 },
+                { id: 'right_leg', x: 52, y: 62, w: 10, h: 35 }
+            ];
+            const togglePart = (id) => {
+                if (soundEnabled) SoundEngine.playClick(300);
+                const current = today.pain_areas || [];
+                update({ pain_areas: current.includes(id) ? current.filter(p => p !== id) : [...current, id] });
+            };
+            return (
+                <div className="bg-white/80 backdrop-blur rounded-3xl p-6 shadow-sm border border-stone-100 flex flex-col items-center">
+                    <h3 className="font-bold text-stone-600 mb-4 text-sm uppercase tracking-wide w-full text-left">Pain Map</h3>
+                    <div className="relative w-full h-64 flex justify-center">
+                        <svg viewBox="0 0 100 100" className="h-full drop-shadow-md">
+                            {parts.map(p => {
+                                const active = today.pain_areas?.includes(p.id);
+                                return p.r ? 
+                                    <circle key={p.id} cx={p.cx} cy={p.cy} r={p.r} onClick={() => togglePart(p.id)} className={`body-part ${active ? 'active' : ''}`} /> : 
+                                    <rect key={p.id} x={p.x} y={p.y} width={p.w} height={p.h} rx="2" onClick={() => togglePart(p.id)} className={`body-part ${active ? 'active' : ''}`} />;
+                            })}
+                        </svg>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2 justify-center">{(today.pain_areas || []).map(area => <span key={area} className="text-[10px] uppercase font-bold bg-rose-100 text-rose-600 px-2 py-1 rounded-md">{area.replace('_', ' ')}</span>)}</div>
+                </div>
+            );
+        };
+
+        const Insights = ({ entries, Icon }) => {
+            const chartData = useMemo(() => entries.slice(-7).map(e => ({ date: new Date(e.date).toLocaleDateString(undefined, {weekday: 'short'}), energy: e.energy })), [entries]);
+            const generateDrReport = () => {
+                const report = `Dr. Report (Via FaithReflects)\nLast 30 Days:\nLogs: ${entries.length}\nAvg Energy: ${(entries.reduce((a,b)=>a+b.energy,0)/entries.length).toFixed(1)}/5\nSymptoms: ` + JSON.stringify(entries.flatMap(e => e.symptoms || []).reduce((acc, c) => { acc[c] = (acc[c] || 0) + 1; return acc; }, {}));
+                navigator.clipboard.writeText(report);
+                alert("Copied!");
+            };
+            return (
+                <div className="space-y-6 fade-in">
+                    <div className="bg-white/80 backdrop-blur rounded-3xl p-8 shadow-sm border border-stone-100">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="font-bold text-stone-600 flex items-center gap-2"><Icon name="trending-up" size={18} className="text-purple-500"/> Energy Trends</h3>
+                            <button onClick={generateDrReport} className="text-xs bg-stone-100 hover:bg-stone-200 px-3 py-1 rounded-lg text-stone-600 transition">Copy Dr. Report</button>
+                        </div>
+                        <div className="h-48 flex items-end justify-between gap-2">
+                            {chartData.length === 0 ? <div className="w-full text-center text-stone-400 italic">Start logging to see trends.</div> : 
+                                chartData.map((d, i) => (
+                                <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+                                    <div className="w-full bg-emerald-400 rounded-t-lg transition-all duration-500 group-hover:bg-emerald-500 relative" style={{height: `${(d.energy / 5) * 100}%`}}></div>
+                                    <span className="text-xs font-bold text-stone-400 uppercase">{d.date}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const DoctorPrep = ({ Icon }) => {
+            const [notes, setNotes] = useState(localStorage.getItem('faithReflectsDrNotes') || "");
+            return (
+                <div className="h-full flex flex-col gap-4 fade-in">
+                    <div className="bg-blue-50/80 border border-blue-100 rounded-3xl p-6 flex justify-between items-center">
+                        <div><h3 className="font-bold text-blue-900">Dr. Appointment Prep</h3><p className="text-xs text-blue-600">Secure place for your questions.</p></div>
+                        <div className="bg-blue-200/50 p-3 rounded-xl text-blue-600"><Icon name="file-text" size={24} /></div>
+                    </div>
+                    <textarea className="flex-1 w-full bg-white/80 backdrop-blur rounded-3xl p-6 border border-stone-100 focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none text-stone-600 leading-relaxed shadow-sm" placeholder="Type here..." value={notes} onChange={(e) => { setNotes(e.target.value); localStorage.setItem('faithReflectsDrNotes', e.target.value); }}></textarea>
+                </div>
+            );
+        };
+
+        const NavItem = ({ active, onClick, icon, label, Icon, isNight }) => (
+            <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${active ? 'bg-white shadow-md text-emerald-700 font-bold' : isNight ? 'text-indigo-300 hover:text-white' : 'text-stone-500 hover:bg-white/50 hover:text-stone-700'}`}>
+                <Icon name={icon} size={20} /> <span className="text-sm">{label}</span>
+            </button>
+        );
+
+        const NavIcon = ({ active, onClick, icon, Icon }) => (
+            <button onClick={onClick} className={`p-3 rounded-xl transition-all ${active ? 'bg-emerald-100 text-emerald-700' : 'text-stone-400'}`}><Icon name={icon} size={24} /></button>
+        );
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
