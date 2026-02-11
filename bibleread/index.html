@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FaithReflects | Moody Lo-Fi Companion</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
+    
+    <!-- Core Libraries -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+    <!-- AI Module -->
+    <script type="importmap">
+    {
+      "imports": {
+        "@google/genai": "https://esm.sh/@google/genai@0.1.1"
+      }
+    }
+    </script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        moody: {
+                            base: '#F5EBE0',      // Warm Sand
+                            glass: 'rgba(255, 255, 255, 0.45)',
+                            text: '#3E2723',      // Dark Coffee
+                            accent1: '#D4A373',   // Clay
+                            accent2: '#CCD5AE',   // Sage
+                            accent3: '#E9EDC9',   // Muted Lime
+                            gold: '#B08968',      // Antique Bronze
+                            dark: '#2F1B15'       // Espresso
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['DM Sans', 'sans-serif'],
+                        serif: ['Fraunces', 'serif'],
+                    },
+                    animation: {
+                        'float': 'float 8s ease-in-out infinite',
+                        'float-delayed': 'float 8s ease-in-out infinite 4s',
+                        'shine': 'shimmer 4s linear infinite',
+                        'fade-in': 'fadeIn 0.6s ease-out',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'rise': 'rise 10s infinite linear',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        shimmer: {
+                            'from': { backgroundPosition: '0 0' },
+                            'to': { backgroundPosition: '-200% 0' }
+                        },
+                        fadeIn: {
+                            'from': { opacity: '0', transform: 'translateY(10px)' },
+                            'to': { opacity: '1', transform: 'translateY(0)' }
+                        },
+                        rise: {
+                            '0%': { transform: 'translateY(100%)', opacity: '0' },
+                            '50%': { opacity: '0.8' },
+                            '100%': { transform: 'translateY(-100%)', opacity: '0' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { 
+            background-color: #F5EBE0; 
+            color: #3E2723; 
+            overflow-x: hidden;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .ambient-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background: #F5EBE0; overflow: hidden;
+        }
+        
+        .orb {
+            position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.5;
+            animation: float 20s infinite alternate;
+        }
+        .orb-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: #E6B89C; }
+        .orb-2 { bottom: -10%; right: -10%; width: 60vw; height: 60vw; background: #CCD5AE; animation-delay: -5s; }
+
+        .glossy-card {
+            background: rgba(255, 255, 255, 0.35);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+            border-radius: 2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .glossy-card:hover {
+            background: rgba(255, 255, 255, 0.5);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.1);
+        }
+
+        .bookshelf-shelf {
+            background: rgba(255, 255, 255, 0.3);
+            border-bottom: 6px solid #B08968;
+            box-shadow: inset 0 -10px 20px rgba(176, 137, 104, 0.1);
+        }
+
+        .book-spine { transition: transform 0.3s ease; transform-origin: bottom center; cursor: pointer; }
+        .book-spine:hover { transform: translateY(-12px) scale(1.05); z-index: 20; }
+        .spine-inner { box-shadow: inset 2px 0 2px rgba(255,255,255,0.4), inset -2px 0 5px rgba(0,0,0,0.1), 3px 5px 10px rgba(44, 36, 32, 0.1); border-radius: 4px; }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #D4A373; border-radius: 99px; opacity: 0.5; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #B08968; }
+
+        .loader { width: 48px; height: 48px; border: 3px solid #B08968; border-radius: 50%; display: inline-block; position: relative; box-sizing: border-box; animation: rotation 1s linear infinite; }
+        .loader::after { content: ''; box-sizing: border-box; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; border-radius: 50%; border: 3px solid transparent; border-bottom-color: #D4A373; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .btn-interactive { transition: all 0.2s ease; }
+        .btn-interactive:active { transform: scale(0.95); }
+
+        .hero-img {
+            width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s ease;
+        }
+        .glossy-card:hover .hero-img { transform: scale(1.05); }
+
+        /* Window of Grace Particles */
+        .particle {
+            position: absolute;
+            width: 4px; height: 4px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            animation: rise 8s infinite ease-in;
+        }
+    </style>
+</head>
+<body>
+    <div id="root" class="min-h-screen flex items-center justify-center">
+        <div class="flex flex-col items-center gap-4">
+            <span class="loader"></span>
+            <span class="font-serif text-moody-text text-xl tracking-widest uppercase">FaithReflects</span>
+        </div>
+    </div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
+        const confetti = window.confetti;
+
+        // --- CONSTANTS ---
+        const STORAGE_KEY = 'faithreflects_moody_v25';
+        const apiKey = ""; 
+
+        const playSound = (type) => {
+            const sounds = {
+                click: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3', 
+                success: 'https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3', 
+                pop: 'https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3', 
+                hero: 'https://assets.mixkit.co/active_storage/sfx/1126/1126-preview.mp3', 
+                stamp: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'
+            };
+            try { const audio = new Audio(sounds[type]); audio.volume = 0.2; audio.play().catch(e => {}); } catch(e) {}
+        };
+
+        const CATEGORY_COLORS = { 
+            'Pentateuch': 'from-[#E6B89C] to-[#D98E73]', 
+            'History': 'from-[#B5C9C3] to-[#8DA399]', 
+            'History_NT': 'from-[#B5C9C3] to-[#8DA399]', 
+            'Poetry': 'from-[#F3E5AB] to-[#C59D5F]',     
+            'Prophets': 'from-[#D8C3A5] to-[#A99175]',   
+            'Gospels': 'from-[#FFFFFF] to-[#EAEAEA] text-gray-800 border-moody-gold/30',    
+            'Epistles': 'from-[#C8D5B9] to-[#9CB088]',   
+            'Revelation': 'from-[#4A3B32] to-[#2C2420]'  
+        };
+
+        const READING_PLANS = [
+            { id: '1year', title: 'The Annual Walk', duration: '1 Year', days: 365, desc: 'A gentle, steady journey through the Word.' },
+            { id: '6month', title: 'Deep Dive', duration: '6 Months', days: 180, desc: 'Immersive growth for the dedicated reader.' },
+            { id: '3month', title: 'The Sprint', duration: '3 Months', days: 90, desc: 'Focused, intense season of spiritual filling.' }
+        ];
+
+        const MANNA_VERSES = [
+            { text: "Be still, and know that I am God.", ref: "Psalm 46:10" },
+            { text: "The Lord is my shepherd; I shall not want.", ref: "Psalm 23:1" },
+            { text: "I can do all things through Christ who strengthens me.", ref: "Philippians 4:13" },
+            { text: "Trust in the Lord with all your heart.", ref: "Proverbs 3:5" },
+            { text: "For I know the plans I have for you, declares the Lord.", ref: "Jeremiah 29:11" },
+            { text: "Love is patient, love is kind.", ref: "1 Corinthians 13:4" }
+        ];
+
+        const BIBLE_BOOKS = [
+          { name: 'Genesis', chapters: 50, category: 'Pentateuch', heroId: 'abraham' }, { name: 'Exodus', chapters: 40, category: 'Pentateuch', heroId: 'moses' }, { name: 'Leviticus', chapters: 27, category: 'Pentateuch' }, { name: 'Numbers', chapters: 36, category: 'Pentateuch' }, { name: 'Deuteronomy', chapters: 34, category: 'Pentateuch' },
+          { name: 'Joshua', chapters: 24, category: 'History', heroId: 'joshua' }, { name: 'Judges', chapters: 21, category: 'History', heroId: 'samson' }, { name: 'Ruth', chapters: 4, category: 'History', heroId: 'ruth' }, { name: '1 Samuel', chapters: 31, category: 'History', heroId: 'samuel' }, { name: '2 Samuel', chapters: 24, category: 'History', heroId: 'david' }, { name: '1 Kings', chapters: 22, category: 'History', heroId: 'solomon' }, { name: '2 Kings', chapters: 25, category: 'History', heroId: 'elijah' }, { name: '1 Chronicles', chapters: 29, category: 'History' }, { name: '2 Chronicles', chapters: 36, category: 'History', heroId: 'hezekiah' }, { name: 'Ezra', chapters: 10, category: 'History', heroId: 'ezra' }, { name: 'Nehemiah', chapters: 13, category: 'History', heroId: 'nehemiah' }, { name: 'Esther', chapters: 10, category: 'History', heroId: 'esther' },
+          { name: 'Job', chapters: 42, category: 'Poetry', heroId: 'job' }, { name: 'Psalms', chapters: 150, category: 'Poetry', heroId: 'david' }, { name: 'Proverbs', chapters: 31, category: 'Poetry' }, { name: 'Ecclesiastes', chapters: 12, category: 'Poetry' }, { name: 'Song of Solomon', chapters: 8, category: 'Poetry' },
+          { name: 'Isaiah', chapters: 66, category: 'Prophets', heroId: 'isaiah' }, { name: 'Jeremiah', chapters: 52, category: 'Prophets', heroId: 'jeremiah' }, { name: 'Lamentations', chapters: 5, category: 'Prophets' }, { name: 'Ezekiel', chapters: 48, category: 'Prophets', heroId: 'ezekiel' }, { name: 'Daniel', chapters: 12, category: 'Prophets', heroId: 'daniel' }, { name: 'Hosea', chapters: 14, category: 'Prophets' }, { name: 'Joel', chapters: 3, category: 'Prophets' }, { name: 'Amos', chapters: 9, category: 'Prophets' }, { name: 'Obadiah', chapters: 1, category: 'Prophets' }, { name: 'Jonah', chapters: 4, category: 'Prophets', heroId: 'jonah' }, { name: 'Micah', chapters: 7, category: 'Prophets' }, { name: 'Nahum', chapters: 3, category: 'Prophets' }, { name: 'Habakkuk', chapters: 3, category: 'Prophets' }, { name: 'Zephaniah', chapters: 3, category: 'Prophets' }, { name: 'Haggai', chapters: 2, category: 'Prophets' }, { name: 'Zechariah', chapters: 14, category: 'Prophets' }, { name: 'Malachi', chapters: 4, category: 'Prophets' },
+          { name: 'Matthew', chapters: 28, category: 'Gospels', heroId: 'jesus' }, { name: 'Mark', chapters: 16, category: 'Gospels', heroId: 'mark' }, { name: 'Luke', chapters: 24, category: 'Gospels', heroId: 'mary' }, { name: 'John', chapters: 21, category: 'Gospels', heroId: 'john' },
+          { name: 'Acts', chapters: 28, category: 'History_NT', heroId: 'paul' }, { name: 'Romans', chapters: 16, category: 'Epistles' }, { name: '1 Corinthians', chapters: 16, category: 'Epistles' }, { name: '2 Corinthians', chapters: 13, category: 'Epistles' }, { name: 'Galatians', chapters: 6, category: 'Epistles' }, { name: 'Ephesians', chapters: 6, category: 'Epistles' }, { name: 'Philippians', chapters: 4, category: 'Epistles' }, { name: 'Colossians', chapters: 4, category: 'Epistles' }, { name: '1 Thessalonians', chapters: 5, category: 'Epistles' }, { name: '2 Thessalonians', chapters: 3, category: 'Epistles' }, { name: '1 Timothy', chapters: 6, category: 'Epistles', heroId: 'timothy' }, { name: '2 Timothy', chapters: 4, category: 'Epistles' }, { name: 'Titus', chapters: 3, category: 'Epistles' }, { name: 'Philemon', chapters: 1, category: 'Epistles' }, { name: 'Hebrews', chapters: 13, category: 'Epistles' }, { name: 'James', chapters: 5, category: 'Epistles', heroId: 'james' }, { name: '1 Peter', chapters: 5, category: 'Epistles', heroId: 'peter' }, { name: '2 Peter', chapters: 3, category: 'Epistles' }, { name: '1 John', chapters: 5, category: 'Epistles' }, { name: '2 John', chapters: 1, category: 'Epistles' }, { name: '3 John', chapters: 1, category: 'Epistles' }, { name: 'Jude', chapters: 1, category: 'Epistles' },
+          { name: 'Revelation', chapters: 22, category: 'Revelation' }
+        ];
+
+        const HEROES = [
+          { id: 'noah', name: 'Noah', book: 'Genesis', title: 'The Ark Builder', description: 'A righteous man who walked faithfully with God, building an ark to save his family from the flood.', icon: '🕊️', defaultImg: 'https://images.unsplash.com/photo-1542359649-31e03cd4d909?auto=format&fit=crop&q=80&w=800' }, 
+          { id: 'abraham', name: 'Abraham', book: 'Genesis', title: 'Father of Nations', description: 'Called by God to leave his home for a promised land, his faith was counted as righteousness.', icon: '✨', defaultImg: 'https://images.unsplash.com/photo-1549488497-619f727c6530?auto=format&fit=crop&q=80&w=800' }, 
+          { id: 'moses', name: 'Moses', book: 'Exodus', title: 'The Lawgiver', description: 'Led Israel out of Egypt, parted the Red Sea, and received the Ten Commandments on Sinai.', icon: '🌊', defaultImg: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=800' }, 
+          { id: 'david', name: 'David', book: '2 Samuel', title: 'The Shepherd King', description: 'A man after God’s own heart who defeated Goliath and ruled Israel with a heart of worship.', icon: '🪨', defaultImg: 'https://images.unsplash.com/photo-1484406566174-9da000fda645?auto=format&fit=crop&q=80&w=800' }, 
+          { id: 'esther', name: 'Esther', book: 'Esther', title: 'The Queen', description: 'Risked her life to save her people, saying "If I perish, I perish."', icon: '👑', defaultImg: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=800' }, 
+          { id: 'daniel', name: 'Daniel', book: 'Daniel', title: 'The Faithful', description: 'Remained faithful to God in exile, even when thrown into a den of lions.', icon: '🦁', defaultImg: 'https://images.unsplash.com/photo-1501386761106-184d3d21f595?auto=format&fit=crop&q=80&w=800' }, 
+          { id: 'mary', name: 'Mary', book: 'Luke', title: 'Mother of Jesus', description: 'Humbly accepted God’s call to bring the Savior into the world.', icon: '🌹', defaultImg: 'https://images.unsplash.com/photo-1628143247076-7880df961026?auto=format&fit=crop&q=80&w=800' }, 
+          { id: 'jesus', name: 'Jesus', book: 'Matthew', title: 'King of Kings', description: 'The Son of God who lived a sinless life, died for our sins, and rose again.', icon: '✝️', defaultImg: 'https://images.unsplash.com/photo-1493612276216-9939246b45c6?auto=format&fit=crop&q=80&w=1000' }, 
+          { id: 'peter', name: 'Peter', book: '1 Peter', title: 'The Rock', description: 'A fisherman called by Jesus who became a bold leader of the early church.', icon: '🐟', defaultImg: 'https://images.unsplash.com/photo-1534237710431-e2fc698436d0?auto=format&fit=crop&q=80&w=1000' }, 
+          { id: 'paul', name: 'Paul', book: 'Acts', title: 'The Apostle', description: 'Once a persecutor, he became the greatest missionary, writing much of the New Testament.', icon: '📜', defaultImg: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=1000' }, 
+          { id: 'ruth', name: 'Ruth', book: 'Ruth', title: 'The Loyal', description: 'A woman of great loyalty who became the great-grandmother of King David.', icon: '🌾', defaultImg: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80&w=1000' }, 
+          { id: 'solomon', name: 'Solomon', book: '1 Kings', title: 'The Wise', description: 'Asked God for wisdom and built the magnificent Temple in Jerusalem.', icon: '🏛️', defaultImg: 'https://images.unsplash.com/photo-1601369796796-7c012808c16a?auto=format&fit=crop&q=80&w=1000' }, 
+          { id: 'elijah', name: 'Elijah', book: '1 Kings', title: 'Prophet of Fire', description: 'A mighty prophet who stood against idolatry and was taken up in a whirlwind.', icon: '🔥', defaultImg: 'https://images.unsplash.com/photo-1478147427282-58a87a120781?auto=format&fit=crop&q=80&w=1000' }, 
+          { id: 'adam', name: 'Adam & Eve', book: 'Genesis', title: 'First Creation', description: 'Created in God’s image to steward His creation in the Garden of Eden.', icon: '🌳', defaultImg: 'https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?auto=format&fit=crop&q=80&w=1000' }, 
+          { id: 'joseph', name: 'Joseph', book: 'Genesis', title: 'The Dreamer', description: 'Sold into slavery, he rose to rule Egypt and save his family from famine.', icon: '🧥', defaultImg: 'https://images.unsplash.com/photo-1528564177573-da9c968f9a2d?auto=format&fit=crop&q=80&w=1000' }, 
+          { id: 'gideon', name: 'Gideon', book: 'Judges', title: 'Mighty Warrior', description: 'Led 300 men to defeat a vast army, proving God’s strength in weakness.', icon: '🎺', defaultImg: 'https://images.unsplash.com/photo-1514539079130-25950c84965e?auto=format&fit=crop&q=80&w=1000' }, 
+          { id: 'samson', name: 'Samson', book: 'Judges', title: 'The Judge', description: 'Possessed supernatural strength to defeat the Philistines.', icon: '💪', defaultImg: 'https://images.unsplash.com/photo-1583511655826-05700442b31b?auto=format&fit=crop&q=80&w=1000' }, 
+          { id: 'deborah', name: 'Deborah', book: 'Judges', title: 'The Prophetess', description: 'Led Israel to victory alongside Barak, judging wisely under a palm tree.', icon: '⚖️', defaultImg: 'https://images.unsplash.com/photo-1466027376046-6098b64bf210?auto=format&fit=crop&q=80&w=1000' }, 
+          { id: 'samuel', name: 'Samuel', book: '1 Samuel', title: 'The Prophet', description: 'Dedicated to the Lord from birth, he anointed the first kings of Israel.', icon: '👂', defaultImg: 'https://images.unsplash.com/photo-1605364850069-252f9c8f0f46?auto=format&fit=crop&q=80&w=1000' }, 
+          { id: 'nehemiah', name: 'Nehemiah', book: 'Nehemiah', title: 'The Builder', description: 'Returned to Jerusalem to rebuild its walls and restore its people.', icon: '🧱', defaultImg: 'https://images.unsplash.com/photo-1599839575945-a9e5af0c3fa5?auto=format&fit=crop&q=80&w=1000' }, 
+          { id: 'isaiah', name: 'Isaiah', book: 'Isaiah', title: 'The Eagle', description: 'Prophesied extensively about the coming Messiah and God’s kingdom.', icon: '🦅', defaultImg: 'https://images.unsplash.com/photo-1529813149813-5b3759c46394?auto=format&fit=crop&q=80&w=1000' }, 
+          { id: 'jeremiah', name: 'Jeremiah', book: 'Jeremiah', title: 'Weeping Prophet', description: 'Endured great sorrow over Jerusalem but spoke of a New Covenant.', icon: '💧', defaultImg: 'https://images.unsplash.com/photo-1460355976672-71c3f0a4bdac?auto=format&fit=crop&q=80&w=1000' }, 
+          { id: 'ezekiel', name: 'Ezekiel', book: 'Ezekiel', title: 'Visionary', description: 'Saw visions of God’s glory and spoke of dry bones coming to life.', icon: '👁️', defaultImg: 'https://images.unsplash.com/photo-1534237710431-e2fc698436d0?auto=format&fit=crop&q=80&w=1000' }, 
+          { id: 'jonah', name: 'Jonah', book: 'Jonah', title: 'The Messenger', description: 'Swallowed by a great fish, he eventually preached repentance to Nineveh.', icon: '🐋', defaultImg: 'https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?auto=format&fit=crop&q=80&w=1000' } 
+        ];
+
+        const ACHIEVEMENTS = [
+          { id: 'first_steps', title: 'First Steps', description: 'Read your first chapter.', icon: '🌱', condition: (p) => Object.values(p.readChapters).flat().length >= 1 },
+          { id: 'pentateuch_master', title: 'Lawkeeper', description: 'Read the Pentateuch.', icon: '📜', condition: (p) => ['Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy'].every(b => p.completedBooks.includes(b)) },
+          { id: 'historian', title: 'Historian', description: 'Read the History books.', icon: '🏺', condition: (p) => ['Joshua', 'Judges', 'Ruth', '1 Samuel', '2 Samuel', '1 Kings'].every(b => p.completedBooks.includes(b)) },
+          { id: 'poet', title: 'Psalmist', description: 'Read the Poetic books.', icon: '🎵', condition: (p) => ['Job', 'Psalms', 'Proverbs'].every(b => p.completedBooks.includes(b)) },
+          { id: 'prophet', title: 'Prophet', description: 'Read Major Prophets.', icon: '👁️', condition: (p) => ['Isaiah', 'Jeremiah', 'Ezekiel'].every(b => p.completedBooks.includes(b)) },
+          { id: 'streak_7', title: 'Faithful Week', description: '7-day reading streak.', icon: '🕯️', condition: (p) => p.streak >= 7 },
+          { id: 'gospel_truth', title: 'Good News', description: 'Read all four Gospels.', icon: '🕊️', condition: (p) => ['Matthew', 'Mark', 'Luke', 'John'].every(b => p.completedBooks.includes(b)) },
+          { id: 'scholar', title: 'Scholar', description: 'Read 50 chapters.', icon: '📚', condition: (p) => Object.values(p.readChapters).flat().length >= 50 },
+          { id: 'theologian', title: 'Theologian', description: 'Read 500 chapters.', icon: '🎓', condition: (p) => Object.values(p.readChapters).flat().length >= 500 },
+          { id: 'revelation', title: 'The End', description: 'Complete Revelation.', icon: '✨', condition: (p) => p.completedBooks.includes('Revelation') },
+          { id: 'epistle_master', title: 'Epistle Reader', description: 'Read all NT Epistles', icon: '✉️', condition: (p) => ['Romans', '1 Corinthians'].every(b => p.completedBooks.includes(b)) },
+          { id: 'master', title: 'Finisher', description: 'Read the entire Bible', icon: '👑', condition: (p) => BIBLE_BOOKS.every(b => p.completedBooks.includes(b.name)) }
+        ];
+
+        // --- HELPERS ---
+        const getColorForDate = (date) => {
+            if (!date) return 'bg-white border-moody-accent2/30 text-gray-400';
+            const colors = ['bg-moody-accent1', 'bg-moody-accent2', 'bg-moody-accent3', 'bg-moody-gold'];
+            let hash = 0;
+            for (let i = 0; i < date.length; i++) hash = date.charCodeAt(i) + ((hash << 5) - hash);
+            return colors[Math.abs(hash) % colors.length] + ' text-white shadow-md border-transparent';
+        };
+
+        const getAllChaptersFlat = () => {
+            const chapters = [];
+            BIBLE_BOOKS.forEach(book => { for(let i=1; i<=book.chapters; i++) chapters.push({ book: book.name, ch: i }); });
+            return chapters;
+        };
+
+        const getPlanProgress = (allChapters, readChaptersMap) => {
+            let readCount = 0;
+            for (const item of allChapters) {
+                const bookRead = readChaptersMap[item.book] || [];
+                if (bookRead.some(c => c.chapter === item.ch)) readCount++; else break;
+            }
+            return readCount;
+        };
+
+        // --- COMPONENTS ---
+
+        const BookSpine = ({ book, isCompleted, onClick }) => {
+            const bgClass = CATEGORY_COLORS[book.category] || 'from-gray-300 to-gray-400';
+            const textColor = book.category === 'Gospels' ? 'text-gray-800' : 'text-white/90';
+            return (
+                <div onClick={() => onClick(book)} className="book-spine flex flex-col items-center mx-1" style={{ height: `${100 + (book.chapters * 0.6)}px`, width: '32px' }}>
+                    <div className={`spine-inner w-full h-full rounded-sm shadow-md bg-gradient-to-br ${bgClass} border-l border-white/20 border-r border-black/10 relative flex items-center justify-center overflow-hidden`}>
+                        {isCompleted && <div className="absolute top-2 w-1.5 h-1.5 rounded-full bg-moody-gold animate-pulse shadow-sm"></div>}
+                        <span className={`absolute transform rotate-90 text-[10px] font-bold tracking-widest uppercase whitespace-nowrap ${textColor} mix-blend-normal`}>
+                            {book.name.length > 10 ? book.name.substring(0, 8) + '.' : book.name}
+                        </span>
+                    </div>
+                </div>
+            );
+        };
+
+        const GreetingWidget = () => {
+            const hour = new Date().getHours();
+            const greeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
+            return (
+                <div className="glossy-card p-6 flex items-center gap-4 border-l-4 border-l-moody-gold">
+                    <div className="text-3xl animate-float">🌿</div>
+                    <div><h3 className="font-serif text-2xl text-moody-text font-bold">{greeting}, Child of God.</h3><p className="text-xs text-gray-500 mt-1 uppercase tracking-widest">Ready to abide in the Word?</p></div>
+                </div>
+            );
+        };
+
+        const TimerWidget = () => {
+            const [timeLeft, setTimeLeft] = useState(15 * 60); 
+            const [isActive, setIsActive] = useState(false);
+            const radius = 50;
+            const circumference = 2 * Math.PI * radius;
+            const progress = ((15 * 60 - timeLeft) / (15 * 60)) * circumference;
+
+            useEffect(() => {
+                let interval = null;
+                if (isActive && timeLeft > 0) interval = setInterval(() => setTimeLeft(timeLeft - 1), 1000);
+                else if (timeLeft === 0) { setIsActive(false); playSound('success'); }
+                return () => clearInterval(interval);
+            }, [isActive, timeLeft]);
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            return (
+                <div className="glossy-card p-6 flex flex-col items-center justify-center relative overflow-hidden group">
+                    <div className="absolute top-2 right-2 text-xl text-moody-accent2 opacity-50">⏳</div>
+                    <h4 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Quiet Time</h4>
+                    <div className="relative w-32 h-32 flex items-center justify-center mb-4">
+                        <svg className="absolute w-full h-full transform -rotate-90">
+                            <circle cx="64" cy="64" r={radius} stroke="#e6d5c3" strokeWidth="6" fill="transparent" />
+                            <circle cx="64" cy="64" r={radius} stroke="#8DA399" strokeWidth="6" fill="transparent" strokeDasharray={circumference} strokeDashoffset={-progress} strokeLinecap="round" className="transition-all duration-1000 ease-linear" />
+                        </svg>
+                        <div className="text-3xl font-sans font-bold text-moody-text">{minutes}:{seconds < 10 ? `0${seconds}` : seconds}</div>
+                    </div>
+                    <button onClick={() => { setIsActive(!isActive); playSound('click'); }} className={`px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${isActive ? 'bg-moody-accent1 text-white' : 'bg-moody-gold text-white hover:bg-moody-dark'}`}>{isActive ? 'Pause' : 'Begin'}</button>
+                </div>
+            );
+        };
+
+        const SpiritCheckIn = () => {
+            const MOODS = [
+                { label: 'Anxious', icon: '☁️', verse: '"Cast all your anxiety on him because he cares for you." - 1 Peter 5:7' },
+                { label: 'Joyful', icon: '☀️', verse: '"The joy of the Lord is your strength." - Nehemiah 8:10' },
+                { label: 'Weary', icon: '🌙', verse: '"Come to me, all you who are weary... and I will give you rest." - Matthew 11:28' }
+            ];
+            const [mood, setMood] = useState(null);
+            return (
+                <div className="glossy-card p-6 flex flex-col justify-center min-h-[180px]">
+                    {!mood ? (
+                        <>
+                            <h4 className="text-sm font-bold text-moody-text mb-4 text-center">How is your spirit today?</h4>
+                            <div className="flex justify-center gap-4">
+                                {MOODS.map(m => (
+                                    <button key={m.label} onClick={() => { setMood(m); playSound('pop'); }} className="flex flex-col items-center gap-1 group">
+                                        <div className="w-12 h-12 bg-moody-base rounded-full flex items-center justify-center text-2xl group-hover:bg-moody-accent3/40 transition-colors">{m.icon}</div>
+                                        <span className="text-[10px] uppercase font-bold text-gray-400 group-hover:text-moody-accent1">{m.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </>
+                    ) : (
+                        <div className="text-center animate-fade-in">
+                            <div className="text-3xl mb-2">{mood.icon}</div>
+                            <p className="font-serif text-sm italic text-moody-text leading-relaxed mb-4">{mood.verse}</p>
+                            <button onClick={() => setMood(null)} className="text-[10px] font-bold uppercase text-moody-gold hover:text-moody-dark">Reset</button>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+        
+        const DailyManna = () => {
+             const [index, setIndex] = useState(0);
+             const nextManna = () => {
+                 setIndex((prev) => (prev + 1) % MANNA_VERSES.length);
+                 playSound('click');
+             };
+             const verse = MANNA_VERSES[index];
+             
+             return (
+                <div className="glossy-card p-10 flex flex-col justify-center relative overflow-hidden group min-h-[320px] border-l-8 border-l-moody-accent1">
+                    <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-moody-accent1/20 to-transparent"></div>
+                    <div className="relative z-10">
+                        <div className="flex justify-between items-start mb-6">
+                            <div className="inline-block px-3 py-1 bg-white/60 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] text-moody-text border border-moody-accent1/20">Daily Manna</div>
+                            <button onClick={nextManna} className="text-gray-300 hover:text-moody-accent1 transition">↻</button>
+                        </div>
+                        <h2 className="font-serif text-4xl md:text-5xl text-moody-text leading-tight mb-6 animate-fade-in" key={verse.text}>"{verse.text}"</h2>
+                        <span className="text-moody-gold font-bold text-xs tracking-widest border-t border-moody-gold/30 pt-4 inline-block">{verse.ref}</span>
+                    </div>
+                </div>
+             );
+        };
+
+        const WindowOfGrace = () => {
+            return (
+                <div className="glossy-card p-0 relative overflow-hidden h-[300px] group">
+                    <div className="absolute inset-0 bg-gradient-to-b from-[#8DA399] to-[#F5EBE0] opacity-80"></div>
+                    <div className="absolute bottom-0 w-full h-1/3 bg-[#3E2723] opacity-20" style={{clipPath: 'polygon(0 100%, 100% 100%, 100% 40%, 0 80%)'}}></div>
+                    <div className="absolute bottom-0 w-full h-1/4 bg-[#2F1B15] opacity-30" style={{clipPath: 'polygon(0 100%, 100% 100%, 100% 60%, 0 20%)'}}></div>
+                    <div className="absolute top-10 right-10 w-16 h-16 rounded-full bg-[#E9EDC9] blur-xl opacity-80 animate-pulse-slow"></div>
+                    
+                    {/* Floating Particles */}
+                    {[...Array(5)].map((_, i) => (
+                        <div key={i} className="particle" style={{
+                            left: `${Math.random() * 100}%`,
+                            bottom: '-10px',
+                            animationDelay: `${Math.random() * 5}s`,
+                            animationDuration: `${8 + Math.random() * 5}s`
+                        }}></div>
+                    ))}
+                    
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <p className="text-moody-dark font-serif italic opacity-60 text-sm tracking-widest">Grace upon grace.</p>
+                    </div>
+                </div>
+            );
+        };
+
+        const BibleReader = ({ initialBook, initialChapter, progress, onToggleRead, onSaveNote }) => {
+            const [selection, setSelection] = useState({ book: initialBook?.name || 'Genesis', chapter: initialChapter || 1 });
+            const [content, setContent] = useState(null);
+            const [loading, setLoading] = useState(false);
+            const [selectedVerse, setSelectedVerse] = useState(null);
+            const [reflectionText, setReflectionText] = useState("");
+
+            useEffect(() => {
+                setLoading(true);
+                const url = `https://bible-api.com/${selection.book}+${selection.chapter}?translation=web`;
+                fetch(url).then(res => res.json()).then(data => { setContent(data); setLoading(false); }).catch(err => { setContent({ text: "Could not load text." }); setLoading(false); });
+            }, [selection]);
+
+            const isRead = (progress.readChapters[selection.book] || []).some(c => c.chapter === selection.chapter);
+
+            return (
+                <div className="animate-fade-in max-w-4xl mx-auto pb-20">
+                    <div className="glossy-card flex flex-col min-h-[80vh] relative overflow-hidden">
+                        <div className="p-6 bg-white/40 border-b border-moody-gold/20 flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div className="flex gap-2">
+                                <select className="bg-white/80 border border-gray-200 rounded-lg px-3 py-2 text-sm font-sans font-bold text-moody-text focus:outline-none focus:border-moody-gold" value={selection.book} onChange={(e) => setSelection({ ...selection, book: e.target.value, chapter: 1 })}>{BIBLE_BOOKS.map(b => <option key={b.name} value={b.name}>{b.name}</option>)}</select>
+                                <select className="bg-white/80 border border-gray-200 rounded-lg px-3 py-2 text-sm font-sans font-bold text-moody-text focus:outline-none focus:border-moody-gold" value={selection.chapter} onChange={(e) => setSelection({ ...selection, chapter: parseInt(e.target.value) })}>{Array.from({length: BIBLE_BOOKS.find(b=>b.name===selection.book)?.chapters || 50}, (_, i) => i + 1).map(c => <option key={c} value={c}>Ch {c}</option>)}</select>
+                            </div>
+                            <div className="flex gap-2">
+                                <button disabled={selection.chapter <= 1} onClick={() => setSelection(p => ({...p, chapter: p.chapter - 1}))} className="px-4 py-1 text-xs uppercase font-bold text-gray-500 hover:text-moody-gold disabled:opacity-30 bg-white/80 border border-gray-200 rounded-lg shadow-sm btn-interactive">Prev</button>
+                                <button disabled={selection.chapter >= (BIBLE_BOOKS.find(b=>b.name===selection.book)?.chapters || 1)} onClick={() => setSelection(p => ({...p, chapter: p.chapter + 1}))} className="px-4 py-1 text-xs uppercase font-bold text-gray-500 hover:text-moody-gold disabled:opacity-30 bg-white/80 border border-gray-200 rounded-lg shadow-sm btn-interactive">Next</button>
+                            </div>
+                        </div>
+                        <div className="flex-1 p-8 md:p-12 overflow-y-auto custom-scrollbar">
+                            {loading ? <div className="flex justify-center items-center h-40"><div className="spinner"></div></div> : <div className="font-serif leading-loose text-moody-text text-lg"><h2 className="text-3xl font-serif text-moody-accent1 mb-8 text-center">{selection.book} {selection.chapter}</h2>{content?.verses ? <div className="space-y-4">{content.verses.map((v, i) => <span key={i} onClick={() => setSelectedVerse(v)} className="verse-span inline px-1 rounded transition-colors cursor-pointer hover:bg-moody-gold/10" title="Click to add note"><sup className="text-[0.7em] font-bold text-moody-accent2 mr-2">{v.verse}</sup>{v.text}</span>)}</div> : <div className="text-center text-gray-400 italic">Select a chapter to begin reading.</div>}</div>}
+                        </div>
+                        <div className="p-6 bg-white/40 border-t border-moody-gold/20 flex justify-center sticky bottom-0 z-20 backdrop-blur-sm">
+                            <button onClick={() => onToggleRead(selection.book, selection.chapter)} className={`px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest transition-all shadow-md flex items-center gap-2 btn-interactive ${isRead ? 'bg-moody-accent2 text-white' : 'bg-moody-gold text-white hover:bg-moody-accent1'}`}>{isRead ? <span>✓ Completed</span> : <span>Mark as Read</span>}</button>
+                        </div>
+                        {selectedVerse && (
+                            <div className="absolute inset-0 bg-white/95 backdrop-blur-xl z-30 p-8 flex flex-col animate-fade-in">
+                                <div className="flex justify-between items-start mb-6"><h3 className="font-sans text-2xl font-bold text-moody-accent1">Verse Study</h3><button onClick={() => setSelectedVerse(null)} className="text-gray-400 hover:text-moody-text text-xl">✕</button></div>
+                                <div className="bg-moody-base p-6 rounded-xl border border-moody-gold/20 mb-6 shadow-inner"><p className="font-serif text-lg text-moody-text leading-relaxed">"{selectedVerse.text}"</p><p className="text-right text-xs font-bold uppercase tracking-widest text-moody-accent2 mt-4">{selection.book} {selection.chapter}:{selectedVerse.verse}</p></div>
+                                <textarea className="flex-1 w-full bg-white border border-gray-200 rounded-xl p-4 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-moody-gold/30 resize-none font-sans" placeholder="Write your reflection, prayer, or study notes here..." value={reflectionText} onChange={(e) => setReflectionText(e.target.value)}></textarea>
+                                <button onClick={() => { if (reflectionText.trim()) { onSaveNote(selection.book, selection.chapter, selectedVerse.verse, selectedVerse.text, reflectionText); setReflectionText(""); setSelectedVerse(null); } }} className="mt-4 w-full py-4 bg-moody-gold text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-moody-accent1 transition-all shadow-md btn-interactive">Save to Journal</button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const ReadingPlanDetail = ({ plan, allChapters, progress, onToggleBatch, onClose }) => {
+            const chaptersPerDay = Math.ceil(allChapters.length / plan.days);
+            const chaptersReadCount = getPlanProgress(allChapters, progress.readChapters);
+            const currentDayProgress = Math.floor(chaptersReadCount / chaptersPerDay) + 1;
+            const schedule = [];
+            for (let i = 0; i < plan.days; i++) {
+                const startIdx = i * chaptersPerDay;
+                const endIdx = Math.min(startIdx + chaptersPerDay, allChapters.length);
+                if (startIdx >= allChapters.length) break;
+                const dayChapters = allChapters.slice(startIdx, endIdx);
+                const startChap = dayChapters[0];
+                const endChap = dayChapters[dayChapters.length - 1];
+                let label = (startChap.book === endChap.book) ? `${startChap.book} ${startChap.ch}` + (startChap.ch !== endChap.ch ? `-${endChap.ch}` : '') : `${startChap.book} ${startChap.ch} - ${endChap.book} ${endChap.ch}`;
+                const isComplete = dayChapters.every(item => (progress.readChapters[item.book] || []).some(c => c.chapter === item.ch));
+                schedule.push({ day: i + 1, label, isComplete, chapters: dayChapters });
+            }
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-moody-text/20 backdrop-blur-sm" onClick={onClose}></div>
+                    <div className="relative w-full max-w-4xl bg-white rounded-[2rem] shadow-2xl overflow-hidden animate-fade-in max-h-[85vh] flex flex-col border border-moody-gold/20">
+                        <div className="p-8 bg-moody-base border-b border-moody-gold/10 flex justify-between items-center"><div><h2 className="font-serif text-3xl font-bold text-moody-text">{plan.title}</h2><p className="text-xs font-bold uppercase tracking-widest text-moody-accent2 mt-2">Daily Schedule • {plan.duration}</p></div><button onClick={onClose} className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-gray-400 hover:text-moody-text hover:shadow-md transition">✕</button></div>
+                        <div className="flex-1 overflow-y-auto p-8 bg-white custom-scrollbar">
+                            <div className="flex justify-between items-center mb-6"><h3 className="text-xs font-bold uppercase tracking-widest text-moody-gold">Reading Schedule</h3><button onClick={() => document.getElementById(`day-${currentDayProgress}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })} className="px-4 py-2 bg-moody-gold text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-moody-accent1 transition shadow-md btn-interactive">Jump to Next Reading (Day {currentDayProgress})</button></div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{schedule.map((item) => (<div key={item.day} id={`day-${item.day}`} onClick={() => onToggleBatch(item.chapters, !item.isComplete)} className={`p-4 rounded-xl border flex justify-between items-center cursor-pointer transition-all hover:scale-[1.01] ${item.isComplete ? 'bg-moody-accent2/10 border-moody-accent2/30' : item.day === currentDayProgress ? 'bg-white border-moody-gold shadow-md border-l-4' : 'bg-white border-gray-100 hover:border-moody-gold/30'}`}><div className="flex items-center gap-3"><div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] border ${item.isComplete ? 'bg-moody-accent2 text-white border-moody-accent2' : 'border-gray-300 text-gray-400'}`}>{item.isComplete ? '✓' : item.day}</div><span className={`font-sans text-sm font-bold ${item.isComplete ? 'text-moody-accent2 line-through decoration-moody-accent2/50' : 'text-moody-text'}`}>{item.label}</span></div></div>))}</div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [progress, setProgress] = useState(() => {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                return saved ? JSON.parse(saved) : { readChapters: {}, completedBooks: [], unlockedHeroes: [], unlockedAchievements: [], streak: 0, history: [], prayers: [], lastReadLocation: null, studyNotes: '', activePlanId: null };
+            });
+            const [view, setView] = useState('dashboard');
+            const [activeTestament, setActiveTestament] = useState(null);
+            const [activeBook, setActiveBook] = useState(null);
+            const [viewingPlan, setViewingPlan] = useState(null);
+            const [unlockQueue, setUnlockQueue] = useState([]);
+            const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString());
+            const [markAllState, setMarkAllState] = useState(0); 
+            const [generating, setGenerating] = useState(false);
+            const [narrating, setNarrating] = useState(false);
+            const [maskLevel, setMaskLevel] = useState(0);
+            const [faithView, setFaithView] = useState('heroes');
+
+            useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); }, [progress]);
+
+            const allChaptersFlat = useMemo(() => getAllChaptersFlat(), []);
+            const readCount = useMemo(() => Object.values(progress.readChapters).flat().length, [progress.readChapters]);
+            const totalChapters = allChaptersFlat.length;
+            const percentage = Math.round((readCount / totalChapters) * 100);
+
+            // Achievement Checker
+            useEffect(() => {
+                const newUnlocks = ACHIEVEMENTS.filter(a => !progress.unlockedAchievements.includes(a.id) && a.condition(progress));
+                if (newUnlocks.length > 0) {
+                    const queueItems = newUnlocks.map(a => ({ title: a.title, subtitle: a.description, icon: a.icon, type: 'achievement' }));
+                    setUnlockQueue(prev => [...prev, ...queueItems]);
+                    setProgress(prev => ({ ...prev, unlockedAchievements: [...prev.unlockedAchievements, ...newUnlocks.map(a => a.id)] }));
+                    playSound('stamp');
+                }
+            }, [progress]); // Re-run whenever progress updates
+
+            const toggleChapter = (bookName, chapter, providedDate = null) => {
+                const bookRecord = progress.readChapters[bookName] || [];
+                const existingEntry = bookRecord.find(c => c.chapter === chapter);
+                let newRecord;
+                let userDate = providedDate || selectedDate; 
+
+                if (existingEntry) {
+                    newRecord = bookRecord.filter(c => c.chapter !== chapter);
+                } else {
+                    newRecord = [...bookRecord, { chapter, date: userDate }];
+                    playSound('pop');
+                }
+
+                const bookData = BIBLE_BOOKS.find(b => b.name === bookName);
+                const isBookComplete = newRecord.length === bookData.chapters;
+                
+                if (!existingEntry && isBookComplete) {
+                    playSound('success');
+                    if (window.confetti) confetti({ particleCount: 200, spread: 100, colors: ['#C59D5F', '#D98E73'] });
+                    const booksHeroes = HEROES.filter(h => h.book === bookName);
+                    booksHeroes.forEach(hero => {
+                         if (!progress.unlockedHeroes.includes(hero.id)) {
+                             setUnlockQueue(prev => [...prev, { title: hero.name, subtitle: hero.title, icon: '👑', type: 'hero' }]);
+                             playSound('hero');
+                         }
+                    });
+                }
+
+                setProgress(prev => {
+                    const newCompletedBooks = isBookComplete 
+                        ? [...new Set([...prev.completedBooks, bookName])]
+                        : prev.completedBooks.filter(b => b !== bookName);
+                    
+                    const newUnlockedHeroes = isBookComplete 
+                        ? [...new Set([...prev.unlockedHeroes, ...HEROES.filter(h => h.book === bookName).map(h => h.id)])] 
+                        : prev.unlockedHeroes;
+
+                    const newHistoryItem = !existingEntry ? { id: Date.now(), date: userDate, book: bookName, chapter, note: "Completed" } : null;
+                    const newHistory = newHistoryItem ? [newHistoryItem, ...prev.history].slice(0, 100) : prev.history;
+
+                    return {
+                        ...prev,
+                        readChapters: { ...prev.readChapters, [bookName]: newRecord },
+                        completedBooks: newCompletedBooks,
+                        unlockedHeroes: newUnlockedHeroes,
+                        lastReadLocation: !existingEntry ? { book: bookName, chapter } : prev.lastReadLocation,
+                        history: newHistory,
+                        streak: prev.lastReadLocation?.date === userDate ? prev.streak : (prev.streak + 1)
+                    };
+                });
+            };
+
+            const markBookComplete = (bookName) => {
+                 const userDate = selectedDate; 
+                 const bookData = BIBLE_BOOKS.find(b => b.name === bookName);
+                 const newChapters = [];
+                 for(let i=1; i<=bookData.chapters; i++) { newChapters.push({ chapter: i, date: userDate }); }
+                 
+                 playSound('hero');
+                 if (window.confetti) confetti({ particleCount: 300, spread: 150, colors: ['#C59D5F', '#D98E73'] });
+                 
+                 const booksHeroes = HEROES.filter(h => h.book === bookName);
+                 booksHeroes.forEach(hero => {
+                     if (!progress.unlockedHeroes.includes(hero.id)) setUnlockQueue(prev => [...prev, { title: hero.name, subtitle: hero.title, icon: '👑', type: 'hero' }]);
+                 });
+
+                 setProgress(prev => ({
+                     ...prev,
+                     readChapters: { ...prev.readChapters, [bookName]: newChapters },
+                     completedBooks: [...new Set([...prev.completedBooks, bookName])],
+                     unlockedHeroes: [...new Set([...prev.unlockedHeroes, ...booksHeroes.map(h => h.id)])],
+                     history: [{ id: Date.now(), date: userDate, book: bookName, chapter: 'All', note: `Completed ${bookName}!` }, ...prev.history].slice(0, 100)
+                 }));
+                 setMarkAllState(0); 
+            };
+
+            const handleBatchToggle = (chapters, markAsRead) => {
+                const now = new Date().toLocaleDateString();
+                playSound(markAsRead ? 'success' : 'click');
+                if (markAsRead && window.confetti) confetti({ particleCount: 60, spread: 60, origin: { y: 0.7 }, colors: ['#6B8E23'] });
+
+                setProgress(prev => {
+                    const nextReadChapters = { ...prev.readChapters };
+                    let historyUpdate = prev.history;
+
+                    chapters.forEach(ch => {
+                        const bookName = ch.book;
+                        const chapterNum = ch.ch;
+                        const currentChapters = nextReadChapters[bookName] || [];
+                        const isRead = currentChapters.some(c => c.chapter === chapterNum);
+
+                        if (markAsRead && !isRead) {
+                            nextReadChapters[bookName] = [...currentChapters, { chapter: chapterNum, date: now }];
+                        } else if (!markAsRead && isRead) {
+                            nextReadChapters[bookName] = currentChapters.filter(c => c.chapter !== chapterNum);
+                        }
+                    });
+
+                    // Re-calc completion
+                    let nextCompletedBooks = [...prev.completedBooks];
+                    const booksInBatch = [...new Set(chapters.map(c => c.book))];
+                    
+                    booksInBatch.forEach(bookName => {
+                         const bookData = BIBLE_BOOKS.find(b => b.name === bookName);
+                         const isComplete = (nextReadChapters[bookName] || []).length === bookData.chapters;
+                         if (isComplete && !nextCompletedBooks.includes(bookName)) nextCompletedBooks.push(bookName);
+                         else if (!isComplete && nextCompletedBooks.includes(bookName)) nextCompletedBooks = nextCompletedBooks.filter(b => b !== bookName);
+                    });
+                    
+                    if (markAsRead) {
+                        historyUpdate = [{ id: Date.now(), date: now, book: "Plan", chapter: "Day Complete", note: "Daily Reading Finished" }, ...prev.history].slice(0, 100);
+                    }
+
+                    return { ...prev, readChapters: nextReadChapters, completedBooks: nextCompletedBooks, history: historyUpdate };
+                });
+            };
+
+            const addVerseNote = (book, chapter, verse, text, note) => {
+                const now = new Date().toLocaleDateString();
+                playSound('stamp');
+                setProgress(prev => ({
+                    ...prev,
+                    history: [{ id: Date.now(), date: now, book, chapter: `${chapter}:${verse}`, note, type: 'reflection', verseText: text }, ...prev.history].slice(0, 100)
+                }));
+            };
+
+            const getNextReadingLabel = (planId) => {
+                 if (!planId) return "Select a Plan";
+                 const plan = READING_PLANS.find(p => p.id === planId);
+                 if (!plan) return "Unknown Plan";
+                 const chaptersPerDay = Math.ceil(totalChapters / plan.days);
+                 const read = getPlanProgress(allChaptersFlat, progress.readChapters);
+                 const nextDay = Math.floor(read / chaptersPerDay) + 1;
+                 if (read >= totalChapters) return "Plan Completed!";
+                 if (nextDay > plan.days) return "Final Stretch";
+                 const startIdx = (nextDay - 1) * chaptersPerDay;
+                 const endIdx = Math.min(startIdx + chaptersPerDay, allChaptersFlat.length);
+                 const startChap = allChaptersFlat[startIdx];
+                 const endChap = allChaptersFlat[endIdx - 1];
+                 if (!startChap || !endChap) return "Done!";
+                 return startChap.book === endChap.book ? `${startChap.book} ${startChap.ch}` + (startChap.ch !== endChap.ch ? `-${endChap.ch}` : '') : `${startChap.book} ${startChap.ch} - ${endChap.book} ${endChap.ch}`;
+            };
+
+            return (
+                <div className="max-w-6xl mx-auto p-4 md:p-8 pb-32">
+                    <div className="ambient-bg">
+                        <div className="orb orb-1"></div>
+                        <div className="orb orb-2"></div>
+                        <div className="orb orb-3"></div>
+                    </div>
+
+                    <header className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6 relative z-10">
+                        <div className="text-center md:text-left">
+                            <h1 className="font-serif text-4xl md:text-5xl font-bold text-moody-text tracking-tight">FaithReflects</h1>
+                            <p className="text-xs font-bold uppercase tracking-[0.3em] text-moody-gold mt-2">Daily Study Sanctuary</p>
+                        </div>
+                        <div className="glossy-card p-1.5 flex gap-1 backdrop-blur-md">
+                            {['dashboard', 'library', 'bible', 'plans', 'gallery'].map(t => (
+                                <button key={t} onClick={() => { setView(t); playSound('click'); }} className={`px-6 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all btn-interactive ${view === t ? 'bg-moody-gold text-white shadow-md' : 'text-gray-500 hover:text-moody-gold'}`}>{t}</button>
+                            ))}
+                        </div>
+                    </header>
+
+                    {view === 'dashboard' && (
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-fade-in">
+                            <div className="lg:col-span-8 flex flex-col gap-6">
+                                <GreetingWidget />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <TimerWidget />
+                                    <SpiritCheckIn />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <DailyManna />
+                                    <WindowOfGrace />
+                                </div>
+                                
+                                {progress.lastReadLocation && (
+                                    <div className="glossy-card p-6 flex items-center justify-between cursor-pointer hover:bg-white/60 transition-colors" onClick={() => { setActiveTestament('OT'); setActiveBook(BIBLE_BOOKS.find(b => b.name === progress.lastReadLocation.book)); setView('library'); }}>
+                                        <div><span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Continue Reading</span><h3 className="font-serif text-xl text-moody-text font-bold">{progress.lastReadLocation.book} <span className="text-moody-gold">{progress.lastReadLocation.chapter}</span></h3></div>
+                                        <div className="w-10 h-10 bg-moody-gold text-white rounded-full flex items-center justify-center text-lg shadow-lg">➜</div>
+                                    </div>
+                                )}
+                                {progress.activePlanId && (
+                                    <div className="bg-gradient-to-r from-moody-accent1 to-moody-dark text-white rounded-[2rem] p-8 shadow-lg flex flex-col justify-between cursor-pointer hover:shadow-xl transition-all h-48" onClick={() => { setViewingPlan(READING_PLANS.find(p => p.id === progress.activePlanId)); setView('plans'); }}>
+                                        <div>
+                                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/70 block mb-2">Next Step</span>
+                                            <h3 className="font-serif text-2xl font-bold leading-tight">{getNextReadingLabel(progress.activePlanId)}</h3>
+                                        </div>
+                                        <div className="flex justify-between items-end">
+                                            <div className="text-[10px] uppercase tracking-wider opacity-80">{READING_PLANS.find(p => p.id === progress.activePlanId)?.title}</div>
+                                            <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-sm backdrop-blur-sm">📖</div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="lg:col-span-4 glossy-card p-8 flex flex-col items-center justify-center text-center h-full">
+                                <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 mb-6">Progress</h3>
+                                <div className="relative w-48 h-48 flex items-center justify-center mb-6">
+                                    <svg className="w-full h-full transform -rotate-90">
+                                        <circle cx="96" cy="96" r="70" stroke="#F0F0F0" strokeWidth="12" fill="transparent" />
+                                        <circle cx="96" cy="96" r="70" stroke="#B08968" strokeWidth="12" fill="transparent" strokeDasharray={440} strokeDashoffset={440 - (440 * percentage) / 100} strokeLinecap="round" className="progress-ring__circle" />
+                                    </svg>
+                                    <div className="absolute flex flex-col items-center">
+                                        <span className="font-serif text-4xl font-bold text-moody-text">{percentage}%</span>
+                                        <span className="text-[9px] uppercase tracking-widest text-gray-400">Complete</span>
+                                    </div>
+                                </div>
+                                <div className="w-full grid grid-cols-2 gap-3">
+                                    <div className="bg-moody-base p-3 rounded-xl border border-white"><div className="text-xl font-bold text-moody-text">{readCount}</div><div className="text-[9px] uppercase text-gray-500">Chapters</div></div>
+                                    <div className="bg-moody-base p-3 rounded-xl border border-white"><div className="text-xl font-bold text-moody-text">{progress.streak}</div><div className="text-[9px] uppercase text-gray-500">Streak</div></div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {view === 'library' && (
+                        <div className="animate-fade-in min-h-[600px]">
+                             {!activeTestament ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 min-h-[400px]">
+                                    <div onClick={() => { setActiveTestament('OT'); playSound('click'); }} className="glossy-card p-12 flex flex-col items-center justify-center cursor-pointer hover:border-moody-accent1/50 text-center transition-all hover:bg-white/60">
+                                        <div className="text-5xl mb-4 opacity-80 text-moody-accent1">📜</div>
+                                        <h2 className="font-serif text-3xl font-bold text-moody-text mb-2">Old Testament</h2>
+                                        <p className="text-xs font-bold uppercase tracking-widest text-gray-500">The Promise</p>
+                                    </div>
+                                    <div onClick={() => { setActiveTestament('NT'); playSound('click'); }} className="glossy-card p-12 flex flex-col items-center justify-center cursor-pointer hover:border-moody-accent2/50 text-center transition-all hover:bg-white/60">
+                                        <div className="text-5xl mb-4 opacity-80 text-moody-accent2">🕊️</div>
+                                        <h2 className="font-serif text-3xl font-bold text-moody-text mb-2">New Testament</h2>
+                                        <p className="text-xs font-bold uppercase tracking-widest text-gray-500">The Fulfillment</p>
+                                    </div>
+                                </div>
+                             ) : (
+                                <div>
+                                    <button onClick={() => setActiveTestament(null)} className="mb-6 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-500 hover:text-moody-text transition-colors">← Library</button>
+                                    <div className="glossy-card p-10 border-t-4 border-moody-gold mb-12 bookshelf-shelf">
+                                        <h2 className="font-serif text-3xl text-center text-moody-text mb-10">{activeTestament === 'OT' ? 'Old Testament' : 'New Testament'}</h2>
+                                        <div className="flex flex-wrap items-end justify-center gap-1 min-h-[180px] px-4 py-8">
+                                            {(activeTestament === 'OT' ? BIBLE_BOOKS.slice(0, 39) : BIBLE_BOOKS.slice(39)).map(book => (
+                                                <BookSpine key={book.name} book={book} isCompleted={progress.completedBooks.includes(book.name)} onClick={(b) => { setActiveBook(b); playSound('click'); setMarkAllState(0); }} />
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="glossy-card p-8">
+                                        <h3 className="font-serif text-xl font-bold text-moody-text mb-6 border-b border-moody-gold/10 pb-4">Reading Chronicle</h3>
+                                        <div className="space-y-4 max-h-80 overflow-y-auto custom-scrollbar">
+                                            {progress.history.length === 0 && <p className="text-gray-400 text-center text-sm italic">No entries yet.</p>}
+                                            {progress.history.map(h => (
+                                                <div key={h.id} className={`flex gap-4 p-4 rounded-xl border transition-all ${h.type === 'reflection' ? 'bg-moody-accent1/5 border-moody-accent1/20' : 'bg-white/40 border-white/60'}`}>
+                                                    <div className="w-24 shrink-0 text-[10px] font-bold uppercase tracking-widest text-gray-500 pt-1 border-r border-moody-gold/10 mr-2">{h.date}</div>
+                                                    <div>
+                                                        <div className="font-bold text-moody-text text-sm">{h.book} <span className="text-moody-gold">{h.chapter === 'All' ? '(Complete)' : `Ch ${h.chapter}`}</span></div>
+                                                        {h.type === 'reflection' && <div className="text-xs text-gray-500 font-serif italic mt-1">"{h.verseText}"</div>}
+                                                        <div className="text-xs text-gray-500 italic mt-1">{h.note}</div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                             )}
+                        </div>
+                    )}
+
+                    {view === 'gallery' && (
+                        <div className="animate-fade-in">
+                            <div className="flex justify-center mb-10"><div className="glass-card p-1 flex gap-1 rounded-full"><button onClick={() => setFaithView('heroes')} className={`px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${faithView === 'heroes' ? 'bg-moody-gold text-white shadow' : 'text-gray-400 hover:text-moody-gold'}`}>Heroes</button><button onClick={() => setFaithView('achievements')} className={`px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${faithView === 'achievements' ? 'bg-moody-gold text-white shadow' : 'text-gray-400 hover:text-moody-gold'}`}>Achievements</button></div></div>
+                            {faithView === 'heroes' && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {HEROES.map(hero => {
+                                        const isUnlocked = progress.completedBooks.includes(hero.book);
+                                        return (
+                                            <div key={hero.id} className={`glossy-card p-8 flex items-center gap-6 transition-all duration-500 hover:scale-[1.02] ${isUnlocked ? 'border-moody-gold shadow-md' : 'opacity-60 grayscale'}`}>
+                                                <div className="text-4xl shrink-0 animate-float">{isUnlocked ? hero.icon : '🔒'}</div>
+                                                <div>
+                                                    <h4 className="font-serif text-lg font-bold text-moody-text">{hero.name}</h4>
+                                                    <p className="text-[10px] font-bold uppercase tracking-widest text-moody-gold mb-1">{hero.title}</p>
+                                                    <p className="text-xs text-gray-500 mt-1 leading-relaxed">{isUnlocked ? hero.description : `Complete ${hero.book} to unlock`}</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                            {faithView === 'achievements' && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {ACHIEVEMENTS.map(ach => {
+                                        const isUnlocked = progress.unlockedAchievements.includes(ach.id);
+                                        return (
+                                            <div key={ach.id} className={`glossy-card p-8 flex items-center gap-6 ${isUnlocked ? 'border-moody-gold shadow-md' : 'opacity-50'}`}>
+                                                <div className="text-4xl">{isUnlocked ? ach.icon : '🔒'}</div>
+                                                <div><h4 className="font-serif text-lg font-bold text-moody-text">{ach.title}</h4><p className="text-xs text-gray-500 mt-1 leading-relaxed">{ach.description}</p></div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    
+                    {view === 'bible' && <BibleReader initialBook={activeBook?.name} initialChapter={progress.lastReadLocation?.chapter} progress={progress} onToggleRead={toggleChapter} onSaveNote={addVerseNote} />}
+                    
+                    {view === 'plans' && (
+                        <div className="animate-fade-in">
+                            <h2 className="font-serif text-3xl font-bold text-moody-text mb-8 text-center">Guided Reading Plans</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                                {READING_PLANS.map(plan => {
+                                    const isActive = progress.activePlanId === plan.id;
+                                    return (
+                                        <div key={plan.id} onClick={() => { setViewingPlan(plan); playSound('click'); if(!isActive) setProgress(p => ({...p, activePlanId: plan.id})); }} className={`glossy-card p-8 cursor-pointer ${isActive ? 'border-moody-gold shadow-lg ring-1 ring-moody-gold/20' : 'hover:border-moody-gold/50'}`}>
+                                            <div className="text-4xl mb-4 text-moody-gold">{isActive ? '★' : '○'}</div>
+                                            <h3 className="font-serif text-xl font-bold text-moody-text mb-2">{plan.title}</h3>
+                                            <p className="text-sm text-gray-500 mb-4">{plan.desc}</p>
+                                            <button className={`w-full py-2 rounded-lg text-xs font-bold uppercase tracking-widest ${isActive ? 'bg-moody-gold text-white' : 'bg-moody-base text-gray-500'}`}>Open Schedule</button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Book Modal */}
+                    {activeBook && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                            <div className="absolute inset-0 bg-white/60 backdrop-blur-md" onClick={() => setActiveBook(null)}></div>
+                            <div className="relative w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-fade-in border border-moody-gold/20">
+                                <div className="p-8 bg-moody-base border-b border-moody-gold/10 flex justify-between items-center">
+                                    <div>
+                                        <h2 className="font-serif text-3xl font-bold text-moody-text">{activeBook.name}</h2>
+                                        <div className="flex items-center gap-4 mt-2">
+                                            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">{activeBook.category}</span>
+                                            <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="bg-white border border-gray-200 rounded px-2 py-1 text-xs text-gray-500 focus:outline-none focus:border-moody-gold" />
+                                        </div>
+                                    </div>
+                                    <button onClick={() => setActiveBook(null)} className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-gray-400 hover:text-moody-text hover:shadow-md transition">✕</button>
+                                </div>
+                                
+                                <div className="px-8 py-4 bg-white flex justify-end border-b border-gray-50">
+                                    <button 
+                                        onClick={() => {
+                                            if (markAllState === 0) setMarkAllState(1); 
+                                            else markBookComplete(activeBook.name);
+                                        }}
+                                        className={`text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 transition-all btn-interactive ${markAllState === 1 ? 'text-moody-accent1' : 'text-moody-gold hover:text-moody-text'}`}
+                                    >
+                                        <span>{markAllState === 1 ? 'Click Again to Confirm' : 'Mark Book Complete'}</span> <span>✨</span>
+                                    </button>
+                                </div>
+
+                                <div className="p-8 overflow-y-auto grid grid-cols-5 sm:grid-cols-8 gap-3 bg-white custom-scrollbar">
+                                    {Array.from({length: activeBook.chapters}, (_, i) => i + 1).map(ch => {
+                                        const readData = (progress.readChapters[activeBook.name] || []).find(c => c.chapter === ch);
+                                        const isRead = !!readData;
+                                        return (
+                                            <button 
+                                                key={ch} 
+                                                onClick={() => toggleChapter(activeBook.name, ch)} 
+                                                title={isRead ? `Read on ${readData.date}` : ''}
+                                                className={`aspect-square rounded-xl text-sm font-bold transition-all border btn-interactive ${isRead ? getColorForDate(readData.date) + ' scale-105' : 'bg-gray-50 text-gray-400 border-gray-100 hover:border-moody-gold/30 hover:text-moody-gold'}`}
+                                            >
+                                                {ch}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {viewingPlan && (
+                        <ReadingPlanDetail 
+                            plan={viewingPlan} 
+                            allChapters={allChaptersFlat} 
+                            progress={progress}
+                            onToggleBatch={handleBatchToggle}
+                            onClose={() => setViewingPlan(null)} 
+                        />
+                    )}
+                    
+                    {unlockQueue.length > 0 && (
+                        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6">
+                            <div className="absolute inset-0 bg-white/90 backdrop-blur-md" onClick={() => setUnlockQueue(prev => prev.slice(1))}></div>
+                            <div className="relative bg-white rounded-[2rem] shadow-2xl p-12 text-center animate-fade-in border border-moody-gold/30">
+                                <div className="text-6xl mb-6 animate-bounce">{unlockQueue[0].icon}</div>
+                                <h2 className="font-serif text-3xl font-bold text-moody-text mb-2">{unlockQueue[0].title}</h2>
+                                <p className="text-gray-500 italic mb-8">{unlockQueue[0].subtitle}</p>
+                                <button onClick={() => setUnlockQueue(prev => prev.slice(1))} className="px-8 py-3 bg-moody-gold text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-moody-dark shadow-lg transition-all btn-interactive">Collect</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
