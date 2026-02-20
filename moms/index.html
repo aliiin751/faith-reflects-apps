@@ -1,0 +1,1446 @@
+import React, { useState, useEffect, useRef } from 'react';
+
+// --- Constants & Content ---
+const SCRIPTURES = [
+  { t: "Train up a child in the way he should go; even when he is old he will not depart from it.", r: "Proverbs 22:6" },
+  { t: "For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you.", r: "Jeremiah 29:11" },
+  { t: "I can do all things through Christ who strengthens me.", r: "Philippians 4:13" },
+  { t: "Be strong and courageous. Do not be afraid, for the Lord your God will be with you wherever you go.", r: "Joshua 1:9" },
+  { t: "Trust in the Lord with all your heart and lean not on your own understanding.", r: "Proverbs 3:5-6" },
+  { t: "The fruit of the Spirit is love, joy, peace, forbearance, kindness, goodness, faithfulness, gentleness and self-control.", r: "Galatians 5:22-23" },
+  { t: "Do not be anxious about anything, but in every situation, by prayer and petition, present your requests to God.", r: "Philippians 4:6" },
+  { t: "Let us not grow weary of doing good, for in due season we will reap, if we do not give up.", r: "Galatians 6:9" },
+  { t: "She opens her mouth with wisdom, and the teaching of kindness is on her tongue.", r: "Proverbs 31:26" },
+  { t: "His mercies never come to an end; they are new every morning; great is your faithfulness.", r: "Lamentations 3:22-23" }
+];
+
+const VIRTUE_VERSES = {
+  Kindness: '"Be kind to one another, tenderhearted, forgiving" — Eph 4:32',
+  Patience: '"Be patient, bearing with one another in love" — Eph 4:2',
+  'Self-Control': '"God gave us power, love and self-discipline" — 2 Tim 1:7',
+  Gentleness: '"A gentle answer turns away wrath" — Prov 15:1',
+  Faithfulness: '"Let love and faithfulness never leave you" — Prov 3:3',
+  Goodness: '"Let us not become weary in doing good" — Gal 6:9',
+  Joy: '"The joy of the Lord is your strength" — Neh 8:10',
+  Love: '"Love is patient, love is kind" — 1 Cor 13:4',
+  Peace: '"The peace of God will guard your hearts and minds" — Phil 4:7',
+  Humility: '"In humility value others above yourselves" — Phil 2:3',
+  Courage: '"Be strong and courageous" — Joshua 1:9',
+  Diligence: '"Work at it with all your heart, as for the Lord" — Col 3:23'
+};
+
+const MOM_ENCOURAGEMENTS = [
+  { t: "She is clothed with strength and dignity, and she laughs without fear of the future.", r: "Proverbs 31:25" },
+  { t: "The Lord your God is in your midst, a mighty one who will save.", r: "Zephaniah 3:17" },
+  { t: "Come to me, all who labor and are heavy laden, and I will give you rest.", r: "Matthew 11:28" },
+  { t: "Those who hope in the Lord will renew their strength; they will soar on wings like eagles.", r: "Isaiah 40:31" },
+  { t: "Cast all your anxiety on him because he cares for you.", r: "1 Peter 5:7" }
+];
+
+const AVATAR_COLORS = ['#D4A373', '#E29578', '#A3B18A', '#E9C46A', '#B5A89E', '#C4A484'];
+
+const DEFAULT_STATE = {
+  children: [], lessons: [], devotions: [], prayers: [], gratitude: [],
+  memVerse: [], tasks: [], mSlots: [
+    { id: 1, time: "08:00", label: "Opening Prayer", type: "Prayer" },
+    { id: 2, time: "08:05", label: 'Hymn — "Great Is Thy Faithfulness"', type: "Hymn" },
+    { id: 3, time: "08:15", label: "Memory Verse — Philippians 4:13", type: "Memory" },
+    { id: 4, time: "08:25", label: "Read-Aloud — Pilgrim's Progress Ch.3", type: "Read Aloud" }
+  ], hymns: [], books: [], momChk: [], momPray: [], curriculum: [], trips: [],
+  attendance: {}, streak: 0, lastDevo: null, virtue: 'Kindness'
+};
+
+// --- Custom Hooks ---
+function useLocalStorage(key, initialValue) {
+  const [storedValue, setStoredValue] = useState(() => {
+    try {
+      const item = window.localStorage.getItem(key);
+      return item ? JSON.parse(item) : initialValue;
+    } catch (error) {
+      console.warn("Error reading localStorage", error);
+      return initialValue;
+    }
+  });
+
+  const setValue = value => {
+    try {
+      const valueToStore = value instanceof Function ? value(storedValue) : value;
+      setStoredValue(valueToStore);
+      window.localStorage.setItem(key, JSON.stringify(valueToStore));
+    } catch (error) {
+      console.warn("Error setting localStorage", error);
+    }
+  };
+  return [storedValue, setValue];
+}
+
+function useInterval(callback, delay) {
+  const savedCallback = useRef();
+  useEffect(() => { savedCallback.current = callback; }, [callback]);
+  useEffect(() => {
+    if (delay !== null) {
+      const id = setInterval(() => savedCallback.current(), delay);
+      return () => clearInterval(id);
+    }
+  }, [delay]);
+}
+
+// --- Main Application ---
+export default function RootedHomeApp() {
+  const [data, setData] = useLocalStorage('rootedHome_react_v2', DEFAULT_STATE);
+  const [activeTab, setActiveTab] = useState('dash');
+  const [toast, setToast] = useState(null);
+  
+  // Modals
+  const [modal, setModal] = useState({ isOpen: false, type: null });
+
+  // Session State (Not persisted)
+  const [timerSeconds, setTimerSeconds] = useState(25 * 60);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [scripture, setScripture] = useState(SCRIPTURES[0]);
+  const [momEncouragement, setMomEncouragement] = useState(MOM_ENCOURAGEMENTS[0]);
+
+  useInterval(() => {
+    if (timerRunning && timerSeconds > 0) setTimerSeconds(s => s - 1);
+    else if (timerSeconds === 0) setTimerRunning(false);
+  }, timerRunning ? 1000 : null);
+
+  useEffect(() => {
+    // Inject custom fonts and styles needed for the specific aesthetic
+    const styleEl = document.createElement('style');
+    styleEl.innerHTML = `
+      @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap');
+      :root {
+        --bg-main: #FAF8F5; --bg-card: #FFFFFF; --bg-offset: #FCF9F2; 
+        --primary: #D4A373; --primary-hover: #BC8A5F; --primary-light: #F6E9DF;
+        --secondary: #E29578; --secondary-light: #F8E7E0;
+        --accent-green: #A3B18A; --accent-gold: #E9C46A;
+        --text-main: #5C544D; --text-muted: #8B7E74; --text-light: #C4B7A6;
+        --border-color: #F0E5D8;
+      }
+      body { background: var(--bg-main); color: var(--text-main); font-family: 'DM Sans', sans-serif; overflow-x: hidden; }
+      .font-serif { font-family: 'Cormorant Garamond', serif; }
+      .font-script { font-family: 'Caveat', cursive; }
+      
+      /* Ambient Backgrounds */
+      .ambient-orb { position: fixed; border-radius: 50%; filter: blur(90px); opacity: 0.25; animation: float 25s ease-in-out infinite; pointer-events: none; z-index: -1; }
+      @keyframes float { 0%, 100% { transform: translate(0, 0) scale(1); } 33% { transform: translate(30px, -30px) scale(1.05); } 66% { transform: translate(-20px, 20px) scale(0.95); } }
+      
+      /* Inputs & Custom Scrollbar */
+      input[type="text"], input[type="date"], input[type="number"], input[type="time"], select, textarea {
+        width: 100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 12px; font-family: 'DM Sans', sans-serif; font-size: 14px; background: var(--bg-card); outline: none; transition: all 0.3s ease; color: var(--text-main);
+      }
+      input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-light); }
+      input::placeholder, textarea::placeholder { color: var(--text-light); }
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover { background: var(--text-light); }
+      
+      /* Specific UI Elements */
+      .streak-ring { background: conic-gradient(var(--primary) calc(var(--pct, 0) * 1%), var(--border-color) 0); }
+      .glow-card::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: conic-gradient(from 0deg, transparent, rgba(212,163,115,.08), transparent, rgba(233,196,106,.08), transparent); animation: glowR 10s linear infinite; z-index: 0; pointer-events: none; }
+      @keyframes glowR { 100% { transform: rotate(360deg); } }
+    `;
+    document.head.appendChild(styleEl);
+    return () => document.head.removeChild(styleEl);
+  }, []);
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const updateData = (updater) => {
+    setData(prev => typeof updater === 'function' ? updater(prev) : { ...prev, ...updater });
+  };
+
+  return (
+    <div className="min-h-screen relative pb-10">
+      {/* Ambient Background */}
+      <div className="fixed inset-0 z-[-1] overflow-hidden">
+        <div className="ambient-orb bg-[#E9C46A] w-[500px] h-[500px] -top-[150px] -right-[150px]"></div>
+        <div className="ambient-orb bg-[#E29578] w-[400px] h-[400px] bottom-[10%] -left-[100px]" style={{ animationDelay: '-5s' }}></div>
+        <div className="ambient-orb bg-[#D4A373] w-[300px] h-[300px] top-[40%] right-[20%]" style={{ animationDelay: '-12s' }}></div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        <Header data={data} />
+        
+        {/* Scripture Banner */}
+        <div className="relative overflow-hidden rounded-[24px] p-8 sm:p-10 mb-10 border border-[#F0E5D8] shadow-sm" style={{ background: 'linear-gradient(135deg, #FCF9F2, #FFFFFF)' }}>
+          <div className="absolute -top-6 left-6 font-serif text-[#F0E5D8] opacity-60 text-[180px] leading-none pointer-events-none">"</div>
+          <button onClick={() => setScripture(SCRIPTURES[Math.floor(Math.random() * SCRIPTURES.length)])} className="absolute top-5 right-5 px-4 py-2 text-xs font-semibold text-[#8B7E74] border border-[#F0E5D8] rounded-xl hover:bg-[#FCF9F2] transition-colors z-10 bg-white/60 backdrop-blur-md shadow-sm">
+            ↻ Refresh Word
+          </button>
+          <div className="relative z-10 pl-4 sm:pl-16 max-w-4xl">
+            <p className="font-serif text-xl sm:text-2xl md:text-3xl italic text-[#5C544D] leading-relaxed">"{scripture.t}"</p>
+            <p className="text-sm text-[#D4A373] mt-4 uppercase tracking-[0.2em] font-bold">— {scripture.r}</p>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex gap-2 p-2 bg-[#FFFFFF] rounded-2xl mb-10 shadow-sm border border-[#F0E5D8] overflow-x-auto hide-scrollbar">
+          {[
+            { id: 'dash', icon: '🏡', label: 'Dashboard' },
+            { id: 'lessons', icon: '📚', label: 'Lessons' },
+            { id: 'devos', icon: '🕊️', label: 'Devotions' },
+            { id: 'kids', icon: '👧', label: 'Children' },
+            { id: 'morning', icon: '🌅', label: 'Morning Time' },
+            { id: 'virtues', icon: '🌿', label: 'Virtues' },
+            { id: 'memory', icon: '📖', label: 'Memory Work' },
+            { id: 'mama', icon: '💛', label: "Mom's Corner" },
+            { id: 'records', icon: '📋', label: 'Records' }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-shrink-0 px-5 py-3 rounded-[12px] text-sm font-bold transition-all ${
+                activeTab === tab.id 
+                  ? 'bg-[#D4A373] text-white shadow-md transform scale-[1.02]' 
+                  : 'text-[#8B7E74] hover:text-[#5C544D] hover:bg-[#FCF9F2]'
+              }`}
+            >
+              <span className="mr-2.5 text-lg">{tab.icon}</span>{tab.label}
+            </button>
+          ))}
+        </nav>
+
+        {/* Views */}
+        <div className="animate-in fade-in duration-500">
+          {activeTab === 'dash' && <DashboardView data={data} updateData={updateData} openModal={t => setModal({ isOpen: true, type: t })} />}
+          {activeTab === 'lessons' && <LessonsView data={data} updateData={updateData} />}
+          {activeTab === 'devos' && <DevotionsView data={data} updateData={updateData} openModal={t => setModal({ isOpen: true, type: t })} />}
+          {activeTab === 'kids' && <ChildrenView data={data} updateData={updateData} />}
+          {activeTab === 'morning' && (
+            <MorningTimeView 
+              data={data} updateData={updateData} openModal={t => setModal({ isOpen: true, type: t })}
+              timer={{ seconds: timerSeconds, running: timerRunning, setSeconds: setTimerSeconds, setRunning: setTimerRunning }} 
+            />
+          )}
+          {activeTab === 'virtues' && <VirtuesView data={data} updateData={updateData} />}
+          {activeTab === 'memory' && <MemoryView data={data} updateData={updateData} />}
+          {activeTab === 'mama' && <MamasCornerView data={data} updateData={updateData} enc={momEncouragement} />}
+          {activeTab === 'records' && <RecordsView data={data} updateData={updateData} openModal={t => setModal({ isOpen: true, type: t })} showToast={showToast} />}
+        </div>
+      </div>
+
+      {/* FaithReflects Beautiful Footer */}
+      <footer className="mt-16 pb-12 pt-8 border-t border-[#F0E5D8]/60 flex flex-col items-center justify-center relative z-10 space-y-5">
+        <div className="font-serif text-[#8B7E74] text-lg italic">
+          Nurturing hearts & minds at home
+        </div>
+        
+        <div className="flex items-center gap-4">
+          <a href="https://instagram.com/faithreflects" target="_blank" rel="noopener noreferrer" 
+             className="w-12 h-12 bg-[#FFFFFF] border border-[#F0E5D8] rounded-full flex items-center justify-center text-[#D4A373] hover:bg-[#D4A373] hover:text-white hover:border-[#D4A373] transition-all shadow-sm transform hover:-translate-y-1" title="Follow @faithreflects on Instagram">
+            <svg xmlns="http://www.w3.org/polygons" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+          </a>
+          
+          <a href="https://faithreflects.etsy.com" target="_blank" rel="noopener noreferrer" 
+             className="flex items-center gap-3 px-6 py-3 bg-[#FFFFFF] border border-[#F0E5D8] rounded-full text-[#D4A373] hover:bg-[#D4A373] hover:text-white hover:border-[#D4A373] transition-all shadow-sm transform hover:-translate-y-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+            <span className="text-sm font-bold tracking-wide uppercase">Shop FaithReflects</span>
+          </a>
+        </div>
+        
+        <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#C4B7A6] mt-4">
+          Designed with ♥ by @faithreflects
+        </div>
+      </footer>
+
+      {/* Modals & Toasts */}
+      {modal.isOpen && <ModalManager type={modal.type} close={() => setModal({ isOpen: false, type: null })} data={data} updateData={updateData} />}
+      {toast && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-[#5C544D] text-[#FCF9F2] px-8 py-4 rounded-full text-sm font-bold tracking-wide shadow-2xl animate-in slide-in-from-bottom-6 z-50">
+          {toast}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- Components ---
+
+function Header() {
+  const [time, setTime] = useState(new Date());
+  useEffect(() => { const timer = setInterval(() => setTime(new Date()), 1000); return () => clearInterval(timer); }, []);
+  
+  const h = time.getHours();
+  const greeting = h < 12 ? 'Good morning ☀️' : h < 17 ? 'Good afternoon ⛅' : 'Good evening 🌙';
+  const timeStr = time.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const dateStr = time.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+
+  return (
+    <header className="flex flex-col md:flex-row items-start md:items-center justify-between pb-8 mb-8 gap-6 border-b border-[#F0E5D8]">
+      <div className="flex items-center gap-5">
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg bg-gradient-to-br from-[#D4A373] to-[#BC8A5F]">
+          ✦
+        </div>
+        <div>
+          <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-[#5C544D] leading-none mb-1.5">
+            Rooted Home <span className="font-script text-[26px] text-[#D4A373] font-normal ml-1">by @faithreflects</span>
+          </h1>
+          <div className="text-[11px] text-[#8B7E74] tracking-[0.2em] uppercase font-bold">Christian Homeschool Dashboard</div>
+        </div>
+      </div>
+      <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+        <div className="bg-[#FCF9F2] px-5 py-2.5 rounded-full text-sm text-[#D4A373] border border-[#F0E5D8] font-bold tracking-wide shadow-sm">{greeting}</div>
+        <div className="text-right">
+          <div className="font-serif text-2xl sm:text-3xl text-[#5C544D] leading-none font-semibold">{timeStr}</div>
+          <div className="text-xs text-[#8B7E74] font-medium mt-1 uppercase tracking-wider">{dateStr}</div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function Card({ children, title, badge, action, className = "", glow = false }) {
+  return (
+    <div className={`bg-[#FFFFFF] rounded-[24px] p-6 sm:p-8 shadow-sm border border-[#F0E5D8] hover:shadow-md hover:border-[#D4A373]/30 transition-all duration-300 relative overflow-hidden ${glow ? 'glow-card' : ''} ${className}`}>
+      {(title || action || badge) && (
+        <div className="flex items-center justify-between mb-6 relative z-10">
+          <div className="flex items-center gap-3">
+            {title && <h2 className="font-serif text-[26px] font-bold text-[#5C544D] leading-none">{title}</h2>}
+            {badge && <span className={`text-[10px] uppercase tracking-wider px-3 py-1.5 rounded-full font-bold ${badge.className}`}>{badge.text}</span>}
+          </div>
+          {action}
+        </div>
+      )}
+      <div className="relative z-10">{children}</div>
+    </div>
+  );
+}
+
+function EmptyState({ icon, text }) {
+  return (
+    <div className="text-center py-10 px-4 text-[#C4B7A6]">
+      <span className="text-5xl block mb-4 opacity-70">{icon}</span>
+      <p className="text-[15px] font-medium text-[#8B7E74]">{text}</p>
+    </div>
+  );
+}
+
+// --- Views ---
+
+function DashboardView({ data, updateData, openModal }) {
+  const today = new Date().toISOString().slice(0, 10);
+  const sw = new Date(); sw.setDate(sw.getDate() - sw.getDay());
+  const swStr = sw.toISOString().slice(0, 10);
+
+  const lessonsThisWeek = data.lessons.filter(l => l.date && l.date >= swStr).length;
+  const answeredPrayers = data.prayers.filter(p => p.ans).length;
+  const versesMemorized = data.memVerse.filter(v => v.mast).length;
+  const todaysTasks = data.tasks.filter(t => t.date === today);
+  
+  const ew = new Date(sw); ew.setDate(sw.getDate() + 6);
+  const ewStr = ew.toISOString().slice(0,10);
+  const weeksLessons = data.lessons.filter(l => l.date && l.date >= swStr && l.date <= ewStr);
+
+  const [quickPray, setQuickPray] = useState('');
+
+  const toggleTask = (id) => {
+    updateData(prev => ({
+      ...prev, tasks: prev.tasks.map(t => t.id === id ? { ...t, done: !t.done } : t)
+    }));
+  };
+
+  const handleQuickPray = (answered) => {
+    if (!quickPray.trim()) return;
+    updateData(prev => ({
+      ...prev, prayers: [...prev.prayers, { id: Date.now(), text: quickPray, date: today, ans: answered, cat: 'Family' }]
+    }));
+    setQuickPray('');
+  };
+
+  const markDevo = () => {
+    if (data.lastDevo === today) return;
+    updateData(prev => {
+      let streak = prev.streak;
+      const y = new Date(); y.setDate(y.getDate() - 1);
+      if (prev.lastDevo === y.toISOString().slice(0, 10)) streak++; else streak = 1;
+      return { ...prev, streak, lastDevo: today };
+    });
+  };
+
+  const streakMsg = data.streak === 0 ? 'Begin your streak today!' : data.streak < 7 ? 'Beautiful start!' : data.streak < 14 ? 'One week strong!' : 'Amazing consistency!';
+
+  return (
+    <div className="space-y-8">
+      {/* Stats Row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { i: '📚', n: lessonsThisWeek, l: 'Lessons This Week' },
+          { i: '🙏', n: answeredPrayers, l: 'Prayers Answered' },
+          { i: '📖', n: versesMemorized, l: 'Verses Memorized' },
+          { i: '🔥', n: data.streak, l: 'Day Streak' }
+        ].map((s, idx) => (
+          <div key={idx} className="bg-[#FFFFFF] rounded-[24px] p-6 text-center border border-[#F0E5D8] shadow-sm hover:shadow-md transition-all">
+            <span className="text-3xl block mb-3 opacity-90">{s.i}</span>
+            <div className="font-serif text-4xl font-bold text-[#5C544D]">{s.n}</div>
+            <div className="text-[11px] text-[#8B7E74] uppercase tracking-[0.15em] mt-2 font-bold">{s.l}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          <Card title="📋 Today's Tasks" action={<button onClick={() => openModal('task')} className="bg-[#D4A373] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#BC8A5F] transition-colors uppercase tracking-wider shadow-sm">+ Add Task</button>}>
+            {todaysTasks.length === 0 ? <EmptyState icon="🌱" text="Add today's tasks to get started" /> : (
+              <div className="space-y-3">
+                {todaysTasks.map(t => (
+                  <label key={t.id} className="flex items-start gap-4 p-4 rounded-xl hover:bg-[#FCF9F2] cursor-pointer transition-colors border border-transparent hover:border-[#F0E5D8] group">
+                    <input type="checkbox" checked={t.done} onChange={() => toggleTask(t.id)} className="mt-1 w-5 h-5 rounded border-[#F0E5D8] text-[#D4A373] focus:ring-[#D4A373] cursor-pointer" />
+                    <div className="flex-1">
+                      <span className={`text-[15px] font-medium ${t.done ? 'line-through text-[#C4B7A6]' : 'text-[#5C544D]'}`}>{t.text}</span>
+                      <span className="text-[11px] font-bold text-[#8B7E74] block mt-1 uppercase tracking-wider bg-[#FCF9F2] px-2 py-0.5 rounded-md w-fit border border-[#F0E5D8]">{t.cat}</span>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          <Card title="📚 This Week's Lessons" badge={{ text: `${weeksLessons.length} planned`, className: 'bg-[#F6E9DF] text-[#D4A373]' }}>
+            {weeksLessons.length === 0 ? <EmptyState icon="📖" text="Plan your week in the Lessons tab" /> : (
+              <div className="space-y-3">
+                {weeksLessons.slice(0, 5).map(l => {
+                  const c = data.children.find(x => x.id === Number(l.cid));
+                  return (
+                    <label key={l.id} className="flex items-center gap-4 p-4 rounded-xl hover:bg-[#FCF9F2] cursor-pointer transition-colors border border-transparent hover:border-[#F0E5D8]">
+                      <input type="checkbox" checked={l.done} onChange={() => {
+                        updateData(prev => ({ ...prev, lessons: prev.lessons.map(x => x.id === l.id ? { ...x, done: !x.done } : x) }));
+                      }} className="w-5 h-5 rounded border-[#F0E5D8] text-[#D4A373] focus:ring-[#D4A373] cursor-pointer" />
+                      <div className="flex-1 text-[15px]">
+                        <strong className={l.done ? 'text-[#C4B7A6]' : 'text-[#5C544D]'}>{l.sub}</strong> 
+                        <span className={l.done ? 'text-[#C4B7A6] line-through ml-1.5' : 'text-[#8B7E74] ml-1.5'}>— {l.title}</span>
+                      </div>
+                      <span className="text-[11px] font-bold text-[#D4A373] bg-[#FCF9F2] px-3 py-1 rounded-lg border border-[#F0E5D8] uppercase tracking-wider">{c?.name || '—'}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
+        </div>
+
+        <div className="space-y-8">
+          <Card title="📅 Calendar">
+            <MiniCalendar lessons={data.lessons} />
+          </Card>
+
+          <Card title="🕊️ Devotion Streak" glow={true}>
+            <div className="flex flex-col items-center py-4">
+              <div className="w-24 h-24 rounded-full flex items-center justify-center relative mb-5 streak-ring shadow-sm" style={{ '--pct': Math.min((data.streak / 30) * 100, 100) }}>
+                <div className="absolute inset-1.5 bg-[#FFFFFF] rounded-full shadow-inner"></div>
+                <div className="relative z-10 text-center">
+                  <div className="font-serif text-4xl font-bold text-[#D4A373] leading-none">{data.streak}</div>
+                  <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#8B7E74] mt-1.5">days</div>
+                </div>
+              </div>
+              <p className="font-script text-2xl text-[#BC8A5F] mb-6 text-center">{streakMsg}</p>
+              <button onClick={markDevo} disabled={data.lastDevo === today} className="w-full bg-[#D4A373] text-white px-5 py-3 rounded-xl text-sm font-bold tracking-wide uppercase hover:bg-[#BC8A5F] transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                {data.lastDevo === today ? '✓ Completed Today' : '✓ Done Today'}
+              </button>
+            </div>
+          </Card>
+
+          <Card title="🙏 Quick Prayer">
+            <textarea 
+              value={quickPray} onChange={e => setQuickPray(e.target.value)} 
+              placeholder="Lord, today I pray for..." 
+              className="font-script text-2xl min-h-[120px] bg-[#FCF9F2] border-[#F0E5D8] rounded-xl p-4 w-full resize-none placeholder-[#C4B7A6] leading-relaxed"
+            />
+            <div className="flex gap-3 mt-4">
+              <button onClick={() => handleQuickPray(false)} className="flex-1 bg-[#D4A373] text-white py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold hover:bg-[#BC8A5F] transition-colors shadow-sm">Save</button>
+              <button onClick={() => handleQuickPray(true)} className="flex-1 bg-[#FFFFFF] border-2 border-[#F0E5D8] text-[#D4A373] py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold hover:bg-[#FCF9F2] transition-colors">🙌 Answered!</button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MiniCalendar({ lessons }) {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = d.getMonth();
+  const td = d.getDate();
+  const firstDay = new Date(y, m, 1).getDay();
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const monthName = d.toLocaleDateString('default', { month: 'long' });
+
+  const days = [];
+  for (let i = 0; i < firstDay; i++) days.push(null);
+  for (let i = 1; i <= daysInMonth; i++) days.push(i);
+
+  return (
+    <div>
+      <div className="font-serif text-xl font-bold mb-4 text-[#5C544D] text-center">{monthName} {y}</div>
+      <div className="grid grid-cols-7 gap-1 text-center mb-3">
+        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+          <div key={i} className="text-[10px] font-bold uppercase tracking-wider text-[#C4B7A6]">{day}</div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-1.5 text-center">
+        {days.map((day, i) => {
+          if (!day) return <div key={i} className="py-2" />;
+          const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          const hasLesson = lessons.some(l => l.date === dateStr);
+          const isToday = day === td;
+          return (
+            <div key={i} className={`py-2 text-sm rounded-xl font-medium transition-all ${isToday ? 'bg-[#D4A373] text-white shadow-md' : 'text-[#8B7E74] hover:bg-[#FCF9F2] hover:text-[#5C544D] cursor-pointer border border-transparent hover:border-[#F0E5D8]'}`}>
+              {day}
+              {hasLesson && !isToday && <div className="w-1.5 h-1.5 bg-[#E29578] rounded-full mx-auto mt-1"></div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function LessonsView({ data, updateData }) {
+  const [lForm, setLForm] = useState({ sub: 'Bible', cid: '', title: '', date: '', dur: 30, notes: '' });
+  const [curIn, setCurIn] = useState('');
+  const [filter, setFilter] = useState({ child: '', sub: '' });
+
+  const addLesson = () => {
+    if (!lForm.title || !lForm.cid) return;
+    updateData(prev => ({ ...prev, lessons: [{ ...lForm, id: Date.now(), done: false }, ...prev.lessons] }));
+    setLForm({ ...lForm, title: '', notes: '' });
+  };
+
+  const addCur = () => {
+    if (!curIn) return;
+    updateData(prev => ({ ...prev, curriculum: [...prev.curriculum, { id: Date.now(), text: curIn }] }));
+    setCurIn('');
+  };
+
+  let filtered = data.lessons;
+  if (filter.child) filtered = filtered.filter(l => String(l.cid) === filter.child);
+  if (filter.sub) filtered = filtered.filter(l => l.sub === filter.sub);
+  filtered.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  return (
+    <div className="space-y-8">
+      <h2 className="font-serif text-3xl font-bold flex items-center gap-3 mb-4 text-[#5C544D]">📚 Lesson Planner</h2>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <Card title="Add New Lesson">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+              <div>
+                <label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Subject</label>
+                <select value={lForm.sub} onChange={e => setLForm({...lForm, sub: e.target.value})}>
+                  {['Bible','Math','Language Arts','Science','History','Art','Music','Nature Study','Latin','Geography','Handwriting','Reading'].map(s => <option key={s}>{s}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Child</label>
+                <select value={lForm.cid} onChange={e => setLForm({...lForm, cid: e.target.value})}>
+                  <option value="" disabled>Select a child...</option>
+                  {data.children.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="mb-5">
+              <label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Lesson Title</label>
+              <input type="text" value={lForm.title} onChange={e => setLForm({...lForm, title: e.target.value})} placeholder="e.g. Psalm 23 Copywork" />
+            </div>
+            <div className="grid grid-cols-2 gap-5 mb-5">
+              <div>
+                <label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Date</label>
+                <input type="date" value={lForm.date} onChange={e => setLForm({...lForm, date: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Duration (min)</label>
+                <input type="number" value={lForm.dur} onChange={e => setLForm({...lForm, dur: e.target.value})} />
+              </div>
+            </div>
+            <div className="mb-6">
+              <label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Notes</label>
+              <textarea value={lForm.notes} onChange={e => setLForm({...lForm, notes: e.target.value})} placeholder="Curriculum page, supplies needed..." className="min-h-[100px]" />
+            </div>
+            <button onClick={addLesson} className="bg-[#D4A373] text-white px-6 py-3 rounded-xl text-xs uppercase tracking-wider font-bold hover:bg-[#BC8A5F] transition-all shadow-md">
+              ✦ Add Lesson
+            </button>
+          </Card>
+        </div>
+
+        <div>
+          <Card title="Curriculum Tracker" badge={{ text: data.curriculum.length.toString(), className: 'bg-[#F6E9DF] text-[#D4A373]' }}>
+            <div className="max-h-[300px] overflow-y-auto mb-5 pr-2 space-y-2">
+              {data.curriculum.length === 0 ? <EmptyState icon="📦" text="Add curriculum resources" /> : 
+                data.curriculum.map(c => (
+                  <div key={c.id} className="flex justify-between items-center p-3 bg-[#FCF9F2] rounded-xl border border-[#F0E5D8] group">
+                    <span className="text-[14px] font-medium text-[#5C544D] flex items-center gap-3"><span>📦</span> {c.text}</span>
+                    <button onClick={() => updateData(p => ({...p, curriculum: p.curriculum.filter(x => x.id !== c.id)}))} className="text-[#C4B7A6] hover:text-[#E29578] opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+                  </div>
+                ))
+              }
+            </div>
+            <div className="flex gap-2">
+              <input type="text" value={curIn} onChange={e => setCurIn(e.target.value)} placeholder="Add resource..." className="flex-1" onKeyDown={e => e.key==='Enter' && addCur()} />
+              <button onClick={addCur} className="bg-[#D4A373] text-white px-4 py-2 rounded-xl font-bold text-lg hover:bg-[#BC8A5F] shadow-sm">+</button>
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      <Card title="All Lessons">
+        <div className="flex flex-wrap gap-4 mb-6">
+          <select value={filter.child} onChange={e => setFilter({...filter, child: e.target.value})} className="w-auto bg-[#FCF9F2] py-2 px-4 rounded-xl text-sm border border-[#F0E5D8] font-bold text-[#8B7E74] focus:ring-0 cursor-pointer">
+            <option value="">All Children</option>
+            {data.children.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          <select value={filter.sub} onChange={e => setFilter({...filter, sub: e.target.value})} className="w-auto bg-[#FCF9F2] py-2 px-4 rounded-xl text-sm border border-[#F0E5D8] font-bold text-[#8B7E74] focus:ring-0 cursor-pointer">
+            <option value="">All Subjects</option>
+            {['Bible','Math','Language Arts','Science','History','Art','Music','Nature Study','Latin','Geography','Handwriting','Reading'].map(s => <option key={s}>{s}</option>)}
+          </select>
+        </div>
+        
+        {filtered.length === 0 ? <EmptyState icon="📝" text="No lessons match your filters" /> : (
+          <div className="overflow-x-auto rounded-xl border border-[#F0E5D8]">
+            <table className="w-full text-left border-collapse text-sm whitespace-nowrap">
+              <thead>
+                <tr className="text-[11px] uppercase tracking-wider font-bold text-[#C4B7A6] border-b border-[#F0E5D8] bg-[#FCF9F2]">
+                  <th className="py-4 pl-4 w-12 text-center">Done</th>
+                  <th className="py-4">Subject</th>
+                  <th className="py-4 min-w-[200px]">Lesson Title</th>
+                  <th className="py-4">Child</th>
+                  <th className="py-4">Date</th>
+                  <th className="py-4 w-12 text-center">Del</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((l, index) => {
+                  const c = data.children.find(x => x.id === Number(l.cid));
+                  return (
+                    <tr key={l.id} className={`border-b border-[#F0E5D8] hover:bg-[#FCF9F2] transition-colors group ${index === filtered.length - 1 ? 'border-b-0' : ''}`}>
+                      <td className="py-3 pl-4 text-center">
+                        <input type="checkbox" checked={l.done} onChange={() => updateData(p => ({...p, lessons: p.lessons.map(x => x.id === l.id ? {...x, done: !x.done} : x)}))} className="w-5 h-5 rounded border-[#F0E5D8] text-[#D4A373] focus:ring-[#D4A373] cursor-pointer" />
+                      </td>
+                      <td className="py-3"><span className="bg-[#F6E9DF] text-[#D4A373] text-[10px] uppercase tracking-wider px-3 py-1.5 rounded-md font-bold">{l.sub}</span></td>
+                      <td className={`py-3 font-medium text-[15px] ${l.done ? 'text-[#C4B7A6]' : 'text-[#5C544D]'}`}>{l.title}</td>
+                      <td className="py-3 text-[#8B7E74] font-medium">{c?.name || '—'}</td>
+                      <td className="py-3 text-[#C4B7A6] font-medium text-[13px]">{l.date || '—'}</td>
+                      <td className="py-3 text-center pr-2">
+                        <button onClick={() => updateData(p => ({...p, lessons: p.lessons.filter(x => x.id !== l.id)}))} className="text-[#C4B7A6] hover:text-[#E29578] opacity-0 group-hover:opacity-100 transition-opacity p-2">✕</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+function DevotionsView({ data, updateData, openModal }) {
+  const [devo, setDevo] = useState({ s: '', o: '', a: '', p: '' });
+  const [grat, setGrat] = useState('');
+
+  const saveDevo = () => {
+    if (!devo.s && !devo.o) return;
+    updateData(p => ({ ...p, devotions: [{ id: Date.now(), date: new Date().toISOString().slice(0,10), ...devo }, ...p.devotions] }));
+    setDevo({ s: '', o: '', a: '', p: '' });
+  };
+
+  const addGrat = () => {
+    if(!grat) return;
+    updateData(p => ({ ...p, gratitude: [{ id: Date.now(), text: grat, date: new Date().toISOString().slice(0,10) }, ...p.gratitude] }));
+    setGrat('');
+  }
+
+  const activePrayers = data.prayers.filter(p => !p.ans).reverse().slice(0,8);
+
+  return (
+    <div className="space-y-8">
+      <h2 className="font-serif text-3xl font-bold mb-4 text-[#5C544D]">🕊️ Family Devotions</h2>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card title="Today's Devotion" badge={{ text: 'S.O.A.P.', className: 'bg-[#F6E9DF] text-[#D4A373]' }} glow={true}>
+          <div className="space-y-5">
+            <div><label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">📜 Scripture</label><input type="text" value={devo.s} onChange={e=>setDevo({...devo, s:e.target.value})} placeholder="e.g. Philippians 4:6-7" /></div>
+            <div><label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">👁️ Observation</label><textarea value={devo.o} onChange={e=>setDevo({...devo, o:e.target.value})} placeholder="What stands out to you?" className="min-h-[80px]" /></div>
+            <div><label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">🎯 Application</label><textarea value={devo.a} onChange={e=>setDevo({...devo, a:e.target.value})} placeholder="How does this apply to your family today?" className="min-h-[80px]" /></div>
+            <div><label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">🙏 Prayer</label><textarea value={devo.p} onChange={e=>setDevo({...devo, p:e.target.value})} placeholder="Lord, help us to..." className="min-h-[100px] font-script text-2xl bg-[#FCF9F2]" /></div>
+            <button onClick={saveDevo} className="bg-[#D4A373] text-white px-6 py-3.5 rounded-xl text-xs uppercase tracking-wider font-bold hover:bg-[#BC8A5F] transition-colors w-full shadow-md mt-2">💾 Save Devotion</button>
+          </div>
+        </Card>
+
+        <div className="space-y-8">
+          <Card title="🙏 Family Prayer List" action={<button onClick={() => openModal('pray')} className="bg-[#D4A373] text-white px-4 py-2 rounded-xl text-xs uppercase tracking-wider font-bold hover:bg-[#BC8A5F] transition-colors shadow-sm">+ Add</button>}>
+            {activePrayers.length === 0 ? <EmptyState icon="🤲" text="Add family prayer requests" /> : (
+              <div className="space-y-3">
+                {activePrayers.map(p => (
+                  <div key={p.id} className="flex gap-4 items-start bg-[#FCF9F2] p-4 rounded-xl border border-[#F0E5D8]">
+                    <span className="text-xl">🙏</span>
+                    <div className="flex-1">
+                      <div className="text-[15px] font-bold text-[#5C544D] leading-snug">{p.text}</div>
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-[#C4B7A6] mt-2">{p.date} • {p.cat}</div>
+                    </div>
+                    <button onClick={() => updateData(prev => ({...prev, prayers: prev.prayers.map(x => x.id === p.id ? {...x, ans: true} : x)}))} className="text-[10px] font-bold uppercase tracking-wider bg-[#FFFFFF] border border-[#F0E5D8] px-3 py-1.5 rounded-lg text-[#D4A373] hover:bg-[#F0E5D8] transition-colors whitespace-nowrap shadow-sm">Answered</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          <Card title="🌻 Gratitude Journal">
+            <div className="flex gap-3 mb-5">
+              <input type="text" value={grat} onChange={e=>setGrat(e.target.value)} placeholder="Today I'm grateful for..." className="font-script text-2xl bg-[#FCF9F2] border-[#F0E5D8]" onKeyDown={e=>e.key==='Enter'&&addGrat()}/>
+              <button onClick={addGrat} className="bg-[#E9C46A] text-white px-5 py-2 rounded-xl text-xl hover:bg-[#D4A373] shadow-sm">♥</button>
+            </div>
+            <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2">
+              {data.gratitude.slice(0,5).map(g => (
+                <div key={g.id} className="flex items-center gap-4 p-4 bg-[#FFFFFF] border border-[#F0E5D8] rounded-xl shadow-sm">
+                  <span className="text-xl">🌻</span>
+                  <span className="font-script text-[22px] text-[#5C544D] flex-1 leading-none pt-1">{g.text}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#C4B7A6]">{g.date}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      <Card title="📒 Past Devotions">
+        {data.devotions.length === 0 ? <EmptyState icon="📔" text="Saved devotions appear here" /> : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {data.devotions.slice(0,6).map(d => (
+              <div key={d.id} className="p-6 border border-[#F0E5D8] rounded-[20px] bg-[#FCF9F2] hover:bg-[#FFFFFF] transition-all shadow-sm hover:shadow-md">
+                <div className="flex justify-between items-start mb-4 border-b border-[#F0E5D8] pb-3">
+                  <strong className="font-serif text-2xl text-[#5C544D]">📜 {d.s}</strong>
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-[#FFFFFF] border border-[#F0E5D8] text-[#8B7E74] px-3 py-1 rounded-full">{d.date}</span>
+                </div>
+                {d.o && <p className="text-[15px] text-[#8B7E74] mb-3 leading-relaxed"><span className="font-bold text-[#D4A373] uppercase text-[10px] tracking-widest block mb-1">Observation</span> {d.o}</p>}
+                {d.a && <p className="text-[15px] text-[#8B7E74] mb-3 leading-relaxed"><span className="font-bold text-[#D4A373] uppercase text-[10px] tracking-widest block mb-1">Application</span> {d.a}</p>}
+                {d.p && <p className="text-2xl font-script text-[#BC8A5F] mt-5 pt-3 border-t border-[#F0E5D8]/50 leading-snug">🙏 {d.p}</p>}
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+function ChildrenView({ data, updateData }) {
+  const [kid, setKid] = useState({ name: '', age: '', grade: 'K' });
+
+  const addKid = () => {
+    if (!kid.name) return;
+    const color = AVATAR_COLORS[data.children.length % AVATAR_COLORS.length];
+    updateData(p => ({ ...p, children: [...p.children, { ...kid, id: Date.now(), color }] }));
+    setKid({ name: '', age: '', grade: 'K' });
+  };
+
+  const rmKid = (id) => {
+    if (confirm('Remove child and all their specific data?')) {
+      updateData(p => ({
+        ...p,
+        children: p.children.filter(c => c.id !== id),
+        lessons: p.lessons.filter(l => Number(l.cid) !== id)
+      }));
+    }
+  };
+
+  return (
+    <div className="space-y-8">
+      <h2 className="font-serif text-3xl font-bold mb-4 text-[#5C544D]">👧 Children Profiles</h2>
+
+      <Card title="Add Child">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-5 items-end">
+          <div><label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Name</label><input type="text" value={kid.name} onChange={e=>setKid({...kid, name:e.target.value})} placeholder="Child's Name" /></div>
+          <div><label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Age</label><input type="number" value={kid.age} onChange={e=>setKid({...kid, age:e.target.value})} placeholder="Age" /></div>
+          <div><label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Grade</label><select value={kid.grade} onChange={e=>setKid({...kid, grade:e.target.value})}>{['PreK','K','1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th','11th','12th'].map(g=><option key={g}>{g}</option>)}</select></div>
+          <button onClick={addKid} className="bg-[#D4A373] text-white px-6 py-3 rounded-xl text-xs uppercase tracking-wider font-bold hover:bg-[#BC8A5F] transition-all w-full sm:w-auto h-[46px] shadow-sm">+ Add Child</button>
+        </div>
+      </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {data.children.length === 0 ? (
+          <div className="col-span-full"><Card><EmptyState icon="👶" text="Add your children to begin tracking their progress!" /></Card></div>
+        ) : (
+          data.children.map(c => {
+            const ls = data.lessons.filter(l => Number(l.cid) === c.id);
+            const dn = ls.filter(l => l.done).length;
+            const pct = ls.length ? Math.round((dn / ls.length) * 100) : 0;
+            const at = data.attendance[c.id] || 0;
+
+            return (
+              <Card key={c.id}>
+                <div className="flex justify-between items-start mb-8">
+                  <div className="flex gap-5 items-center">
+                    <div className="w-16 h-16 rounded-[20px] flex items-center justify-center text-white text-3xl font-bold shadow-md transform -rotate-3" style={{ backgroundColor: c.color }}>{c.name[0]}</div>
+                    <div>
+                      <div className="font-serif text-2xl font-bold text-[#5C544D]">{c.name}</div>
+                      <div className="text-[11px] text-[#8B7E74] uppercase tracking-[0.2em] font-bold mt-1">Age {c.age} • {c.grade}</div>
+                    </div>
+                  </div>
+                  <button onClick={() => rmKid(c.id)} className="text-[#C4B7A6] hover:text-[#E29578] transition-colors p-2 bg-[#FCF9F2] rounded-full">✕</button>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3 mb-6 bg-[#FCF9F2] p-4 rounded-2xl border border-[#F0E5D8]">
+                  <div className="text-center border-r border-[#F0E5D8]">
+                    <div className="font-serif text-3xl font-bold text-[#5C544D]">{ls.length}</div>
+                    <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#C4B7A6] mt-1">Lessons</div>
+                  </div>
+                  <div className="text-center border-r border-[#F0E5D8]">
+                    <div className="font-serif text-3xl font-bold text-[#A3B18A]">{dn}</div>
+                    <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#C4B7A6] mt-1">Done</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-serif text-3xl font-bold text-[#D4A373]">{at}</div>
+                    <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#C4B7A6] mt-1">Present</div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-[11px] font-bold uppercase tracking-wider text-[#8B7E74] mb-2">
+                    <span>Overall Progress</span>
+                    <span className="text-[#D4A373]">{pct}%</span>
+                  </div>
+                  <div className="h-2.5 w-full bg-[#F0E5D8] rounded-full overflow-hidden shadow-inner">
+                    <div className="h-full rounded-full transition-all duration-1000 ease-out" style={{ width: `${pct}%`, backgroundColor: c.color }}></div>
+                  </div>
+                </div>
+              </Card>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MorningTimeView({ data, updateData, openModal, timer }) {
+  const { seconds, running, setRunning, setSeconds } = timer;
+  
+  const mStr = String(Math.floor(seconds / 60)).padStart(2, '0');
+  const sStr = String(seconds % 60).padStart(2, '0');
+
+  const rmSlot = (id) => updateData(p => ({...p, mSlots: p.mSlots.filter(s => s.id !== id)}));
+  
+  const tagColors = { Prayer: 'bg-[#F8E7E0] text-[#E29578]', Hymn: 'bg-[#FCF5E3] text-[#E9C46A]', Memory: 'bg-[#F6E9DF] text-[#D4A373]', 'Read Aloud': 'bg-[#EBF0E6] text-[#A3B18A]' };
+  const borderColors = { Prayer: 'border-l-[#E29578]', Hymn: 'border-l-[#E9C46A]', Memory: 'border-l-[#D4A373]', 'Read Aloud': 'border-l-[#A3B18A]' };
+
+  return (
+    <div className="space-y-8">
+      <div className="mb-8">
+        <h2 className="font-serif text-3xl font-bold mb-2 text-[#5C544D]">🌅 Morning Time</h2>
+        <p className="font-script text-2xl text-[#8B7E74]">Your sacred daily rhythm — hymns, prayer, read-alouds & scripture. ✦</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="space-y-8">
+          <Card title="Today's Basket" action={<button onClick={() => openModal('morn')} className="bg-[#D4A373] text-white px-4 py-2 rounded-xl text-xs uppercase tracking-wider font-bold shadow-sm">+ Add</button>}>
+            {data.mSlots.length === 0 ? <EmptyState icon="🧺" text="Build your morning routine" /> : (
+              <div className="space-y-3">
+                {data.mSlots.map(s => (
+                  <div key={s.id} className={`flex items-center gap-4 p-4 bg-[#FCF9F2] rounded-r-[16px] rounded-l-lg border-l-[6px] ${borderColors[s.type] || 'border-l-[#C4B7A6]'} hover:bg-[#FFFFFF] transition-all border border-transparent hover:border-[#F0E5D8] shadow-sm group`}>
+                    <span className="text-[12px] font-bold text-[#C4B7A6] w-12">{s.time || '—'}</span>
+                    <span className="text-[15px] font-bold text-[#5C544D] flex-1">{s.label}</span>
+                    <span className={`text-[10px] uppercase tracking-wider px-3 py-1 rounded-full font-bold ${tagColors[s.type] || 'bg-[#F0E5D8] text-[#8B7E74]'}`}>{s.type}</span>
+                    <button onClick={() => rmSlot(s.id)} className="text-[#C4B7A6] hover:text-[#E29578] opacity-0 group-hover:opacity-100 transition-opacity ml-2 p-1">✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          <Card title="🎵 Hymn Tracker" action={<button onClick={() => openModal('hymn')} className="bg-[#FFFFFF] border-2 border-[#F0E5D8] text-[#D4A373] px-4 py-2 rounded-xl text-xs uppercase tracking-wider font-bold shadow-sm hover:bg-[#FCF9F2]">+ Add</button>}>
+            {data.hymns.length === 0 ? <EmptyState icon="🎶" text="Track hymns you are learning" /> : (
+              <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+                {data.hymns.map(h => (
+                  <div key={h.id} className="flex justify-between items-center p-4 bg-[#FCF9F2] rounded-[16px] border border-[#F0E5D8] group hover:bg-[#FFFFFF] transition-colors">
+                    <div>
+                      <div className="font-bold text-[#5C544D] text-[15px] flex items-center gap-3"><span className="text-xl">🎼</span> {h.title}</div>
+                      <div className="text-[10px] font-bold uppercase tracking-widest text-[#D4A373] mt-1.5 ml-8">{h.status}</div>
+                    </div>
+                    <button onClick={() => updateData(p => ({...p, hymns: p.hymns.filter(x => x.id !== h.id)}))} className="text-[#C4B7A6] hover:text-[#E29578] opacity-0 group-hover:opacity-100 transition-opacity p-2 bg-[#FFFFFF] rounded-full">✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
+
+        <div className="space-y-8">
+          <Card className="text-center flex flex-col items-center justify-center py-12" glow={running}>
+            <div className="text-xs font-bold uppercase tracking-[0.2em] text-[#C4B7A6] mb-6">⏱️ Focus Timer</div>
+            <div className="font-serif text-[90px] font-light text-[#5C544D] tabular-nums tracking-tighter mb-10 bg-[#FCF9F2] px-12 py-6 rounded-[40px] border-2 border-[#F0E5D8] shadow-inner">
+              {mStr}:{sStr}
+            </div>
+            
+            <div className="flex gap-4 mb-8">
+              <button onClick={() => setRunning(!running)} className={`${running ? 'bg-[#E29578] hover:bg-[#CC8063]' : 'bg-[#D4A373] hover:bg-[#BC8A5F]'} text-white px-10 py-4 rounded-2xl font-bold text-[15px] uppercase tracking-wider transition-all shadow-md hover:shadow-lg hover:-translate-y-1`}>
+                {running ? '⏸ Pause Timer' : '▶ Start Timer'}
+              </button>
+              <button onClick={() => { setRunning(false); setSeconds(25*60); }} className="bg-[#FFFFFF] border-2 border-[#F0E5D8] text-[#8B7E74] px-8 py-4 rounded-2xl font-bold text-[15px] uppercase tracking-wider hover:bg-[#FCF9F2] transition-all">
+                ↻ Reset
+              </button>
+            </div>
+            
+            <div className="flex gap-3">
+              {[15, 25, 45].map(m => (
+                <button key={m} onClick={() => { setRunning(false); setSeconds(m*60); }} className="px-5 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl bg-[#FCF9F2] text-[#D4A373] hover:bg-[#F0E5D8] transition-colors border border-[#F0E5D8]">
+                  {m} min
+                </button>
+              ))}
+            </div>
+          </Card>
+
+          <Card title="📖 Read-Aloud Log" action={<button onClick={() => openModal('book')} className="bg-[#FFFFFF] border-2 border-[#F0E5D8] text-[#D4A373] px-4 py-2 rounded-xl text-xs uppercase tracking-wider font-bold shadow-sm hover:bg-[#FCF9F2]">+ Add</button>}>
+            {data.books.length === 0 ? <EmptyState icon="📚" text="Track family read-alouds" /> : (
+              <div className="space-y-3">
+                {data.books.map(b => (
+                  <label key={b.id} className={`flex items-center gap-4 p-4 rounded-[16px] cursor-pointer transition-all border border-transparent ${b.done ? 'bg-transparent opacity-50' : 'bg-[#FCF9F2] hover:border-[#F0E5D8] shadow-sm'}`}>
+                    <input type="checkbox" checked={b.done} onChange={() => updateData(p => ({...p, books: p.books.map(x => x.id === b.id ? {...x, done: !x.done} : x)}))} className="w-6 h-6 rounded-lg border-[#D4A373] text-[#D4A373] focus:ring-[#D4A373]" />
+                    <div className="flex-1">
+                      <div className={`text-[15px] font-bold ${b.done ? 'line-through text-[#C4B7A6]' : 'text-[#5C544D]'}`}>{b.title}</div>
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-[#8B7E74] mt-1.5">Chapter: {b.ch}</div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VirtuesView({ data, updateData }) {
+  const currentVerse = VIRTUE_VERSES[data.virtue] || VIRTUE_VERSES['Kindness'];
+  
+  const fruits = [
+    { n: 'Love', e: '❤️', v: '1 Cor 13:4-7' }, { n: 'Joy', e: '😊', v: 'Neh 8:10' }, { n: 'Peace', e: '☮️', v: 'Phil 4:7' },
+    { n: 'Patience', e: '⏳', v: 'James 1:4' }, { n: 'Kindness', e: '🤗', v: 'Eph 4:32' }, { n: 'Goodness', e: '🌟', v: 'Gal 6:9' },
+    { n: 'Faithfulness', e: '⚓', v: 'Prov 3:3' }, { n: 'Gentleness', e: '🕊️', v: 'Prov 15:1' }, { n: 'Self-Control', e: '🛡️', v: 'Prov 25:28' }
+  ];
+
+  return (
+    <div className="space-y-8">
+      <h2 className="font-serif text-3xl font-bold mb-4 text-[#5C544D]">🌿 Character & Virtue</h2>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="md:col-span-1">
+          <Card title="Focus Virtue" glow={true} className="border-[#A3B18A]/50 bg-gradient-to-b from-[#FFFFFF] to-[#F2F4EF]">
+            <select value={data.virtue} onChange={e => updateData({ virtue: e.target.value })} className="mb-8 font-serif text-2xl bg-[#FFFFFF] border-2 border-[#A3B18A]/30 text-[#A3B18A] font-bold py-4 px-5 rounded-2xl shadow-sm cursor-pointer">
+              {Object.keys(VIRTUE_VERSES).map(v => <option key={v}>{v}</option>)}
+            </select>
+            <div className="bg-[#FFFFFF] p-6 rounded-[20px] border border-[#F0E5D8] text-center shadow-md">
+              <span className="text-5xl block mb-4 opacity-80">📖</span>
+              <div className="text-[10px] uppercase tracking-[0.2em] text-[#C4B7A6] font-bold mb-3">Key Scripture</div>
+              <div className="font-serif text-xl text-[#5C544D] italic leading-relaxed">"{currentVerse.replace(/^"|"$/g, '')}"</div>
+            </div>
+          </Card>
+        </div>
+        
+        <div className="md:col-span-2">
+          <Card title="🍇 Fruit of the Spirit">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {fruits.map(f => (
+                <div key={f.n} className={`flex items-center gap-4 p-5 rounded-[20px] transition-all border ${f.n === data.virtue ? 'bg-[#EBF0E6] border-[#A3B18A] shadow-md transform scale-[1.03]' : 'bg-[#FCF9F2] border-[#F0E5D8] hover:bg-[#FFFFFF] hover:border-[#D4A373]/30'}`}>
+                  <span className="text-3xl drop-shadow-sm">{f.e}</span>
+                  <div>
+                    <div className={`text-[15px] font-bold ${f.n === data.virtue ? 'text-[#A3B18A]' : 'text-[#5C544D]'}`}>{f.n}</div>
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-[#C4B7A6] mt-1">{f.v}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MemoryView({ data, updateData }) {
+  const [form, setForm] = useState({ ref: '', txt: '', child: 'Family', date: '' });
+
+  const addMem = () => {
+    if(!form.ref) return;
+    updateData(p => ({ ...p, memVerse: [{...form, id: Date.now(), mast: false}, ...p.memVerse] }));
+    setForm({ ref: '', txt: '', child: 'Family', date: '' });
+  };
+
+  const active = data.memVerse.filter(v => !v.mast);
+  const mastered = data.memVerse.filter(v => v.mast);
+
+  return (
+    <div className="space-y-8">
+      <h2 className="font-serif text-3xl font-bold mb-4 text-[#5C544D]">📖 Scripture Memory</h2>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          <Card title="Add Memory Verse">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+              <div><label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Reference</label><input type="text" value={form.ref} onChange={e=>setForm({...form,ref:e.target.value})} placeholder="e.g. John 3:16" /></div>
+              <div><label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Week Of</label><input type="date" value={form.date} onChange={e=>setForm({...form,date:e.target.value})} /></div>
+            </div>
+            <div className="mb-5">
+              <label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Verse Text</label>
+              <textarea value={form.txt} onChange={e=>setForm({...form,txt:e.target.value})} placeholder="For God so loved the world..." className="min-h-[100px]" />
+            </div>
+            <div className="mb-8">
+              <label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Assigned To</label>
+              <select value={form.child} onChange={e=>setForm({...form,child:e.target.value})}>
+                <option value="Family">Whole Family</option>
+                {data.children.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+            <button onClick={addMem} className="bg-[#D4A373] text-white px-6 py-3.5 rounded-xl text-xs uppercase tracking-wider font-bold hover:bg-[#BC8A5F] transition-colors shadow-md">
+              ✨ Add Verse
+            </button>
+          </Card>
+
+          <Card title="Currently Learning" badge={{ text: `${active.length} verses`, className: 'bg-[#F6E9DF] text-[#D4A373]' }}>
+            {active.length === 0 ? <EmptyState icon="🌱" text="Start hiding God's Word in their hearts" /> : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {active.map(v => (
+                  <div key={v.id} className="p-6 border border-[#F0E5D8] rounded-[24px] bg-[#FFFFFF] shadow-sm relative overflow-hidden group hover:border-[#D4A373]/40 transition-all hover:shadow-md">
+                    <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                       <button onClick={() => updateData(p => ({...p, memVerse: p.memVerse.filter(x => x.id !== v.id)}))} className="text-[#C4B7A6] hover:text-[#E29578] text-sm bg-[#FCF9F2] w-8 h-8 rounded-full flex items-center justify-center">✕</button>
+                    </div>
+                    <div className="flex justify-between items-center mb-4">
+                      <strong className="font-serif text-xl text-[#5C544D]">📖 {v.ref}</strong>
+                    </div>
+                    <p className="font-serif text-xl text-[#8B7E74] italic leading-relaxed mb-6">"{v.txt}"</p>
+                    <div className="flex justify-between items-center pt-4 border-t border-[#F0E5D8]">
+                      <span className="text-[10px] bg-[#FCF9F2] border border-[#F0E5D8] text-[#D4A373] px-3 py-1.5 rounded-lg font-bold uppercase tracking-widest">
+                        {v.child === 'Family' ? 'Family' : data.children.find(c=>c.id==v.child)?.name}
+                      </span>
+                      <button onClick={() => updateData(p => ({...p, memVerse: p.memVerse.map(x => x.id === v.id ? {...x, mast: true} : x)}))} className="text-[11px] font-bold uppercase tracking-wider text-[#BC8A5F] hover:text-white bg-[#F6E9DF] hover:bg-[#D4A373] px-4 py-2 rounded-xl transition-all shadow-sm">
+                        🏆 Mastered
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
+
+        <div>
+          <Card title="🏆 Mastered Wall">
+            {mastered.length === 0 ? <EmptyState icon="🎉" text="Mastered verses appear here" /> : (
+              <div className="space-y-4 max-h-[700px] overflow-y-auto pr-2">
+                {mastered.slice().reverse().map(v => (
+                  <div key={v.id} className="p-5 bg-gradient-to-br from-[#FCF5E3] to-[#FFFFFF] border border-[#E9C46A]/30 rounded-[20px] shadow-sm relative group">
+                    <button onClick={() => updateData(p => ({...p, memVerse: p.memVerse.filter(x => x.id !== v.id)}))} className="absolute top-3 right-3 text-[#C4B7A6] hover:text-[#E29578] opacity-0 group-hover:opacity-100 transition-opacity text-sm bg-white rounded-full w-6 h-6 flex items-center justify-center">✕</button>
+                    <strong className="text-[15px] font-bold text-[#E9C46A] block mb-2 drop-shadow-sm">🏆 {v.ref}</strong>
+                    <p className="text-[14px] text-[#8B7E74] italic leading-relaxed">"{v.txt.substring(0, 80)}{v.txt.length > 80 ? '...' : ''}"</p>
+                    <div className="text-[9px] font-bold text-[#C4B7A6] mt-3 uppercase tracking-[0.2em]">{v.child === 'Family' ? 'Family' : data.children.find(c=>c.id==v.child)?.name}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MamasCornerView({ data, updateData, enc }) {
+  const [mood, setMood] = useState('');
+  const [j, setJ] = useState('');
+  const [s, setS] = useState('');
+  const [energy, setEnergy] = useState(5);
+  const [prayIn, setPrayIn] = useState('');
+
+  const [sc, setSc] = useState({ water: false, word: false, outside: false, friend: false, break: false, bed: false });
+
+  const saveChk = () => {
+    if(!mood && !j) return;
+    updateData(p => ({ ...p, momChk: [{id:Date.now(), date: new Date().toISOString().slice(0,10), mood, j, s, energy}, ...p.momChk]}));
+    setMood(''); setJ(''); setS(''); setEnergy(5);
+  };
+
+  const addPray = () => {
+    if(!prayIn) return;
+    updateData(p => ({ ...p, momPray: [{id:Date.now(), text:prayIn, date: new Date().toISOString().slice(0,10)}, ...p.momPray]}));
+    setPrayIn('');
+  };
+
+  const moods = [{m:'great',e:'😊'},{m:'good',e:'🙂'},{m:'okay',e:'😐'},{m:'low',e:'😔'},{m:'hard',e:'😢'}];
+
+  return (
+    <div className="space-y-8">
+      <div className="mb-8">
+        <h2 className="font-serif text-3xl font-bold mb-2 text-[#5C544D]">💛 Mom's Corner</h2>
+        <p className="font-script text-2xl text-[#8B7E74]">You matter too, mama. Pour into your own cup.</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          <Card glow={true} title="Daily Heart Check-In" badge={{text:'Today', className:'bg-[#F8E7E0] text-[#E29578]'}}>
+            <p className="text-[15px] font-medium text-[#8B7E74] mb-5">How are you feeling today, really?</p>
+            <div className="flex gap-4 mb-8 bg-[#FCF9F2] p-4 rounded-2xl border border-[#F0E5D8] w-fit">
+              {moods.map(md => (
+                <button key={md.m} onClick={()=>setMood(md.m)} className={`text-4xl p-2 rounded-2xl transition-all transform hover:scale-110 ${mood===md.m ? 'bg-[#FFFFFF] scale-110 shadow-md border border-[#F0E5D8]' : 'hover:bg-[#FFFFFF] opacity-80 hover:opacity-100'}`}>{md.e}</button>
+              ))}
+            </div>
+
+            <div className="mb-8">
+              <label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-3">🔋 Energy Level ({energy}/10)</label>
+              <input type="range" min="1" max="10" value={energy} onChange={e=>setEnergy(e.target.value)} className="w-full accent-[#D4A373] h-2 bg-[#F0E5D8] rounded-lg appearance-none cursor-pointer" />
+              <div className="flex justify-between text-[10px] text-[#C4B7A6] mt-2 font-bold uppercase tracking-[0.2em]">
+                <span>🪫 Depleted</span><span>⚡ Thriving</span>
+              </div>
+            </div>
+
+            <div className="space-y-6 mb-8">
+              <div>
+                <label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">What's on your heart?</label>
+                <textarea value={j} onChange={e=>setJ(e.target.value)} placeholder="Pour it out here..." className="font-script text-2xl min-h-[140px] bg-[#FCF9F2] leading-relaxed" />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Surrendering to God today:</label>
+                <input type="text" value={s} onChange={e=>setS(e.target.value)} placeholder="My worry about..." className="font-script text-2xl bg-[#FCF9F2] py-4" />
+              </div>
+            </div>
+            
+            <button onClick={saveChk} className="bg-[#D4A373] text-white px-8 py-4 rounded-xl text-xs uppercase tracking-wider font-bold hover:bg-[#BC8A5F] transition-all shadow-md w-full sm:w-auto">
+              💾 Save Check-In
+            </button>
+          </Card>
+
+          <Card title="📓 Past Check-Ins">
+            {data.momChk.length === 0 ? <EmptyState icon="📔" text="Your private reflections will appear here" /> : (
+              <div className="space-y-5">
+                {data.momChk.slice(0,5).map(c => {
+                   const mIcon = moods.find(x=>x.m===c.mood)?.e || '💛';
+                   return (
+                     <div key={c.id} className="flex gap-5 p-5 bg-[#FCF9F2] border border-[#F0E5D8] rounded-[24px] relative group hover:bg-[#FFFFFF] transition-colors shadow-sm">
+                        <button onClick={() => updateData(p => ({...p, momChk: p.momChk.filter(x => x.id !== c.id)}))} className="absolute top-4 right-4 text-[#C4B7A6] hover:text-[#E29578] opacity-0 group-hover:opacity-100 transition-opacity bg-white w-8 h-8 rounded-full flex items-center justify-center shadow-sm">✕</button>
+                        <span className="text-4xl bg-[#FFFFFF] p-3 rounded-[20px] h-fit shadow-sm border border-[#F0E5D8]">{mIcon}</span>
+                        <div className="flex-1">
+                          <div className="flex justify-between items-center mb-3">
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#C4B7A6]">{c.date}</span>
+                            <span className="text-[10px] font-bold uppercase tracking-wider bg-[#FFFFFF] border border-[#F0E5D8] text-[#D4A373] px-3 py-1 rounded-lg">Energy: {c.energy}/10</span>
+                          </div>
+                          {c.j && <p className="font-script text-[26px] text-[#5C544D] mb-3 leading-tight">{c.j}</p>}
+                          {c.s && <p className="text-xs text-[#BC8A5F] font-bold bg-[#F6E9DF] inline-block px-3 py-1.5 rounded-lg uppercase tracking-wider">🙏 Surrendered: <span className="normal-case tracking-normal font-medium">{c.s}</span></p>}
+                        </div>
+                     </div>
+                   );
+                })}
+              </div>
+            )}
+          </Card>
+        </div>
+
+        <div className="space-y-8">
+          <div className="bg-gradient-to-br from-[#F6E9DF] to-[#FFFFFF] p-8 rounded-[24px] border border-[#D4A373]/30 shadow-md relative overflow-hidden">
+            <div className="absolute top-0 right-0 text-[80px] opacity-10 -mt-2 -mr-2 pointer-events-none">✨</div>
+            <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#D4A373] mb-4">Today's Encouragement</div>
+            <p className="font-script text-3xl text-[#5C544D] leading-snug mb-5">"{enc.t}"</p>
+            <p className="text-[11px] font-bold text-[#BC8A5F] uppercase tracking-widest">— {enc.r}</p>
+          </div>
+
+          <Card title="🌸 Mom's Prayers">
+            <div className="flex gap-3 mb-5">
+              <input type="text" value={prayIn} onChange={e=>setPrayIn(e.target.value)} placeholder="Lord, I need..." className="font-script text-2xl bg-[#FCF9F2] py-3" onKeyDown={e=>e.key==='Enter'&&addPray()} />
+              <button onClick={addPray} className="bg-[#E29578] text-white px-5 py-2 rounded-xl text-xl hover:bg-[#CC8063] shadow-sm">🙏</button>
+            </div>
+            {data.momPray.length === 0 ? <EmptyState icon="💜" text="Just between you and God" /> : (
+              <div className="space-y-3 max-h-[250px] overflow-y-auto pr-2">
+                {data.momPray.slice(0,6).map(p => (
+                  <div key={p.id} className="p-4 bg-[#F8E7E0]/50 rounded-[16px] border border-[#F8E7E0] group relative hover:bg-[#F8E7E0] transition-colors">
+                    <button onClick={() => updateData(prev => ({...prev, momPray: prev.momPray.filter(x => x.id !== p.id)}))} className="absolute top-3 right-3 text-[#C4B7A6] hover:text-[#E29578] opacity-0 group-hover:opacity-100 transition-opacity text-sm bg-white rounded-full w-6 h-6 flex items-center justify-center">✕</button>
+                    <p className="font-script text-[22px] text-[#5C544D] pr-6 leading-tight mb-2">{p.text}</p>
+                    <div className="text-[9px] text-[#E29578] font-bold uppercase tracking-[0.2em]">{p.date}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          <Card title="🧘 Self-Care">
+            <div className="space-y-2">
+              {[
+                {k:'water', l:'Drank enough water', i:'💧'}, {k:'word', l:'Time in the Word', i:'📖'},
+                {k:'outside', l:'Went outside', i:'🌿'}, {k:'friend', l:'Connected with a friend', i:'💬'},
+                {k:'break', l:'A real break (not scrolling)', i:'☕'}, {k:'bed', l:'Bed on time', i:'😴'}
+              ].map(item => (
+                <label key={item.k} className="flex items-center gap-4 p-3.5 rounded-[16px] hover:bg-[#FCF9F2] cursor-pointer transition-colors border border-transparent hover:border-[#F0E5D8]">
+                  <input type="checkbox" checked={sc[item.k]} onChange={() => setSc({...sc, [item.k]: !sc[item.k]})} className="w-6 h-6 rounded-lg border-[#F0E5D8] text-[#E29578] focus:ring-[#E29578]" />
+                  <span className={`text-[15px] flex-1 font-bold ${sc[item.k] ? 'text-[#C4B7A6] line-through' : 'text-[#5C544D]'}`}>{item.l}</span>
+                  <span className="text-2xl opacity-90">{item.i}</span>
+                </label>
+              ))}
+            </div>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RecordsView({ data, updateData, openModal, showToast }) {
+  const markAtt = () => {
+    updateData(p => {
+      const att = { ...p.attendance };
+      p.children.forEach(c => { att[c.id] = (att[c.id] || 0) + 1; });
+      return { ...p, attendance: att };
+    });
+    showToast("Attendance marked for today!");
+  };
+
+  const expData = () => {
+    const b = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    a.download = `RootedHome_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    showToast("Data exported successfully");
+  };
+
+  const impData = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = (x) => {
+      try {
+        const parsed = JSON.parse(x.target.result);
+        if(parsed.children && parsed.lessons) { // Basic validation
+           updateData(parsed);
+           showToast("Data imported successfully!");
+        } else {
+           showToast("Invalid backup file structure.");
+        }
+      } catch (err) { showToast("Error parsing file."); }
+    };
+    r.readAsText(f);
+  };
+
+  const clearAll = () => {
+    if (confirm("Erase ALL data permanently? This cannot be undone.")) {
+      updateData(DEFAULT_STATE);
+      showToast("All data has been reset.");
+    }
+  };
+
+  const subjects = [...new Set(data.lessons.map(l => l.sub))];
+  const progColors = ['bg-[#D4A373]', 'bg-[#E29578]', 'bg-[#A3B18A]', 'bg-[#E9C46A]'];
+
+  return (
+    <div className="space-y-8">
+      <h2 className="font-serif text-3xl font-bold mb-4 text-[#5C544D]">📋 Homeschool Records</h2>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <Card title="📊 Attendance Tracker">
+          {data.children.length === 0 ? <EmptyState icon="📅" text="Add children first" /> : (
+            <div className="space-y-4">
+              {data.children.map(c => (
+                <div key={c.id} className="flex items-center gap-5 bg-[#FCF9F2] p-4 rounded-[16px] border border-[#F0E5D8]">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold shadow-sm text-xl transform -rotate-3" style={{backgroundColor: c.color}}>{c.name[0]}</div>
+                  <div className="flex-1">
+                    <div className="font-bold text-[#5C544D] text-[16px]">{c.name}</div>
+                  </div>
+                  <div className="text-right bg-[#FFFFFF] px-4 py-2 rounded-xl border border-[#F0E5D8]">
+                    <span className="font-serif text-3xl font-bold text-[#D4A373]">{data.attendance[c.id] || 0}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#C4B7A6] ml-2">days</span>
+                  </div>
+                </div>
+              ))}
+              <button onClick={markAtt} className="w-full bg-[#D4A373] text-white py-3.5 rounded-xl text-xs uppercase tracking-wider font-bold hover:bg-[#BC8A5F] mt-4 transition-all shadow-md">
+                ✓ Mark All Present Today
+              </button>
+            </div>
+          )}
+        </Card>
+
+        <Card title="🎒 Field Trips" action={<button onClick={() => openModal('trip')} className="bg-[#FFFFFF] border-2 border-[#F0E5D8] text-[#D4A373] px-4 py-2 rounded-xl text-xs uppercase tracking-wider font-bold hover:bg-[#FCF9F2] shadow-sm">+ Plan</button>}>
+          {data.trips.length === 0 ? <EmptyState icon="🗺️" text="Plan educational adventures" /> : (
+            <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2">
+              {data.trips.map(t => (
+                <label key={t.id} className={`flex items-start gap-4 p-4 rounded-[16px] border transition-all cursor-pointer group ${t.done ? 'bg-transparent border-transparent opacity-50' : 'bg-[#FCF9F2] border-[#F0E5D8] shadow-sm hover:bg-[#FFFFFF]'}`}>
+                  <input type="checkbox" checked={t.done} onChange={() => updateData(p => ({...p, trips: p.trips.map(x => x.id === t.id ? {...x, done: !x.done} : x)}))} className="mt-1 w-5 h-5 rounded border-[#F0E5D8] text-[#D4A373] focus:ring-[#D4A373]" />
+                  <div className="flex-1">
+                    <div className={`text-[15px] font-bold ${t.done ? 'line-through text-[#C4B7A6]' : 'text-[#5C544D]'}`}>{t.dest}</div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-[#D4A373] mt-1.5 bg-[#FFFFFF] inline-block px-3 py-1 rounded-md border border-[#F0E5D8]">{t.date}</div>
+                    {t.notes && <p className="text-[13px] text-[#8B7E74] mt-2 line-clamp-2 leading-relaxed">{t.notes}</p>}
+                  </div>
+                  <button onClick={(e) => { e.preventDefault(); updateData(p => ({...p, trips: p.trips.filter(x => x.id !== t.id)}))}} className="text-[#C4B7A6] hover:text-[#E29578] opacity-0 group-hover:opacity-100 transition-opacity p-2 bg-[#FFFFFF] rounded-full">✕</button>
+                </label>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+
+      <Card title="📈 Subject Progress">
+        {subjects.length === 0 ? <EmptyState icon="📊" text="Complete lessons to see progress" /> : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+            {subjects.map((s, i) => {
+              const tot = data.lessons.filter(l => l.sub === s).length;
+              const dn = data.lessons.filter(l => l.sub === s && l.done).length;
+              const pct = tot ? Math.round((dn/tot)*100) : 0;
+              const bg = progColors[i % progColors.length];
+              return (
+                <div key={s} className="bg-[#FCF9F2] p-5 rounded-[20px] border border-[#F0E5D8]">
+                  <div className="flex justify-between items-end mb-4">
+                    <span className="text-[15px] font-bold text-[#5C544D]">{s}</span>
+                    <span className="text-xs font-bold text-[#D4A373] bg-[#FFFFFF] px-3 py-1 rounded-lg border border-[#F0E5D8]">{dn}/{tot} <span className="text-[#C4B7A6] ml-1">({pct}%)</span></span>
+                  </div>
+                  <div className="h-3 w-full bg-[#F0E5D8] rounded-full overflow-hidden shadow-inner">
+                    <div className={`h-full rounded-full transition-all duration-1000 ease-out ${bg}`} style={{ width: `${pct}%` }}></div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Card>
+
+      <Card className="border-2 border-dashed border-[#F0E5D8] text-center bg-transparent py-10">
+        <h3 className="font-serif text-2xl font-bold mb-3 text-[#5C544D]">💾 Data Management</h3>
+        <p className="text-[15px] text-[#8B7E74] mb-8 max-w-lg mx-auto leading-relaxed">All your dashboard data is safely saved locally in your browser. Export it regularly to keep a secure backup of your family's records.</p>
+        <div className="flex flex-wrap justify-center gap-5">
+          <button onClick={expData} className="bg-[#5C544D] text-[#FCF9F2] px-6 py-3.5 rounded-xl text-xs uppercase tracking-wider font-bold hover:bg-[#4A4036] transition-all shadow-md flex items-center gap-3">
+            <span className="text-lg">📥</span> Export Backup (JSON)
+          </button>
+          <label className="bg-[#FFFFFF] border-2 border-[#F0E5D8] text-[#D4A373] px-6 py-3.5 rounded-xl text-xs uppercase tracking-wider font-bold hover:bg-[#FCF9F2] transition-colors shadow-sm cursor-pointer flex items-center gap-3">
+            <span className="text-lg">📤</span> Import Data
+            <input type="file" accept=".json" onChange={impData} className="hidden" />
+          </label>
+          <button onClick={clearAll} className="bg-[#F8E7E0] text-[#E29578] px-6 py-3.5 rounded-xl text-xs uppercase tracking-wider font-bold hover:bg-[#E29578] hover:text-white transition-all flex items-center gap-3 border border-[#E29578]/30">
+            <span className="text-lg">🗑️</span> Factory Reset
+          </button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// --- Modals ---
+function ModalManager({ type, close, data, updateData }) {
+  const [form, setForm] = useState({});
+
+  let content = null;
+  
+  if (type === 'task') {
+    content = (
+      <>
+        <h3 className="font-serif text-3xl font-bold mb-6 text-[#5C544D]">Add Today's Task</h3>
+        <div className="space-y-5 mb-8">
+          <div><label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Task Description</label><input autoFocus type="text" value={form.text||''} onChange={e=>setForm({...form, text:e.target.value})} placeholder="e.g. Prep science experiment" /></div>
+          <div><label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Category</label>
+            <select value={form.cat||'📚 Academic'} onChange={e=>setForm({...form, cat:e.target.value})}>
+              <option>📚 Academic</option><option>🏠 Household</option><option>🙏 Spiritual</option><option>🎨 Activity</option>
+            </select>
+          </div>
+        </div>
+        <div className="flex justify-end gap-4">
+          <button onClick={close} className="px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold text-[#8B7E74] hover:bg-[#FCF9F2]">Cancel</button>
+          <button onClick={()=>{ if(form.text){ updateData(p=>({...p, tasks: [...p.tasks, {id:Date.now(), text:form.text, cat:form.cat||'📚 Academic', done:false, date:new Date().toISOString().slice(0,10)}]})); close(); } }} className="bg-[#D4A373] text-white px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold shadow-md hover:bg-[#BC8A5F]">Add Task</button>
+        </div>
+      </>
+    );
+  } else if (type === 'pray') {
+    content = (
+      <>
+        <h3 className="font-serif text-3xl font-bold mb-6 text-[#5C544D]">Add Prayer Request</h3>
+        <div className="space-y-5 mb-8">
+          <div><label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Request</label><textarea autoFocus value={form.text||''} onChange={e=>setForm({...form, text:e.target.value})} placeholder="Lord, we pray for..." className="min-h-[100px]" /></div>
+          <div><label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Category</label>
+            <select value={form.cat||'🏠 Family'} onChange={e=>setForm({...form, cat:e.target.value})}>
+              <option>🏠 Family</option><option>👩‍👧‍👦 Children</option><option>💼 Provision</option><option>🌍 World</option><option>🏥 Health</option>
+            </select>
+          </div>
+        </div>
+        <div className="flex justify-end gap-4">
+          <button onClick={close} className="px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold text-[#8B7E74] hover:bg-[#FCF9F2]">Cancel</button>
+          <button onClick={()=>{ if(form.text){ updateData(p=>({...p, prayers: [...p.prayers, {id:Date.now(), text:form.text, cat:form.cat||'🏠 Family', ans:false, date:new Date().toISOString().slice(0,10)}]})); close(); } }} className="bg-[#D4A373] text-white px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold shadow-md hover:bg-[#BC8A5F]">Save Request</button>
+        </div>
+      </>
+    );
+  } else if (type === 'hymn') {
+    content = (
+      <>
+        <h3 className="font-serif text-3xl font-bold mb-6 text-[#5C544D]">Add Hymn</h3>
+        <div className="space-y-5 mb-8">
+          <div><label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Hymn Title</label><input autoFocus type="text" value={form.title||''} onChange={e=>setForm({...form, title:e.target.value})} placeholder="e.g. Amazing Grace" /></div>
+          <div><label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Status</label>
+            <select value={form.status||'Learning'} onChange={e=>setForm({...form, status:e.target.value})}>
+              <option>Learning</option><option>Reviewing</option><option>Mastered</option>
+            </select>
+          </div>
+        </div>
+        <div className="flex justify-end gap-4">
+          <button onClick={close} className="px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold text-[#8B7E74] hover:bg-[#FCF9F2]">Cancel</button>
+          <button onClick={()=>{ if(form.title){ updateData(p=>({...p, hymns: [...p.hymns, {id:Date.now(), title:form.title, status:form.status||'Learning'}]})); close(); } }} className="bg-[#D4A373] text-white px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold shadow-md hover:bg-[#BC8A5F]">Add Hymn</button>
+        </div>
+      </>
+    );
+  } else if (type === 'book') {
+    content = (
+      <>
+        <h3 className="font-serif text-3xl font-bold mb-6 text-[#5C544D]">Add Read-Aloud</h3>
+        <div className="space-y-5 mb-8">
+          <div><label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Book Title</label><input autoFocus type="text" value={form.title||''} onChange={e=>setForm({...form, title:e.target.value})} placeholder="Little House on the Prairie" /></div>
+          <div><label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Current Chapter / Progress</label><input type="text" value={form.ch||''} onChange={e=>setForm({...form, ch:e.target.value})} placeholder="Ch. 5" /></div>
+        </div>
+        <div className="flex justify-end gap-4">
+          <button onClick={close} className="px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold text-[#8B7E74] hover:bg-[#FCF9F2]">Cancel</button>
+          <button onClick={()=>{ if(form.title){ updateData(p=>({...p, books: [...p.books, {id:Date.now(), title:form.title, ch:form.ch||'', done:false}]})); close(); } }} className="bg-[#D4A373] text-white px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold shadow-md hover:bg-[#BC8A5F]">Add Book</button>
+        </div>
+      </>
+    );
+  } else if (type === 'trip') {
+    content = (
+      <>
+        <h3 className="font-serif text-3xl font-bold mb-6 text-[#5C544D]">Plan Field Trip</h3>
+        <div className="space-y-5 mb-8">
+          <div><label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Destination</label><input autoFocus type="text" value={form.dest||''} onChange={e=>setForm({...form, dest:e.target.value})} placeholder="Natural History Museum" /></div>
+          <div><label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Date</label><input type="date" value={form.date||''} onChange={e=>setForm({...form, date:e.target.value})} /></div>
+          <div><label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Notes</label><textarea value={form.notes||''} onChange={e=>setForm({...form, notes:e.target.value})} placeholder="What we will learn..." className="min-h-[80px]" /></div>
+        </div>
+        <div className="flex justify-end gap-4">
+          <button onClick={close} className="px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold text-[#8B7E74] hover:bg-[#FCF9F2]">Cancel</button>
+          <button onClick={()=>{ if(form.dest){ updateData(p=>({...p, trips: [...p.trips, {id:Date.now(), dest:form.dest, date:form.date||'', notes:form.notes||'', done:false}]})); close(); } }} className="bg-[#D4A373] text-white px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold shadow-md hover:bg-[#BC8A5F]">Save Plan</button>
+        </div>
+      </>
+    );
+  } else if (type === 'morn') {
+    content = (
+      <>
+        <h3 className="font-serif text-3xl font-bold mb-6 text-[#5C544D]">Add Morning Time Slot</h3>
+        <div className="space-y-5 mb-8">
+          <div><label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Time</label><input autoFocus type="time" value={form.time||''} onChange={e=>setForm({...form, time:e.target.value})} /></div>
+          <div><label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Activity Label</label><input type="text" value={form.label||''} onChange={e=>setForm({...form, label:e.target.value})} placeholder="e.g. Hymn Study" /></div>
+          <div><label className="block text-[11px] font-bold text-[#8B7E74] uppercase tracking-wider mb-2">Type</label>
+            <select value={form.type||'Prayer'} onChange={e=>setForm({...form, type:e.target.value})}>
+              <option>Prayer</option><option>Hymn</option><option>Memory</option><option>Read Aloud</option><option>Catechism</option><option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div className="flex justify-end gap-4">
+          <button onClick={close} className="px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold text-[#8B7E74] hover:bg-[#FCF9F2]">Cancel</button>
+          <button onClick={()=>{ if(form.label){ updateData(p=>({...p, mSlots: [...p.mSlots, {id:Date.now(), time:form.time||'', label:form.label, type:form.type||'Prayer'}]})); close(); } }} className="bg-[#D4A373] text-white px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold shadow-md hover:bg-[#BC8A5F]">Add Slot</button>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-[#5C544D]/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+      <div className="bg-[#FFFFFF] w-full max-w-lg rounded-[32px] p-8 sm:p-10 shadow-2xl animate-in zoom-in-95 duration-200 relative border border-[#F0E5D8]">
+        <button onClick={close} className="absolute top-6 right-6 text-[#C4B7A6] hover:text-[#E29578] text-xl transition-colors bg-[#FCF9F2] w-10 h-10 rounded-full flex items-center justify-center">✕</button>
+        {content}
+      </div>
+    </div>
+  );
+}
