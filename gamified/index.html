@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Faith Reflects ✦ Life Quest — Gamified Christian Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Outfit:wght@300;400;500;600;700;800&family=Press+Start+2P&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#050408;
+--gold:#c9a84c;--gold-light:#f2e1a6;--gold-dim:rgba(201,168,76,0.3);--gold-glow:rgba(201,168,76,0.25);
+--blue:#5b9bd5;--red:#d45b5b;--green:#5baa6b;--purple:#8b6fc0;--cyan:#5bb8c9;
+--text:#ddd5c4;--text-dim:rgba(221,213,196,0.5);--text-bright:#ffffff;
+--border:rgba(201,168,76,0.15);--border-h:rgba(201,168,76,0.4);
+--r-lg:22px;
+}
+html{scroll-behavior:smooth;font-size:14px}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;line-height:1.55}
+
+/* === AMBIENT EFFECTS === */
+.ambient{position:fixed;inset:0;z-index:-10;pointer-events:none}
+.ambient-orb{position:absolute;border-radius:50%;filter:blur(120px);opacity:.4;animation:orbF 25s ease-in-out infinite alternate}
+.ambient-orb:nth-child(1){width:60vw;height:60vw;background:rgba(201,168,76,.06);top:-20%;left:-10%}
+.ambient-orb:nth-child(2){width:50vw;height:50vw;background:rgba(91,155,213,.04);bottom:-20%;right:-10%;animation-delay:-7s}
+.ambient-orb:nth-child(3){width:40vw;height:40vw;background:rgba(139,111,192,.05);top:30%;left:40%;animation-delay:-14s}
+@keyframes orbF{0%{transform:translate(0,0) scale(1)}100%{transform:translate(50px,-50px) scale(1.15)}}
+
+/* Flowing Ethereal Dust */
+.dust-container{position:fixed;inset:0;z-index:-9;pointer-events:none;overflow:hidden}
+.dust{position:absolute;width:2px;height:2px;background:var(--gold-light);border-radius:50%;box-shadow:0 0 6px 1px var(--gold);opacity:0;animation:floatUp var(--dur) linear infinite;bottom:-10px}
+@keyframes floatUp{0%{transform:translateY(0) scale(0.5);opacity:0}20%{opacity:var(--o)}80%{opacity:var(--o)}100%{transform:translateY(-100vh) scale(1.5);opacity:0}}
+
+body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.025'/%3E%3C/svg%3E");opacity:.6}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:rgba(0,0,0,.2)}::-webkit-scrollbar-thumb{background:var(--gold-dim);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--gold)}
+
+/* === HEADER === */
+.header{position:sticky;top:0;z-index:100;padding:12px 24px;background:rgba(5,4,8,.75);backdrop-filter:blur(24px) saturate(1.5);border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 30px rgba(0,0,0,.3)}
+.logo{display:flex;align-items:center;gap:14px}
+.logo-mark{width:42px;height:42px;position:relative;display:grid;place-items:center;border-radius:12px;background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.02));border:1px solid var(--border)}
+.logo-mark::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--gold),var(--gold-light));border-radius:12px;opacity:1;filter:blur(10px);z-index:-1;animation:lb 4s ease-in-out infinite}
+@keyframes lb{0%,100%{opacity:.4;transform:scale(.9)}50%{opacity:.7;transform:scale(1.1)}}
+.logo-cross{font-size:20px;font-weight:900;background:linear-gradient(135deg,var(--gold-light),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-family:'Cormorant Garamond',serif;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+.logo-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--text-bright);letter-spacing:.5px;line-height:1.1;text-shadow:0 0 10px rgba(255,255,255,.1)}
+.logo-sub{font-size:9px;color:var(--gold);letter-spacing:3px;text-transform:uppercase;font-weight:600}
+.header-actions{display:flex;align-items:center;gap:12px}
+.h-btn{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);color:var(--text);padding:8px 14px;border-radius:10px;cursor:pointer;font-family:'Outfit';font-size:11px;font-weight:600;transition:all .3s}
+.h-btn:hover{border-color:var(--gold-dim);color:var(--gold);background:rgba(201,168,76,.08);box-shadow:0 0 15px rgba(201,168,76,.15)}
+.streak-pill{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;background:linear-gradient(135deg,rgba(212,91,91,.15),rgba(201,168,76,.05));border:1px solid rgba(212,91,91,.2);font-size:13px;font-weight:700;color:var(--text-bright);box-shadow:0 0 15px rgba(212,91,91,.1)}
+.streak-fire{animation:fl .6s ease-in-out infinite alternate;display:inline-block;filter:drop-shadow(0 0 5px rgba(212,91,91,.6))}
+@keyframes fl{0%{transform:scale(1) rotate(-3deg)}100%{transform:scale(1.15) rotate(3deg)}}
+
+/* === LAYOUT === */
+.main{max-width:1320px;margin:0 auto;padding:24px 24px 60px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.card{background:linear-gradient(145deg,rgba(18,17,24,0.7),rgba(10,9,14,0.9));backdrop-filter:blur(20px);border:1px solid var(--border);border-top:1px solid rgba(201,168,76,0.25);border-radius:var(--r-lg);padding:22px 24px;transition:all .4s cubic-bezier(0.175, 0.885, 0.32, 1.275);position:relative;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.card::before{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at 50% 0%, rgba(201,168,76,.05), transparent 60%);pointer-events:none}
+.card:hover{border-color:var(--border-h);box-shadow:0 15px 45px rgba(0,0,0,.6), 0 0 20px rgba(201,168,76,.05);transform:translateY(-3px)}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;position:relative;z-index:1}
+.section-title{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--text-bright);display:flex;align-items:center;gap:10px;text-shadow:0 0 10px rgba(255,255,255,.1)}
+.badge{font-family:'JetBrains Mono';font-size:9px;font-weight:700;padding:4px 10px;border-radius:8px;background:rgba(201,168,76,.1);color:var(--gold);border:1px solid var(--gold-dim);box-shadow:0 0 10px rgba(201,168,76,.1)}
+
+/* Small functional buttons (Delete/Remove) */
+.del-btn{background:transparent;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;padding:0 4px;line-height:1;transition:all .2s;opacity:0.3}
+.del-btn:hover{color:var(--red);opacity:1;transform:scale(1.2)}
+.hover-reveal:hover .del-btn{opacity:0.7}
+
+/* === HUD === */
+.hud{display:grid;grid-template-columns:auto 1fr auto;gap:24px;align-items:center;padding:24px 30px;background:linear-gradient(145deg,rgba(20,19,28,0.85),rgba(12,11,17,0.95));border:1px solid var(--border);border-top:1px solid rgba(201,168,76,0.3);border-radius:var(--r-lg);margin-bottom:20px;position:relative;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.hud::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 20% -50%, rgba(201,168,76,.1), transparent 70%);pointer-events:none}
+.avatar-ring{width:86px;height:86px;border-radius:50%;position:relative;cursor:pointer;background:conic-gradient(from 0deg,var(--gold),var(--purple),var(--blue),var(--gold));padding:3px;transition:all .4s cubic-bezier(0.175, 0.885, 0.32, 1.275);animation:rs 10s linear infinite;box-shadow:0 0 25px rgba(201,168,76,.2)}
+@keyframes rs{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.avatar-ring:hover{box-shadow:0 0 35px rgba(201,168,76,.4)}
+.avatar-inner{width:100%;height:100%;border-radius:50%;background:var(--bg);display:grid;place-items:center;font-size:36px;animation:rs 10s linear infinite reverse}
+.lv-badge{position:absolute;bottom:-4px;right:-4px;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--bg);font-family:'Press Start 2P';font-size:9px;padding:4px 8px;border-radius:8px;border:3px solid var(--bg);box-shadow:0 2px 10px rgba(0,0,0,.5)}
+.char-col{display:flex;flex-direction:column;gap:6px;position:relative;z-index:1}
+.char-name{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:var(--text-bright);line-height:1;outline:none;border-bottom:1px dashed transparent;transition:border-color .3s;text-shadow:0 0 15px rgba(255,255,255,.2)}
+.char-name:focus{border-bottom-color:var(--gold-dim)}
+.char-class{font-size:12px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;font-weight:600;display:flex;align-items:center;gap:6px}
+.char-class::before{content:'';width:30px;height:1px;background:var(--gold-dim)}
+.bars{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.bar-row{display:flex;align-items:center;gap:10px}
+.bar-label{font-size:10px;font-weight:800;width:28px;letter-spacing:1px;font-family:'JetBrains Mono';text-shadow:0 0 5px rgba(0,0,0,.5)}
+.bar-label.xp{color:var(--blue)}.bar-label.fth{color:var(--red)}.bar-label.grc{color:var(--green)}.bar-label.wis{color:var(--purple)}
+.bar-track{flex:1;height:8px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.05);border-radius:4px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.5)}
+.bar-fill{height:100%;border-radius:3px;transition:width 1s cubic-bezier(.4,0,.2,1);position:relative}
+.bar-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);animation:bs 2s infinite linear;transform:skewX(-20deg)}
+@keyframes bs{0%{transform:translateX(-150%) skewX(-20deg)}100%{transform:translateX(150%) skewX(-20deg)}}
+.bar-fill.xp{background:linear-gradient(90deg,#3a7bd5,var(--blue));box-shadow:0 0 10px rgba(91,155,213,.5)}.bar-fill.fth{background:linear-gradient(90deg,#a03a3a,var(--red));box-shadow:0 0 10px rgba(212,91,91,.5)}.bar-fill.grc{background:linear-gradient(90deg,#2d7a3e,var(--green));box-shadow:0 0 10px rgba(91,170,107,.5)}.bar-fill.wis{background:linear-gradient(90deg,#5a3d8a,var(--purple));box-shadow:0 0 10px rgba(139,111,192,.5)}
+.bar-val{font-size:10px;color:var(--text-bright);width:50px;text-align:right;font-family:'JetBrains Mono';font-weight:600}
+.hud-right{display:flex;flex-direction:column;gap:8px;align-items:flex-end;position:relative;z-index:1}
+.hud-stat{text-align:center;padding:10px 16px;min-width:100px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.05);border-radius:12px;backdrop-filter:blur(5px);box-shadow:0 4px 15px rgba(0,0,0,.2)}
+.hud-stat-v{font-family:'Press Start 2P';font-size:12px;color:var(--gold);text-shadow:0 0 10px var(--gold-glow)}
+.hud-stat-l{font-size:9px;color:var(--text-dim);margin-top:4px;text-transform:uppercase;letter-spacing:1px;font-weight:600}
+
+/* === JOURNEY === */
+.journey-card{padding:20px 24px;background:linear-gradient(145deg,rgba(18,17,24,0.7),rgba(10,9,14,0.9));backdrop-filter:blur(20px);border:1px solid var(--border);border-top:1px solid rgba(201,168,76,0.25);border-radius:var(--r-lg);margin-bottom:20px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.journey-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.journey-track{position:relative;height:56px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.03);border-radius:14px;overflow:hidden;box-shadow:inset 0 2px 10px rgba(0,0,0,.5)}
+.journey-fill{position:absolute;top:0;left:0;bottom:0;background:linear-gradient(90deg,rgba(201,168,76,.15),rgba(201,168,76,.05));border-right:2px solid var(--gold);transition:width 1.5s cubic-bezier(0.25, 1, 0.5, 1);box-shadow:0 0 20px var(--gold-glow)}
+.journey-nodes{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.j-node{display:flex;flex-direction:column;align-items:center;gap:4px;position:relative;z-index:2}
+.j-node-icon{font-size:20px;transition:all .4s}
+.j-node.reached .j-node-icon{filter:drop-shadow(0 0 8px var(--gold));transform:scale(1.1)}
+.j-node.unreached .j-node-icon{opacity:.2;filter:grayscale(1)}
+.j-node-label{font-size:8px;color:var(--text-dim);font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.j-node.reached .j-node-label{color:var(--gold-light);text-shadow:0 0 5px var(--gold-glow)}
+
+/* === CLOCK === */
+.clock-time{font-family:'JetBrains Mono';font-size:42px;font-weight:600;text-align:center;background:linear-gradient(135deg,var(--text-bright),var(--gold-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 15px rgba(255,255,255,.1))}
+.clock-date{font-size:12px;color:var(--gold-dim);text-align:center;margin-top:2px;letter-spacing:1px;text-transform:uppercase;font-weight:600}
+.clock-verse{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:16px;color:var(--text-bright);text-align:center;margin-top:12px;opacity:.9;line-height:1.4;text-shadow:0 0 10px rgba(0,0,0,.5)}
+.time-progress{margin-top:16px}
+.time-lbl{font-size:9px;color:var(--text-dim);margin-bottom:6px;display:flex;justify-content:space-between;text-transform:uppercase;letter-spacing:1px;font-weight:700}
+.time-track{height:6px;background:rgba(0,0,0,.4);border-radius:3px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.5)}
+.time-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--purple),var(--blue));transition:width 1s;box-shadow:0 0 10px rgba(91,155,213,.5)}
+
+/* === QUESTS === */
+.quest{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);margin-bottom:8px;cursor:pointer;transition:all .3s}
+.quest:hover{background:rgba(255,255,255,.04);border-color:var(--border-h);transform:translateX(4px)}
+.quest.done{opacity:.5;background:rgba(0,0,0,.2)}.quest.done .q-text{text-decoration:line-through;color:var(--text-dim)}
+.q-check{width:22px;height:22px;border-radius:6px;border:2px solid var(--border-h);display:grid;place-items:center;flex-shrink:0;transition:all .3s;font-size:12px;color:var(--bg)}
+.quest.done .q-check{background:var(--gold);border-color:var(--gold);box-shadow:0 0 10px var(--gold-glow)}
+.quest.done .q-check::after{content:'✓';font-weight:900}
+.q-text{flex:1;font-size:13px;font-weight:500}
+.q-xp{font-family:'JetBrains Mono';font-size:9px;color:var(--blue);background:rgba(91,155,213,.1);border:1px solid rgba(91,155,213,.2);padding:3px 8px;border-radius:6px;font-weight:700}
+.q-rarity{font-size:8px;padding:3px 6px;border-radius:5px;font-weight:800;text-transform:uppercase;letter-spacing:1px}
+.q-rarity.c{background:rgba(150,150,150,.1);color:#aaa;border:1px solid rgba(150,150,150,.2)}
+.q-rarity.r{background:rgba(91,155,213,.1);color:var(--blue);border:1px solid rgba(91,155,213,.2)}
+.q-rarity.e{background:rgba(139,111,192,.1);color:var(--purple);border:1px solid rgba(139,111,192,.2)}
+.q-rarity.l{background:rgba(201,168,76,.1);color:var(--gold);border:1px solid rgba(201,168,76,.2);box-shadow:0 0 8px var(--gold-glow)}
+.input-row{display:flex;gap:8px;margin-top:12px}
+.input-field{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 14px;color:var(--text-bright);font-family:'Outfit';font-size:12px;transition:all .3s}
+.input-field:focus{outline:none;border-color:var(--gold-dim);background:rgba(0,0,0,.5);box-shadow:0 0 10px var(--gold-glow)}
+.input-field::placeholder{color:var(--text-dim)}
+.input-btn{background:linear-gradient(135deg,var(--gold),#b8942e);color:var(--bg);border:none;border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer;font-family:'Outfit';font-size:12px;transition:all .3s;box-shadow:0 4px 10px rgba(0,0,0,.3)}
+.input-btn:hover{transform:translateY(-2px);box-shadow:0 6px 15px rgba(201,168,76,.3)}
+
+/* === SCRIPTURE === */
+.scripture-box{text-align:center;padding:24px;position:relative;background:linear-gradient(135deg,rgba(201,168,76,.05),rgba(139,111,192,.05));border:1px solid rgba(255,255,255,.05);border-radius:16px;box-shadow:inset 0 0 20px rgba(0,0,0,.2)}
+.s-rarity{font-family:'Press Start 2P';font-size:8px;color:var(--gold);margin-bottom:12px;letter-spacing:3px;animation:rp 3s infinite}
+@keyframes rp{0%,100%{opacity:.6;text-shadow:none}50%{opacity:1;text-shadow:0 0 10px var(--gold-glow)}}
+.s-text{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--text-bright);line-height:1.6;margin-bottom:12px;font-style:italic;text-shadow:0 2px 4px rgba(0,0,0,.5)}
+.s-ref{font-size:13px;color:var(--gold);font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.s-btn{margin-top:18px;padding:10px 24px;background:linear-gradient(135deg,var(--gold),#b8942e);color:var(--bg);border:none;border-radius:12px;font-family:'Outfit';font-weight:800;font-size:12px;cursor:pointer;transition:all .3s;box-shadow:0 4px 15px rgba(0,0,0,.3)}
+.s-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(201,168,76,.4)}
+
+/* === POMODORO === */
+.pomo{text-align:center}
+.pomo-wrap{position:relative;width:180px;height:180px;margin:0 auto}
+.pomo-wrap svg{position:absolute;inset:0;filter:drop-shadow(0 0 10px rgba(0,0,0,.5))}
+.pomo-wrap circle{fill:none;stroke-width:6;transform:rotate(-90deg);transform-origin:center}
+.pomo-bg{stroke:rgba(255,255,255,.05)}.pomo-fg{stroke:url(#goldGrad);stroke-dasharray:440;stroke-dashoffset:440;stroke-linecap:round;transition:stroke-dashoffset 1s linear}
+.pomo-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.pomo-time{font-family:'JetBrains Mono';font-size:32px;font-weight:700;color:var(--text-bright);text-shadow:0 0 10px rgba(255,255,255,.2)}
+.pomo-lbl{font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:3px;margin-top:4px;font-weight:600}
+.pomo-controls{display:flex;gap:10px;justify-content:center;margin-top:20px}
+.p-btn{padding:8px 18px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:var(--text-bright);font-family:'Outfit';font-size:12px;font-weight:700;cursor:pointer;transition:all .3s}
+.p-btn:hover{border-color:var(--gold-dim);background:rgba(201,168,76,.05)}
+.p-btn.pri{background:linear-gradient(135deg,var(--gold),#b8942e);color:var(--bg);border:none;box-shadow:0 4px 10px rgba(0,0,0,.3)}
+.p-btn.pri:hover{box-shadow:0 6px 15px rgba(201,168,76,.3);transform:translateY(-2px)}
+.pomo-modes{display:flex;gap:6px;justify-content:center;margin-top:14px}
+.pm{padding:5px 12px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;transition:all .3s;color:var(--text-dim);background:rgba(0,0,0,.2);border:1px solid transparent}
+.pm:hover{color:var(--text-bright)}
+.pm.active{color:var(--gold);border-color:var(--gold-dim);background:rgba(201,168,76,.08);box-shadow:0 0 10px rgba(201,168,76,.1)}
+
+/* === SKILLS === */
+.skill-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.skill-node{text-align:center;padding:14px 8px;border-radius:14px;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.05);cursor:pointer;transition:all .3s;box-shadow:inset 0 0 10px rgba(0,0,0,.3)}
+.skill-node:hover{border-color:var(--border-h);background:rgba(255,255,255,.02);transform:translateY(-2px)}
+.skill-node.unlocked{border-color:var(--gold-dim);background:rgba(201,168,76,.03);box-shadow:0 4px 10px rgba(0,0,0,.2), inset 0 0 15px rgba(201,168,76,.05)}
+.skill-node.locked .sk-icon{opacity:.15;filter:grayscale(1)}
+.sk-icon{font-size:26px;margin-bottom:6px;transition:all .3s;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+.skill-node.unlocked .sk-icon{filter:drop-shadow(0 0 8px var(--gold-glow))}
+.sk-name{font-size:9px;font-weight:800;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px}
+.skill-node.unlocked .sk-name{color:var(--text-bright)}
+.sk-lv{font-family:'JetBrains Mono';font-size:9px;color:var(--gold);margin-top:4px;font-weight:600}
+.skill-node.max{border-color:var(--gold);animation:pulseGlow 2s infinite alternate}
+@keyframes pulseGlow{0%{box-shadow:0 0 10px rgba(201,168,76,.2)}100%{box-shadow:0 0 20px rgba(201,168,76,.5)}}
+.skill-node.max .sk-name{color:var(--gold);text-shadow:0 0 5px var(--gold-glow)}
+
+/* === BOSS === */
+.boss{padding:16px;border-radius:14px;background:linear-gradient(135deg,rgba(212,91,91,.08),rgba(139,111,192,.05));border:1px solid rgba(212,91,91,.2);margin-bottom:12px;position:relative;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,.2)}
+.boss::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--red),var(--purple),var(--red));background-size:200% 100%;animation:gr 3s linear infinite}
+@keyframes gr{0%{background-position:100% 0}100%{background-position:-100% 0}}
+.boss-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.boss-name{font-weight:800;font-size:14px;display:flex;align-items:center;gap:8px;color:var(--text-bright);text-shadow:0 0 5px rgba(212,91,91,.5)}
+.boss-actions{display:flex;align-items:center;gap:10px}
+.boss-timer{font-family:'JetBrains Mono';font-size:9px;color:var(--red);font-weight:700;background:rgba(212,91,91,.1);padding:2px 6px;border-radius:4px}
+.boss-hp{height:8px;background:rgba(0,0,0,.5);border-radius:4px;overflow:hidden;border:1px solid rgba(255,255,255,.05);box-shadow:inset 0 1px 3px rgba(0,0,0,.5)}
+.boss-hp-fill{height:100%;background:linear-gradient(90deg,var(--red),#ff7e67);border-radius:3px;transition:width 1s cubic-bezier(0.25, 1, 0.5, 1);box-shadow:0 0 10px rgba(212,91,91,.6);position:relative}
+.boss-hp-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:bs 1.5s infinite linear;transform:skewX(-20deg)}
+.boss-foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.boss-reward{font-size:10px;color:var(--gold);font-weight:600}
+.boss-atk{padding:6px 14px;border-radius:8px;font-size:11px;font-weight:800;background:rgba(212,91,91,.2);border:1px solid rgba(212,91,91,.3);color:#ff9e9e;cursor:pointer;font-family:'Outfit';transition:all .3s;box-shadow:0 2px 5px rgba(0,0,0,.2)}
+.boss-atk:hover{background:rgba(212,91,91,.3);color:#fff;transform:translateY(-2px);box-shadow:0 4px 10px rgba(212,91,91,.4)}
+
+/* === WEEK === */
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.day-cell{text-align:center;padding:12px 6px;border-radius:12px;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.05);transition:all .3s;box-shadow:inset 0 0 10px rgba(0,0,0,.2)}
+.day-cell.today{border-color:var(--gold);background:rgba(201,168,76,.05);box-shadow:0 0 15px rgba(201,168,76,.15), inset 0 0 15px rgba(201,168,76,.05);transform:translateY(-3px)}
+.day-cell.rest{border-color:rgba(91,170,107,.4);background:rgba(91,170,107,.05)}
+.dc-label{font-size:9px;color:var(--text-dim);font-weight:800;text-transform:uppercase;letter-spacing:1px}
+.day-cell.today .dc-label{color:var(--gold)}
+.dc-icon{font-size:20px;margin:6px 0;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+.day-cell.today .dc-icon{filter:drop-shadow(0 0 8px var(--gold-glow))}
+.dc-status{font-size:9px;font-weight:800}
+.dc-status.ok{color:var(--green)}.dc-status.now{color:var(--gold)}.dc-status.soon{color:var(--text-dim)}
+
+/* === HABITS === */
+.habit-row{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.03);margin-bottom:6px;transition:all .3s}
+.habit-row:hover{background:rgba(255,255,255,.02);border-color:rgba(255,255,255,.08)}
+.habit-name{font-size:12px;font-weight:700;width:90px;flex-shrink:0;color:var(--text-bright)}
+.habit-dots{display:flex;gap:4px;flex:1;flex-wrap:wrap}
+.habit-dot{width:14px;height:14px;border-radius:4px;background:rgba(255,255,255,.05);cursor:pointer;transition:all .2s;border:1px solid transparent}
+.habit-dot:hover{transform:scale(1.2);border-color:var(--gold-dim);background:rgba(255,255,255,.1)}
+.habit-dot.filled{background:linear-gradient(135deg,var(--gold-light),var(--gold));box-shadow:0 0 5px var(--gold-glow);border:none}
+.habit-chain-count{font-family:'JetBrains Mono';font-size:10px;color:var(--gold);min-width:35px;text-align:right;font-weight:700}
+
+/* === LISTS (PRAYER/GRATITUDE/TESTIMONY) === */
+.log-zone{position:relative}
+.save-glow{position:absolute;top:-40px;left:50%;transform:translateX(-50%);width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.15),transparent 70%);animation:sp 4s ease-in-out infinite alternate;pointer-events:none}
+@keyframes sp{0%{opacity:.4;transform:translateX(-50%) scale(1)}100%{opacity:1;transform:translateX(-50%) scale(1.3)}}
+.ta-input{width:100%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 16px;color:var(--text-bright);font-family:'Outfit';font-size:13px;resize:vertical;min-height:70px;transition:all .3s;box-shadow:inset 0 2px 5px rgba(0,0,0,.2)}
+.ta-input:focus{outline:none;border-color:var(--gold-dim);background:rgba(0,0,0,.5);box-shadow:inset 0 2px 5px rgba(0,0,0,.2), 0 0 10px var(--gold-glow)}
+.ta-input::placeholder{color:var(--text-dim)}
+.save-btn{margin-top:10px;width:100%;padding:10px;background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(139,111,192,.08));border:1px solid var(--border-h);border-radius:12px;color:var(--gold);font-family:'Outfit';font-weight:800;font-size:13px;cursor:pointer;transition:all .3s;box-shadow:0 4px 10px rgba(0,0,0,.2)}
+.save-btn:hover{border-color:var(--gold);background:linear-gradient(135deg,rgba(201,168,76,.2),rgba(139,111,192,.12));transform:translateY(-2px);box-shadow:0 6px 15px rgba(201,168,76,.2)}
+.list-area{margin-top:14px;max-height:160px;overflow-y:auto;padding-right:4px;display:flex;flex-direction:column;gap:6px}
+.list-item{padding:10px 14px;border-radius:10px;background:rgba(0,0,0,.2);font-size:12px;border-left:3px solid var(--gold-dim);display:flex;justify-content:space-between;align-items:flex-start;gap:10px;border-right:1px solid rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.03);transition:all .3s}
+.list-item:hover{background:rgba(255,255,255,.02);border-left-color:var(--gold)}
+.item-content{flex:1;color:var(--text-bright)}
+.item-meta{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
+.item-date{font-size:9px;color:var(--text-dim);white-space:nowrap;font-weight:600;letter-spacing:1px}
+.ans-btn{font-size:9px;cursor:pointer;padding:3px 8px;border-radius:6px;background:rgba(91,170,107,.1);color:var(--green);border:1px solid rgba(91,170,107,.2);font-family:'Outfit';font-weight:800;transition:all .3s;text-transform:uppercase;letter-spacing:1px}
+.ans-btn:hover{background:rgba(91,170,107,.2);transform:scale(1.05)}
+.ans-btn.yes{background:var(--green);color:var(--bg);border-color:var(--green);box-shadow:0 0 10px rgba(91,170,107,.4)}
+.loot-gem{width:8px;height:8px;border-radius:50%;flex-shrink:0;box-shadow:0 0 5px currentColor}
+
+/* === BIBLE === */
+.bible-grid{display:grid;grid-template-columns:repeat(11,1fr);gap:4px}
+.bible-cell{width:100%;aspect-ratio:1;border-radius:4px;cursor:pointer;transition:all .3s;display:grid;place-items:center;font-size:8.5px;font-family:'JetBrains Mono';font-weight:600;user-select:none}
+.bible-cell.unread{background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.05);color:var(--text-dim)}
+.bible-cell.read{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--bg);font-weight:800;box-shadow:0 0 8px rgba(201,168,76,.4);border:1px solid var(--gold-light)}
+.bible-cell:hover{transform:scale(1.4);z-index:5;box-shadow:0 5px 15px rgba(0,0,0,.5), 0 0 10px var(--gold-glow);border-color:var(--gold)}
+.bible-legend{display:flex;align-items:center;gap:16px;margin-top:12px;justify-content:center}
+.bible-legend-item{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text-bright);font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.bible-legend-box{width:12px;height:12px;border-radius:3px;border:1px solid rgba(255,255,255,.1)}
+
+/* === RADAR === */
+.radar-wrap{display:flex;justify-content:center;padding:10px;background:radial-gradient(circle,rgba(255,255,255,.02),transparent 70%);border-radius:50%}
+.radar-wrap canvas{max-width:100%;filter:drop-shadow(0 0 10px rgba(201,168,76,.1))}
+
+/* === ACHIEVEMENTS === */
+.inv-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.inv-slot{aspect-ratio:1;border-radius:12px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.05);display:grid;place-items:center;font-size:24px;cursor:pointer;transition:all .3s;position:relative;box-shadow:inset 0 2px 5px rgba(0,0,0,.3)}
+.inv-slot:hover{border-color:var(--gold-dim);transform:translateY(-3px) scale(1.05);background:rgba(255,255,255,.02);box-shadow:0 5px 15px rgba(0,0,0,.3)}
+.inv-slot.empty{opacity:.2;filter:grayscale(1)}
+.inv-slot.earned{border-color:var(--gold-dim);background:radial-gradient(circle,rgba(201,168,76,.1),transparent);box-shadow:0 0 10px rgba(201,168,76,.15), inset 0 0 10px rgba(201,168,76,.1)}
+.inv-slot.earned.legendary{animation:lg 3s infinite alternate}
+@keyframes lg{0%{box-shadow:0 0 10px rgba(201,168,76,.15)}100%{box-shadow:0 0 25px rgba(201,168,76,.4), inset 0 0 15px rgba(201,168,76,.2)}}
+.inv-tip{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%) translateY(10px);background:rgba(10,9,14,0.95);border:1px solid var(--gold-dim);padding:8px 12px;border-radius:8px;font-size:10px;white-space:nowrap;opacity:0;pointer-events:none;transition:all .3s;z-index:10;color:var(--text-bright);font-weight:600;box-shadow:0 5px 15px rgba(0,0,0,.5);backdrop-filter:blur(10px)}
+.inv-tip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border-width:5px;border-style:solid;border-color:var(--gold-dim) transparent transparent transparent}
+.inv-slot:hover .inv-tip{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* === TITHE === */
+.tithe-row{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+.tithe-label{font-size:12px;font-weight:700;width:75px;flex-shrink:0;color:var(--text-bright)}
+.tithe-input{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 14px;color:var(--text-bright);font-family:'JetBrains Mono';font-size:14px;transition:all .3s;box-shadow:inset 0 2px 4px rgba(0,0,0,.3)}
+.tithe-input:focus{outline:none;border-color:var(--gold-dim);background:rgba(0,0,0,.5)}
+.tithe-result{text-align:center;padding:16px;border-radius:12px;background:linear-gradient(135deg,rgba(201,168,76,.08),rgba(91,170,107,.05));border:1px solid rgba(201,168,76,.2);margin-top:16px;box-shadow:inset 0 0 15px rgba(0,0,0,.2)}
+.tithe-amount{font-family:'JetBrains Mono';font-size:28px;font-weight:700;color:var(--gold);text-shadow:0 0 10px rgba(201,168,76,.3)}
+.tithe-sub{font-size:10px;color:var(--text-dim);margin-top:4px;text-transform:uppercase;letter-spacing:1px;font-weight:700}
+
+/* === FASTING === */
+.fast-display{text-align:center;padding:14px 0}
+.fast-wrap{position:relative;width:140px;height:140px;margin:0 auto}
+.fast-wrap svg{filter:drop-shadow(0 0 8px rgba(91,184,201,.3))}
+.fast-time{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.fast-hours{font-family:'JetBrains Mono';font-size:26px;font-weight:700;color:var(--text-bright);text-shadow:0 0 10px rgba(255,255,255,.2)}
+.fast-sub{font-size:9px;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-top:4px;font-weight:700}
+.fast-controls{display:flex;gap:8px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+.fast-btn{padding:8px 16px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Outfit';transition:all .3s;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:var(--text-bright)}
+.fast-btn:hover{border-color:var(--cyan);background:rgba(91,184,201,.05);transform:translateY(-2px)}
+.fast-btn.active{background:linear-gradient(135deg,#3a8f9c,var(--cyan));color:var(--bg);border:none;box-shadow:0 4px 10px rgba(91,184,201,.4)}
+
+/* === MUSIC === */
+.music-viz{height:40px;display:flex;align-items:end;justify-content:center;gap:3px;margin:16px 0}
+.music-bar{width:5px;border-radius:3px;background:var(--purple);transition:height .15s ease-out;box-shadow:0 0 8px var(--purple)}
+.music-controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.music-btn{padding:8px 14px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Outfit';transition:all .3s;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:var(--text-dim)}
+.music-btn:hover{border-color:var(--purple);color:var(--text-bright);background:rgba(139,111,192,.1);transform:translateY(-2px)}
+.music-btn.active{background:linear-gradient(135deg,#6a4d9e,var(--purple));color:#fff;border:none;box-shadow:0 4px 10px rgba(139,111,192,.4)}
+
+/* === POPUPS === */
+.xp-pop{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);background:linear-gradient(145deg,rgba(18,17,24,0.95),rgba(10,9,14,0.98));backdrop-filter:blur(10px);border:1px solid var(--gold);border-radius:var(--r-lg);padding:30px 50px;text-align:center;z-index:1000;transition:transform .4s cubic-bezier(.68,-.55,.27,1.55);box-shadow:0 0 80px rgba(201,168,76,.3), inset 0 0 20px rgba(201,168,76,.1)}
+.xp-pop.show{transform:translate(-50%,-50%) scale(1)}
+.xp-pop-val{font-family:'Press Start 2P';font-size:18px;color:var(--gold);margin-bottom:8px;text-shadow:0 0 15px var(--gold-glow)}
+.xp-pop-msg{font-size:13px;color:var(--text-bright);font-weight:600;letter-spacing:1px}
+.lvl-overlay{position:fixed;inset:0;z-index:999;background:rgba(5,4,8,.9);backdrop-filter:blur(10px);display:none;place-items:center}
+.lvl-overlay.show{display:grid}
+.lvl-content{text-align:center;animation:la .8s cubic-bezier(0.175, 0.885, 0.32, 1.275)}
+@keyframes la{0%{opacity:0;transform:scale(.5)}60%{transform:scale(1.08)}100%{opacity:1;transform:scale(1)}}
+.lvl-icon{font-size:64px;margin-bottom:12px;filter:drop-shadow(0 0 20px rgba(201,168,76,.4))}
+.lvl-text{font-family:'Press Start 2P';font-size:24px;color:var(--gold);margin-bottom:10px;text-shadow:0 0 20px var(--gold-glow)}
+.lvl-sub{font-size:16px;color:var(--text-bright);margin-bottom:24px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+.lvl-close{background:linear-gradient(135deg,var(--gold),#b8942e);color:var(--bg);border:none;padding:12px 30px;border-radius:12px;font-family:'Outfit';font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 6px 20px rgba(201,168,76,.4);transition:all .3s}
+.lvl-close:hover{transform:scale(1.05);box-shadow:0 8px 25px rgba(201,168,76,.6)}
+
+/* === FOOTER === */
+.footer{max-width:1320px;margin:0 auto;padding:30px 24px 24px;text-align:center;border-top:1px solid rgba(255,255,255,.05);position:relative;z-index:1}
+.footer-brand{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--gold);margin-bottom:12px;font-weight:700;letter-spacing:1px}
+.footer-links{display:flex;justify-content:center;gap:24px;margin-bottom:14px;flex-wrap:wrap}
+.footer-link{color:var(--text-dim);text-decoration:none;font-size:12px;transition:all .3s;display:flex;align-items:center;gap:6px;font-weight:600}
+.footer-link:hover{color:var(--gold-light);transform:translateY(-2px);text-shadow:0 0 8px var(--gold-glow)}
+.footer-copy{font-size:10px;color:var(--text-dim);letter-spacing:1px;font-weight:500}
+
+@media(max-width:820px){
+.grid{grid-template-columns:1fr}.hud{grid-template-columns:auto 1fr;gap:16px}.hud-right{display:none}
+.skill-grid{grid-template-columns:repeat(4,1fr)}.week-grid{grid-template-columns:repeat(7,1fr)}.bible-grid{grid-template-columns:repeat(8,1fr)}
+.header{padding:10px 16px}.main{padding:16px 16px 40px}
+}
+@media(max-width:480px){.skill-grid{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<!-- SVG DEFINITIONS FOR GRADIENTS -->
+<svg style="width:0;height:0;position:absolute;" aria-hidden="true" focusable="false">
+  <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#c9a84c" />
+    <stop offset="100%" stop-color="#f2e1a6" />
+  </linearGradient>
+</svg>
+
+<div class="ambient"><div class="ambient-orb"></div><div class="ambient-orb"></div><div class="ambient-orb"></div></div>
+<div class="dust-container" id="dusts"></div>
+
+<div class="xp-pop" id="xpPop"><div class="xp-pop-val" id="xpPopVal">+25 XP</div><div class="xp-pop-msg" id="xpPopMsg">Quest Complete!</div></div>
+<div class="lvl-overlay" id="lvlO"><div class="lvl-content"><div class="lvl-icon">👑</div><div class="lvl-text">LEVEL UP!</div><div class="lvl-sub" id="lvlSub">Level 2</div><button class="lvl-close" onclick="closeLvl()">Continue Journey →</button></div></div>
+
+<header class="header">
+<div class="logo">
+<div class="logo-mark"><span class="logo-cross">✝</span></div>
+<div><div class="logo-title">Life Quest</div><div class="logo-sub">by @faithreflects</div></div>
+</div>
+<div class="header-actions">
+<div class="streak-pill" title="Daily Streak"><span class="streak-fire">🔥</span><span id="streakNum">0</span></div>
+<button class="h-btn" id="sfxBtn" onclick="toggleSfx()">🔊 SFX</button>
+<button class="h-btn" onclick="resetDay()">↻ New Day</button>
+</div>
+</header>
+
+<main class="main">
+<section class="hud">
+<div class="avatar-ring" onclick="cycleAvatar()" title="Click to change avatar"><div class="avatar-inner" id="avatar">⚔️</div><div class="lv-badge" id="lvBadge">LV 1</div></div>
+<div class="char-col">
+<div class="char-name" contenteditable="true" id="charName" spellcheck="false" title="Click to edit name">Faithful Warrior</div>
+<div class="char-class" id="charClass">Novice Disciple</div>
+<div class="bars">
+<div class="bar-row" title="Experience"><span class="bar-label xp">XP</span><div class="bar-track"><div class="bar-fill xp" id="xpBar"></div></div><span class="bar-val" id="xpVal">0/100</span></div>
+<div class="bar-row" title="Faith Points"><span class="bar-label fth">FTH</span><div class="bar-track"><div class="bar-fill fth" id="fthBar"></div></div><span class="bar-val" id="fthVal">80/100</span></div>
+<div class="bar-row" title="Grace Points"><span class="bar-label grc">GRC</span><div class="bar-track"><div class="bar-fill grc" id="grcBar"></div></div><span class="bar-val" id="grcVal">60/100</span></div>
+<div class="bar-row" title="Wisdom Points"><span class="bar-label wis">WIS</span><div class="bar-track"><div class="bar-fill wis" id="wisBar"></div></div><span class="bar-val" id="wisVal">30/100</span></div>
+</div>
+</div>
+<div class="hud-right">
+<div class="hud-stat"><div class="hud-stat-v" id="totalXp">0</div><div class="hud-stat-l">Total XP</div></div>
+<div class="hud-stat"><div class="hud-stat-v" id="questCount">0</div><div class="hud-stat-l">Quests Done</div></div>
+</div>
+</section>
+
+<div class="journey-card">
+<div class="journey-top"><div class="section-title">🗺️ Spiritual Journey</div><div class="badge" id="journeyPct">0%</div></div>
+<div class="journey-track"><div class="journey-fill" id="journeyFill" style="width:5%"></div>
+<div class="journey-nodes">
+<div class="j-node reached"><div class="j-node-icon">🌅</div><div class="j-node-label">Awaken</div></div>
+<div class="j-node unreached"><div class="j-node-icon">🙏</div><div class="j-node-label">Prayer</div></div>
+<div class="j-node unreached"><div class="j-node-icon">🔥</div><div class="j-node-label">Baptism</div></div>
+<div class="j-node unreached"><div class="j-node-icon">🌿</div><div class="j-node-label">Garden</div></div>
+<div class="j-node unreached"><div class="j-node-icon">⛰️</div><div class="j-node-label">Summit</div></div>
+<div class="j-node unreached"><div class="j-node-icon">💧</div><div class="j-node-label">Waters</div></div>
+<div class="j-node unreached"><div class="j-node-icon">⛪</div><div class="j-node-label">Temple</div></div>
+<div class="j-node unreached"><div class="j-node-icon">👑</div><div class="j-node-label">Ascend</div></div>
+</div></div></div>
+
+<div class="grid">
+<!-- CLOCK -->
+<div class="card">
+<div class="card-head"><div class="section-title">⏰ Living Clock</div><div class="badge">LIVE</div></div>
+<div class="clock-time" id="clockTime">00:00:00</div>
+<div class="clock-date" id="clockDate">Sunday, January 1</div>
+<div class="clock-verse" id="clockVerse">"This is the day the Lord has made."</div>
+<div class="time-progress"><div class="time-lbl"><span>Sunrise</span><span id="dayPct">0%</span><span>Sunset</span></div><div class="time-track"><div class="time-fill" id="dayBar" style="width:50%"></div></div></div>
+</div>
+
+<!-- POMODORO -->
+<div class="card">
+<div class="card-head"><div class="section-title">⏱️ Devotional Timer</div><div class="badge">FOCUS</div></div>
+<div class="pomo">
+<div class="pomo-wrap">
+<svg viewBox="0 0 160 160"><circle class="pomo-bg" cx="80" cy="80" r="70"/></svg>
+<svg viewBox="0 0 160 160"><circle class="pomo-fg" cx="80" cy="80" r="70" id="pomoRing"/></svg>
+<div class="pomo-center"><div class="pomo-time" id="pomoTime">25:00</div><div class="pomo-lbl" id="pomoLbl">Devotional</div></div>
+</div>
+<div class="pomo-controls"><button class="p-btn pri" id="pomoStart" onclick="pomoToggle()">▶ Start</button><button class="p-btn" onclick="pomoReset()">↻ Reset</button></div>
+<div class="pomo-modes">
+<button class="pm active" onclick="pomoMode(this,25,'Devotional')">25m</button>
+<button class="pm" onclick="pomoMode(this,15,'Prayer')">15m</button>
+<button class="pm" onclick="pomoMode(this,10,'Worship')">10m</button>
+<button class="pm" onclick="pomoMode(this,5,'Rest')">5m</button>
+</div>
+</div>
+</div>
+
+<!-- QUESTS -->
+<div class="card">
+<div class="card-head"><div class="section-title">⚔️ Daily Quests</div><div class="badge" id="qProg">0/6</div></div>
+<div id="questList">
+<div class="quest" data-xp="25" data-id="q1" onclick="toggleQ(this)"><div class="q-check"></div><span class="q-text">Morning devotional (15 min)</span><span class="q-rarity r">Rare</span><span class="q-xp">+25</span></div>
+<div class="quest" data-xp="15" data-id="q2" onclick="toggleQ(this)"><div class="q-check"></div><span class="q-text">Pray for someone specific</span><span class="q-rarity c">Com</span><span class="q-xp">+15</span></div>
+<div class="quest" data-xp="30" data-id="q3" onclick="toggleQ(this)"><div class="q-check"></div><span class="q-text">Read 1 Bible chapter</span><span class="q-rarity r">Rare</span><span class="q-xp">+30</span></div>
+<div class="quest" data-xp="20" data-id="q4" onclick="toggleQ(this)"><div class="q-check"></div><span class="q-text">Random act of kindness</span><span class="q-rarity e">Epic</span><span class="q-xp">+20</span></div>
+<div class="quest" data-xp="35" data-id="q5" onclick="toggleQ(this)"><div class="q-check"></div><span class="q-text">Worship session</span><span class="q-rarity e">Epic</span><span class="q-xp">+35</span></div>
+<div class="quest" data-xp="50" data-id="q6" onclick="toggleQ(this)"><div class="q-check"></div><span class="q-text">Share faith with someone</span><span class="q-rarity l">Legend</span><span class="q-xp">+50</span></div>
+</div>
+<div class="input-row"><input class="input-field" id="cqInput" placeholder="+ Add custom quest..." onkeydown="if(event.key==='Enter')addCQ()"><button class="input-btn" onclick="addCQ()">Add</button></div>
+</div>
+
+<!-- SCRIPTURE -->
+<div class="card">
+<div class="card-head"><div class="section-title">📜 Scripture Scroll</div><div class="badge">LOOT</div></div>
+<div class="scripture-box" id="sBox">
+<div class="s-rarity" id="sRarity">★ ★ ★ LEGENDARY ★ ★ ★</div>
+<div class="s-text" id="sText">"For I know the plans I have for you," declares the Lord.</div>
+<div class="s-ref" id="sRef">— Jeremiah 29:11</div>
+<button class="s-btn" onclick="rollS()">🎲 Roll New Scroll</button>
+</div>
+</div>
+
+<!-- SKILLS -->
+<div class="card"><div class="card-head"><div class="section-title">🌳 Skill Tree</div><div class="badge">TALENTS</div></div><div class="skill-grid" id="skillTree"></div></div>
+
+<!-- BOSS -->
+<div class="card">
+<div class="card-head"><div class="section-title">🐉 Boss Battles</div><div class="badge">WEEKLY</div></div>
+<div id="bossList"></div>
+<div class="input-row"><input class="input-field" id="bossInput" placeholder="Name a new struggle to fight..." onkeydown="if(event.key==='Enter')addBoss()"><button class="input-btn" onclick="addBoss()">Add Boss</button></div>
+</div>
+
+<!-- WEEK -->
+<div class="card"><div class="card-head"><div class="section-title">🔥 Weekly Bonfire</div><div class="badge">REST</div></div><div class="week-grid" id="weekGrid"></div></div>
+
+<!-- HABITS -->
+<div class="card">
+<div class="card-head"><div class="section-title">🔗 Habit Chains</div><div class="badge">21 DAYS</div></div>
+<div id="habitArea"></div>
+<div class="input-row"><input class="input-field" id="habitInput" placeholder="Name a new habit to track..." onkeydown="if(event.key==='Enter')addHabit()"><button class="input-btn" onclick="addHabit()">Add Habit</button></div>
+</div>
+
+<!-- PRAYER -->
+<div class="card">
+<div class="card-head"><div class="section-title">🙏 Prayer Room</div><div class="badge">SAVE</div></div>
+<div class="log-zone"><div class="save-glow"></div><textarea class="ta-input" id="prayerTa" placeholder="Save your prayer here... ✨"></textarea><button class="save-btn" onclick="savePrayer()">💾 Save Prayer</button><div class="list-area" id="prayerList"></div></div>
+</div>
+
+<!-- GRATITUDE -->
+<div class="card">
+<div class="card-head"><div class="section-title">🎁 Gratitude Loot</div><div class="badge">DROP</div></div>
+<div class="input-row" style="margin-top:0"><input class="input-field" id="lootIn" placeholder="I'm grateful for..." onkeydown="if(event.key==='Enter')addLoot()"><button class="input-btn" onclick="addLoot()">+ Drop</button></div>
+<div class="list-area" id="lootList" style="max-height:180px"></div>
+</div>
+
+<!-- BIBLE -->
+<div class="card">
+<div class="card-head"><div class="section-title">📖 Bible Library</div><div class="badge" id="bibleCount">0/66</div></div>
+<div class="bible-grid" id="bibleGrid"></div>
+<div class="bible-legend"><div class="bible-legend-item"><div class="bible-legend-box" style="background:rgba(0,0,0,.4);border-color:rgba(255,255,255,.1)"></div>Unread</div><div class="bible-legend-item"><div class="bible-legend-box" style="background:linear-gradient(135deg,var(--gold-light),var(--gold));border-color:var(--gold)"></div>Read</div></div>
+</div>
+
+<!-- FRUIT RADAR -->
+<div class="card">
+<div class="card-head"><div class="section-title">🍇 Fruit of the Spirit</div><div class="badge">STATS</div></div>
+<div class="radar-wrap"><canvas id="radarC" width="280" height="280"></canvas></div>
+<div style="text-align:center;margin-top:10px"><button class="s-btn" style="padding:8px 16px;font-size:11px" onclick="rerollFruit()">🔄 Self-Assessment</button></div>
+</div>
+
+<!-- ACHIEVEMENTS -->
+<div class="card"><div class="card-head"><div class="section-title">🎒 Inventory & Relics</div><div class="badge">LOOT</div></div><div class="inv-grid" id="invGrid"></div></div>
+
+<!-- TITHE -->
+<div class="card">
+<div class="card-head"><div class="section-title">💰 Tithe Calculator</div><div class="badge">FINANCE</div></div>
+<div class="tithe-row"><div class="tithe-label">Income $</div><input class="tithe-input" id="titheInc" type="number" placeholder="0.00" oninput="calcTithe()"></div>
+<div class="tithe-row"><div class="tithe-label">Rate %</div><input class="tithe-input" id="titheRate" type="number" value="10" oninput="calcTithe()"></div>
+<div class="tithe-result"><div class="tithe-amount" id="titheAmt">$0.00</div><div class="tithe-sub">Your tithe offering</div></div>
+</div>
+
+<!-- FASTING -->
+<div class="card">
+<div class="card-head"><div class="section-title">🕐 Fasting Tracker</div><div class="badge">DISCIPLINE</div></div>
+<div class="fast-display">
+<div class="fast-wrap">
+<svg viewBox="0 0 140 140" width="140" height="140"><circle cx="70" cy="70" r="62" fill="none" stroke="rgba(0,0,0,.5)" stroke-width="6" transform="rotate(-90 70 70)"/><circle cx="70" cy="70" r="62" fill="none" stroke="var(--cyan)" stroke-width="6" stroke-dasharray="390" id="fastRing" stroke-dashoffset="390" stroke-linecap="round" transform="rotate(-90 70 70)"/></svg>
+<div class="fast-time"><div class="fast-hours" id="fastTime">0h 0m</div><div class="fast-sub" id="fastSubTxt">Not fasting</div></div>
+</div>
+<div class="fast-controls">
+<button class="fast-btn" id="fastStartBtn" onclick="toggleFast()">Start Fast</button>
+<button class="fast-btn" onclick="setFG(16)">16h</button>
+<button class="fast-btn" onclick="setFG(24)">24h</button>
+<button class="fast-btn" onclick="setFG(36)">36h</button>
+</div>
+</div>
+</div>
+
+<!-- TESTIMONY -->
+<div class="card">
+<div class="card-head"><div class="section-title">✍️ Testimony Journal</div><div class="badge">STORY</div></div>
+<textarea class="ta-input" id="testTa" placeholder="Write your testimony, miracles, answered prayers..."></textarea>
+<button class="save-btn" onclick="saveTest()">📝 Save Testimony</button>
+<div class="list-area" id="testList"></div>
+</div>
+
+<!-- MUSIC -->
+<div class="card">
+<div class="card-head"><div class="section-title">🎵 Ambient Worship</div><div class="badge">AUDIO</div></div>
+<div class="music-viz" id="musicViz"></div>
+<div class="music-controls">
+<button class="music-btn" onclick="playAmb('drone',this)">🕊️ Peaceful</button>
+<button class="music-btn" onclick="playAmb('warm',this)">🌅 Warm</button>
+<button class="music-btn" onclick="playAmb('deep',this)">🌊 Deep</button>
+<button class="music-btn" onclick="stopAmb()">⏹ Stop</button>
+</div>
+</div>
+
+</div>
+</main>
+
+<footer class="footer">
+<div class="footer-brand">✦ Faith Reflects ✦</div>
+<div class="footer-links">
+<a href="https://instagram.com/faithreflects" target="_blank" class="footer-link">📸 @faithreflects</a>
+<a href="https://faithreflects.etsy.com" target="_blank" class="footer-link">🛒 Etsy Shop</a>
+<a href="https://faithreflects.gumroad.com" target="_blank" class="footer-link">📦 Gumroad</a>
+</div>
+<div class="footer-copy">© 2026 Faith Reflects — Walk by faith, not by sight. (2 Cor 5:7)</div>
+</footer>
+
+<script>
+// INITIAL STATE (Using fq4 to ensure fresh state for new dynamic arrays)
+const D = {
+    xp:0, level:1, totalXp:0, questsDone:0, streak:0, lastDate:null, quests:{},
+    skills:{prayer:1,wisdom:0,mercy:0,faith:0,worship:0,service:0,patience:0,evangelism:0},
+    prayers:[], gratitude:[], testimonies:[],
+    bosses: [
+        {id:'b1', n:'Doubt', hp:100, max:100, t:'7d', xp:100, rw:'Shield of Faith'},
+        {id:'b2', n:'Procrastination', hp:100, max:100, t:'Monthly', xp:200, rw:'Crown of Discipline'},
+        {id:'b3', n:'Anxiety', hp:100, max:100, t:'Ongoing', xp:150, rw:'Peace of Mind'}
+    ],
+    habits: [
+        {id:'h1', n:'Devotion', d:Array(21).fill(0)},
+        {id:'h2', n:'Prayer', d:Array(21).fill(0)},
+        {id:'h3', n:'Reading', d:Array(21).fill(0)},
+        {id:'h4', n:'Kindness', d:Array(21).fill(0)}
+    ],
+    avatarIdx:0, charName:'Faithful Warrior', fruit:[5,4,3,6,5,4,3,5,4],
+    achievements:[true,false,false,false,false,false,false,false,false,false],
+    bibleRead:[], fastStart:null, fastGoal:16, titheIncome:0
+};
+
+let S;
+try { const d = localStorage.getItem('fq4'); S = d ? {...D, ...JSON.parse(d)} : {...D}; } 
+catch(e) { S = {...D}; }
+const sv = () => localStorage.setItem('fq4', JSON.stringify(S));
+
+// AUDIO SYSTEM
+let ac, sfxOn = true;
+const cx = () => { if(!ac) ac = new (window.AudioContext || window.webkitAudioContext)(); return ac; };
+function sfx(t) {
+    if(!sfxOn) return;
+    try {
+        const c = cx(), o = c.createOscillator(), g = c.createGain();
+        o.connect(g); g.connect(c.destination); g.gain.value = .08;
+        if(t === 'xp') { o.frequency.setValueAtTime(523, c.currentTime); o.frequency.setValueAtTime(659, c.currentTime+.07); o.frequency.setValueAtTime(784, c.currentTime+.14); g.gain.exponentialRampToValueAtTime(.001, c.currentTime+.35); o.start(); o.stop(c.currentTime+.35); }
+        else if(t === 'lvl') { o.frequency.setValueAtTime(440, c.currentTime); o.frequency.setValueAtTime(554, c.currentTime+.08); o.frequency.setValueAtTime(659, c.currentTime+.16); o.frequency.setValueAtTime(880, c.currentTime+.24); g.gain.exponentialRampToValueAtTime(.001, c.currentTime+.7); o.start(); o.stop(c.currentTime+.7); }
+        else if(t === 'click') { o.frequency.setValueAtTime(800, c.currentTime); g.gain.exponentialRampToValueAtTime(.001, c.currentTime+.08); o.start(); o.stop(c.currentTime+.08); }
+        else if(t === 'loot') { o.type='triangle'; o.frequency.setValueAtTime(600, c.currentTime); o.frequency.setValueAtTime(1000, c.currentTime+.1); g.gain.exponentialRampToValueAtTime(.001, c.currentTime+.25); o.start(); o.stop(c.currentTime+.25); }
+        else if(t === 'boss') { o.type='sawtooth'; o.frequency.setValueAtTime(150, c.currentTime); o.frequency.setValueAtTime(90, c.currentTime+.12); g.gain.exponentialRampToValueAtTime(.001, c.currentTime+.25); o.start(); o.stop(c.currentTime+.25); }
+        else if(t === 'save') { o.frequency.setValueAtTime(440, c.currentTime); o.frequency.setValueAtTime(660, c.currentTime+.12); o.frequency.setValueAtTime(880, c.currentTime+.24); g.gain.exponentialRampToValueAtTime(.001, c.currentTime+.5); o.start(); o.stop(c.currentTime+.5); }
+        else if(t === 'del') { o.frequency.setValueAtTime(300, c.currentTime); g.gain.exponentialRampToValueAtTime(.001, c.currentTime+.15); o.start(); o.stop(c.currentTime+.15); }
+    } catch(e) {}
+}
+function toggleSfx() { sfxOn = !sfxOn; document.getElementById('sfxBtn').textContent = sfxOn ? '🔊 SFX' : '🔇 SFX'; if(sfxOn) sfx('click'); }
+
+// AMBIENT MUSIC
+let ambO=[], ambG, vizI;
+function playAmb(mode, btn) {
+    stopAmb();
+    try {
+        const c = cx(); ambG = c.createGain(); ambG.gain.value = .04; ambG.connect(c.destination);
+        const f = mode === 'drone' ? [220,330,440] : mode === 'warm' ? [196,294,392] : [130,196,262];
+        f.forEach(fr => {
+            const o = c.createOscillator(); o.type = 'sine'; o.frequency.value = fr;
+            const g = c.createGain(); g.gain.value = .3; o.connect(g); g.connect(ambG); o.start(); ambO.push(o);
+            const l = c.createOscillator(); l.frequency.value = .1+Math.random()*.2;
+            const lg = c.createGain(); lg.gain.value = 3; l.connect(lg); lg.connect(o.frequency); l.start(); ambO.push(l);
+        });
+        document.querySelectorAll('.music-btn').forEach(b=>b.classList.remove('active')); if(btn) btn.classList.add('active'); animViz(true);
+    } catch(e) {}
+}
+function stopAmb() {
+    ambO.forEach(o=>{try{o.stop()}catch(e){}}); ambO=[]; animViz(false);
+    document.querySelectorAll('.music-btn').forEach(b=>b.classList.remove('active'));
+}
+function animViz(on) {
+    const el = document.getElementById('musicViz');
+    if(!el.children.length) for(let i=0;i<24;i++){ const b=document.createElement('div'); b.className='music-bar'; b.style.height='3px'; el.appendChild(b); }
+    clearInterval(vizI);
+    if(on) vizI = setInterval(()=>{ [...el.children].forEach(b=>{ b.style.height = (3+Math.random()*35)+'px'; }) }, 150);
+    else [...el.children].forEach(b=>{ b.style.height = '3px'; });
+}
+
+// PARTICLES (Dust)
+function makeDust(){
+    const c = document.getElementById('dusts');
+    for(let i=0; i<40; i++){
+        const s = document.createElement('div');
+        s.className = 'dust';
+        s.style.left = Math.random()*100+'%';
+        s.style.setProperty('--dur', (10+Math.random()*20)+'s');
+        s.style.setProperty('--o', .2+Math.random()*.5);
+        s.style.animationDelay = (Math.random() * -30) + 's';
+        c.appendChild(s);
+    }
+}
+
+// XP & LEVELING
+const TITLES=['Novice Disciple','Faithful Seeker','Prayer Apprentice','Scripture Acolyte','Shield Bearer','Light Walker','Spirit Warrior','Covenant Champion','Grace Guardian','Ascended Saint'];
+function addXp(n, msg){
+    S.xp += n; S.totalXp += n; showPop(n, msg); sfx('xp');
+    while(S.xp >= 100){ S.xp -= 100; S.level++; setTimeout(()=>{ sfx('lvl'); showLvl(); }, 500); }
+    updateUI(); sv();
+}
+function showPop(n, m){
+    const p = document.getElementById('xpPop');
+    document.getElementById('xpPopVal').textContent = '+'+n+' XP';
+    document.getElementById('xpPopMsg').textContent = m||'';
+    p.classList.add('show');
+    setTimeout(()=>p.classList.remove('show'), 1400);
+}
+function showLvl(){
+    document.getElementById('lvlSub').textContent = 'Level '+S.level+' — '+TITLES[Math.min(S.level-1,9)];
+    document.getElementById('lvlO').classList.add('show');
+}
+function closeLvl(){ document.getElementById('lvlO').classList.remove('show'); updateUI(); }
+
+// QUESTS
+function toggleQ(el){
+    const id = el.dataset.id, xp = +el.dataset.xp, was = el.classList.contains('done');
+    el.classList.toggle('done');
+    if(!was){ S.quests[id] = true; S.questsDone++; addXp(xp, 'Quest Complete!'); }
+    else { delete S.quests[id]; S.questsDone = Math.max(0, S.questsDone-1); S.xp = Math.max(0, S.xp-xp); S.totalXp = Math.max(0, S.totalXp-xp); sfx('click'); }
+    updateUI(); sv();
+}
+let cqId = 100;
+function addCQ(){
+    const inp = document.getElementById('cqInput'), t = inp.value.trim();
+    if(!t) return;
+    cqId++;
+    const q = document.createElement('div');
+    q.className = 'quest'; q.dataset.xp = '15'; q.dataset.id = 'cq'+cqId;
+    q.onclick = function(){ toggleQ(this) };
+    q.innerHTML = '<div class="q-check"></div><span class="q-text">'+t+'</span><span class="q-rarity c">Custom</span><span class="q-xp">+15</span>';
+    document.getElementById('questList').appendChild(q);
+    inp.value = ''; sfx('click');
+}
+
+// SCRIPTURE
+const SC=[{t:'"For I know the plans I have for you," declares the Lord, "plans to prosper you and not to harm you, plans to give you hope and a future."',r:'Jeremiah 29:11',q:'LEGENDARY'},{t:'"Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go."',r:'Joshua 1:9',q:'EPIC'},{t:'"Trust in the Lord with all your heart and lean not on your own understanding."',r:'Proverbs 3:5',q:'LEGENDARY'},{t:'"I can do all things through Christ who strengthens me."',r:'Philippians 4:13',q:'RARE'},{t:'"The Lord is my shepherd; I shall not want."',r:'Psalm 23:1',q:'LEGENDARY'},{t:'"And we know that in all things God works for the good of those who love him."',r:'Romans 8:28',q:'EPIC'},{t:'"But the fruit of the Spirit is love, joy, peace, forbearance, kindness, goodness, faithfulness, gentleness and self-control."',r:'Galatians 5:22-23',q:'EPIC'},{t:'"Come to me, all you who are weary and burdened, and I will give you rest."',r:'Matthew 11:28',q:'RARE'},{t:'"Do not be anxious about anything, but in every situation, by prayer and petition, present your requests to God."',r:'Philippians 4:6',q:'EPIC'},{t:'"He has told you, O man, what is good; and what does the Lord require of you but to do justice, love kindness, and walk humbly with your God?"',r:'Micah 6:8',q:'LEGENDARY'},{t:'"The joy of the Lord is your strength."',r:'Nehemiah 8:10',q:'RARE'},{t:'"Create in me a clean heart, O God, and renew a right spirit within me."',r:'Psalm 51:10',q:'RARE'},{t:'"Delight yourself in the Lord, and he will give you the desires of your heart."',r:'Psalm 37:4',q:'LEGENDARY'},{t:'"But those who hope in the Lord will renew their strength. They will soar on wings like eagles."',r:'Isaiah 40:31',q:'LEGENDARY'},{t:'"The name of the Lord is a fortified tower; the righteous run to it and are safe."',r:'Proverbs 18:10',q:'RARE'},{t:'"Fear not, for I am with you; be not dismayed, for I am your God."',r:'Isaiah 41:10',q:'EPIC'}];
+function rollS(){
+    sfx('loot'); const s = SC[Math.floor(Math.random()*SC.length)]; const b = document.getElementById('sBox');
+    b.style.animation = 'none'; b.offsetHeight; b.style.animation = 'ld .4s ease';
+    document.getElementById('sRarity').textContent = s.q==='LEGENDARY'?'★ ★ ★ LEGENDARY ★ ★ ★':s.q==='EPIC'?'★ ★ EPIC ★ ★':'★ RARE ★';
+    document.getElementById('sText').textContent = s.t; document.getElementById('sRef').textContent = '— '+s.r;
+    addXp(5, 'Scripture Revealed!');
+}
+
+// SKILLS
+const SK=[{id:'prayer',icon:'🙏',n:'Prayer'},{id:'wisdom',icon:'📖',n:'Wisdom'},{id:'mercy',icon:'💛',n:'Mercy'},{id:'faith',icon:'🛡️',n:'Faith'},{id:'worship',icon:'🎵',n:'Worship'},{id:'service',icon:'🤝',n:'Service'},{id:'patience',icon:'⏳',n:'Patience'},{id:'evangelism',icon:'📣',n:'Evangelism'}];
+function renderSK(){
+    document.getElementById('skillTree').innerHTML = SK.map(s => {
+        const lv = S.skills[s.id]||0;
+        return '<div class="skill-node '+(lv>0?'unlocked':'locked')+(lv>=10?' max':'')+'" data-skill="'+s.id+'" onclick="upSK(this)"><div class="sk-icon">'+s.icon+'</div><div class="sk-name">'+s.n+'</div><div class="sk-lv">LV '+lv+'</div></div>';
+    }).join('');
+}
+function upSK(el){ const sk = el.dataset.skill, lv = S.skills[sk]||0; if(lv>=10) return; S.skills[sk] = lv+1; sfx('xp'); renderSK(); sv(); }
+
+// DYNAMIC BOSSES
+function renderBosses() {
+    document.getElementById('bossList').innerHTML = S.bosses.map((b, i) => `
+        <div class="boss hover-reveal">
+            <div class="boss-top">
+                <div class="boss-name">😈 ${b.n}</div>
+                <div class="boss-actions">
+                    <span class="boss-timer">${b.t}</span>
+                    <button class="del-btn" onclick="delBoss(${i})" title="Remove Boss">×</button>
+                </div>
+            </div>
+            <div class="boss-hp"><div class="boss-hp-fill" style="width:${(b.hp/b.max)*100}%"></div></div>
+            <div class="boss-foot">
+                <div class="boss-reward">🏆 ${b.rw} · +${b.xp} XP</div>
+                <button class="boss-atk" onclick="atkBoss(${i})">⚔️ Attack</button>
+            </div>
+        </div>
+    `).join('');
+}
+function addBoss() {
+    const inp = document.getElementById('bossInput'), t = inp.value.trim();
+    if(!t) return;
+    sfx('save');
+    S.bosses.push({id: 'b'+Date.now(), n: t, hp: 100, max: 100, t: 'Custom', xp: 100, rw: 'Faith Reward'});
+    inp.value = ''; renderBosses(); sv();
+}
+function delBoss(i) { sfx('del'); S.bosses.splice(i, 1); renderBosses(); sv(); }
+function atkBoss(i) {
+    if(!S.bosses[i]) return;
+    S.bosses[i].hp = Math.max(0, S.bosses[i].hp - 15);
+    sfx('boss');
+    if(S.bosses[i].hp <= 0) { addXp(S.bosses[i].xp, '🏆 Boss Defeated!'); S.achievements[4] = true; }
+    renderBosses(); sv();
+}
+
+// WEEK
+const DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], DI=['⛪','⚔️','📖','🙏','🤝','🎵','🔥'];
+function renderW(){
+    const t = new Date().getDay();
+    document.getElementById('weekGrid').innerHTML = DN.map((n,i)=>'<div class="day-cell'+(i===t?' today':'')+(i===0?' rest':'')+'"><div class="dc-label">'+n+'</div><div class="dc-icon">'+DI[i]+'</div><div class="dc-status '+(i<t?'ok':i===t?'now':'soon')+'">'+(i<t?'✓':i===t?'→':'·')+'</div></div>').join('');
+}
+
+// DYNAMIC HABITS
+function renderH(){
+    document.getElementById('habitArea').innerHTML = S.habits.map((h, hi) => {
+        const ch = h.d.reduce((a,v)=>v?a+1:0, 0);
+        return `
+        <div class="habit-row hover-reveal">
+            <button class="del-btn" onclick="delHabit(${hi})" title="Remove Habit" style="margin-right: -4px">×</button>
+            <div class="habit-name" title="${h.n}">${h.n.length > 10 ? h.n.substring(0,8)+'..' : h.n}</div>
+            <div class="habit-dots">${h.d.map((v, di)=>`<div class="habit-dot${v?' filled':''}" onclick="tH(${hi}, ${di})"></div>`).join('')}</div>
+            <div class="habit-chain-count">🔗${ch}</div>
+        </div>`;
+    }).join('');
+}
+function addHabit() {
+    const inp = document.getElementById('habitInput'), t = inp.value.trim();
+    if(!t) return;
+    sfx('save');
+    S.habits.push({id: 'h'+Date.now(), n: t, d: Array(21).fill(0)});
+    inp.value = ''; renderH(); sv();
+}
+function delHabit(i) { sfx('del'); S.habits.splice(i, 1); renderH(); sv(); }
+function tH(hi, di) {
+    S.habits[hi].d[di] = S.habits[hi].d[di] ? 0 : 1;
+    if(S.habits[hi].d[di]) addXp(5, 'Habit Built!');
+    renderH(); sv();
+}
+
+// PRAYER (Deletable)
+function savePrayer(){
+    const t = document.getElementById('prayerTa').value.trim(); if(!t) return; sfx('save');
+    S.prayers.unshift({text:t, date:new Date().toLocaleDateString(), ans:false});
+    if(S.prayers.length>50) S.prayers.pop();
+    document.getElementById('prayerTa').value=''; addXp(10,'💾 Prayer Saved!');
+    if(S.prayers.length>=10) S.achievements[1]=true; renderP(); sv();
+}
+function renderP(){
+    document.getElementById('prayerList').innerHTML = S.prayers.slice(0,8).map((p,i)=>`
+        <div class="list-item hover-reveal">
+            <div class="item-content">${p.text}</div>
+            <div class="item-meta">
+                <span class="item-date">${p.date}</span>
+                <button class="ans-btn${p.ans?' yes':''}" onclick="mA(${i})">${p.ans?'✓ Answered':'Answered?'}</button>
+                <button class="del-btn" onclick="delP(${i})">🗑️ Delete</button>
+            </div>
+        </div>
+    `).join('');
+}
+function mA(i){ S.prayers[i].ans = !S.prayers[i].ans; if(S.prayers[i].ans){ sfx('xp'); addXp(15,'🙌 Prayer Answered!'); } renderP(); sv(); }
+function delP(i){ sfx('del'); S.prayers.splice(i,1); renderP(); sv(); }
+
+// GRATITUDE (Deletable)
+const LC=['#aaa','#5b9bd5','#8b6fc0','#c9a84c'];
+function addLoot(){
+    const inp=document.getElementById('lootIn'), t=inp.value.trim(); if(!t) return; sfx('loot');
+    const r=Math.random(), c=r>.9?LC[3]:r>.6?LC[2]:r>.3?LC[1]:LC[0];
+    S.gratitude.unshift({text:t, color:c}); if(S.gratitude.length>30) S.gratitude.pop();
+    inp.value=''; addXp(8,'🎁 Gratitude!'); renderL(); sv();
+}
+function renderL(){
+    document.getElementById('lootList').innerHTML = S.gratitude.slice(0,6).map((g,i)=>`
+        <div class="list-item hover-reveal" style="align-items:center;">
+            <span class="loot-gem" style="background:${g.color}; color:${g.color}"></span>
+            <span class="item-content">${g.text}</span>
+            <button class="del-btn" onclick="delL(${i})">×</button>
+        </div>
+    `).join('');
+}
+function delL(i){ sfx('del'); S.gratitude.splice(i,1); renderL(); sv(); }
+
+// BIBLE (With Book Abbreviations)
+const BK=['Gen','Exo','Lev','Num','Deu','Jos','Jdg','Rut','1Sa','2Sa','1Ki','2Ki','1Ch','2Ch','Ezr','Neh','Est','Job','Psa','Pro','Ecc','Sng','Isa','Jer','Lam','Eze','Dan','Hos','Joe','Amo','Oba','Jon','Mic','Nah','Hab','Zep','Hag','Zec','Mal','Mat','Mrk','Luk','Jhn','Act','Rom','1Co','2Co','Gal','Eph','Php','Col','1Th','2Th','1Ti','2Ti','Tit','Phm','Heb','Jas','1Pe','2Pe','1Jn','2Jn','3Jn','Jud','Rev'];
+function renderB(){
+    document.getElementById('bibleGrid').innerHTML = BK.map((b,i)=>`
+        <div class="bible-cell ${S.bibleRead.includes(i)?'read':'unread'}" title="${b}" onclick="tB(${i})">${b}</div>
+    `).join('');
+    document.getElementById('bibleCount').textContent = S.bibleRead.length+'/66';
+}
+function tB(i){ const x=S.bibleRead.indexOf(i); x===-1 ? S.bibleRead.push(i) : S.bibleRead.splice(x,1); sfx('click'); renderB(); sv(); }
+
+// RADAR
+const FR=['Love','Joy','Peace','Patience','Kindness','Goodness','Faithfulness','Gentleness','Self-Control'];
+function drawR(){
+    const cv=document.getElementById('radarC'), c=cv.getContext('2d'), w=cv.width, h=cv.height, cx2=w/2, cy=h/2, r=100, n=FR.length, st=Math.PI*2/n; c.clearRect(0,0,w,h);
+    for(let ring=1;ring<=5;ring++){
+        c.beginPath();
+        for(let i=0;i<=n;i++){ const a=i*st-Math.PI/2, x=cx2+Math.cos(a)*(r*ring/5), y=cy+Math.sin(a)*(r*ring/5); i===0?c.moveTo(x,y):c.lineTo(x,y); }
+        c.strokeStyle='rgba(255,255,255,.05)'; c.stroke();
+    }
+    for(let i=0;i<n;i++){
+        const a=i*st-Math.PI/2; c.beginPath(); c.moveTo(cx2,cy); c.lineTo(cx2+Math.cos(a)*r,cy+Math.sin(a)*r); c.strokeStyle='rgba(255,255,255,.05)'; c.stroke();
+        c.fillStyle='rgba(201,168,76,.6)'; c.font='600 10px Outfit'; c.textAlign='center'; c.textBaseline='middle'; c.fillText(FR[i], cx2+Math.cos(a)*(r+22), cy+Math.sin(a)*(r+22));
+    }
+    c.beginPath();
+    S.fruit.forEach((v,i)=>{ const a=i*st-Math.PI/2, x=cx2+Math.cos(a)*(r*v/10), y=cy+Math.sin(a)*(r*v/10); i===0?c.moveTo(x,y):c.lineTo(x,y); });
+    c.closePath(); c.fillStyle='rgba(201,168,76,.15)'; c.fill(); c.strokeStyle='rgba(201,168,76,.8)'; c.lineWidth=2; c.stroke();
+    S.fruit.forEach((v,i)=>{ const a=i*st-Math.PI/2; c.beginPath(); c.arc(cx2+Math.cos(a)*(r*v/10),cy+Math.sin(a)*(r*v/10),4,0,Math.PI*2); c.fillStyle='#f2e1a6'; c.fill(); });
+}
+function rerollFruit(){ sfx('click'); S.fruit=S.fruit.map(()=>2+Math.floor(Math.random()*8)); drawR(); sv(); }
+
+// ACHIEVEMENTS
+const AC=[{n:'First Steps',d:'Begin journey',i:'⚔️'},{n:'Prayer Warrior',d:'10 prayers',i:'🙏'},{n:'Scripture Scholar',d:'Read 50 books',i:'📖'},{n:'Fire Keeper',d:'7-day streak',i:'🔥'},{n:'Boss Slayer',d:'Defeat boss',i:'🐉'},{n:'Light Bearer',d:'Share 10x',i:'💡'},{n:'Fruit Bearer',d:'Max a skill',i:'🍇'},{n:'The Faithful',d:'30-day streak',i:'👑'},{n:'Ascended',d:'Reach LV 10',i:'✨'},{n:'???',d:'Secret',i:'🌟'}];
+function renderI(){ document.getElementById('invGrid').innerHTML=AC.map((a,i)=>{ const e=S.achievements[i]; return '<div class="inv-slot '+(e?'earned legendary':'empty')+'"><span class="inv-tip">'+(e?'🏆 '+a.n:'🔒 '+a.n+' — '+a.d)+'</span>'+(e?a.i:'❓')+'</div>'; }).join(''); }
+
+// TITHE
+function calcTithe(){ const inc=parseFloat(document.getElementById('titheInc').value)||0, rate=parseFloat(document.getElementById('titheRate').value)||10; document.getElementById('titheAmt').textContent='$'+(inc*rate/100).toFixed(2); S.titheIncome=inc; sv(); }
+
+// FASTING
+function toggleFast(){ if(S.fastStart){ S.fastStart=null; sfx('click'); } else { S.fastStart=Date.now(); sfx('save'); } sv(); updateF(); }
+function setFG(h){ S.fastGoal=h; sfx('click'); sv(); updateF(); }
+function updateF(){
+    if(!S.fastStart){ document.getElementById('fastTime').textContent='0h 0m'; document.getElementById('fastSubTxt').textContent='Not fasting'; document.getElementById('fastRing').style.strokeDashoffset=390; document.getElementById('fastStartBtn').textContent='Start Fast'; document.getElementById('fastStartBtn').classList.remove('active'); return; }
+    const el=(Date.now()-S.fastStart)/3600000, h=Math.floor(el), m=Math.floor((el-h)*60);
+    document.getElementById('fastTime').textContent=h+'h '+m+'m'; document.getElementById('fastSubTxt').textContent='of '+S.fastGoal+'h goal';
+    document.getElementById('fastRing').style.strokeDashoffset=390-(390*Math.min(1,el/S.fastGoal));
+    document.getElementById('fastStartBtn').textContent='End Fast'; document.getElementById('fastStartBtn').classList.add('active');
+}
+
+// TESTIMONY (Deletable)
+function saveTest(){
+    const t = document.getElementById('testTa').value.trim(); if(!t) return; sfx('save');
+    S.testimonies.unshift({text:t, date:new Date().toLocaleDateString()});
+    if(S.testimonies.length>30) S.testimonies.pop();
+    document.getElementById('testTa').value=''; addXp(15,'✍️ Testimony!'); renderT(); sv();
+}
+function renderT(){
+    document.getElementById('testList').innerHTML = (S.testimonies||[]).slice(0,5).map((t, i) => `
+        <div class="list-item hover-reveal" style="border-left-color: var(--purple)">
+            <div class="item-content" style="font-family:'Cormorant Garamond',serif; font-size:14px; font-style:italic">"${t.text}"</div>
+            <div class="item-meta">
+                <span class="item-date">${t.date}</span>
+                <button class="del-btn" onclick="delT(${i})">🗑️</button>
+            </div>
+        </div>
+    `).join('');
+}
+function delT(i){ sfx('del'); S.testimonies.splice(i,1); renderT(); sv(); }
+
+// POMODORO
+let pT=25*60, pL=25*60, pR=false, pI;
+function pomoToggle(){ if(pR){ clearInterval(pI); pR=false; document.getElementById('pomoStart').innerHTML='▶ Start'; } else { pR=true; document.getElementById('pomoStart').innerHTML='⏸ Pause'; pI=setInterval(()=>{ if(pL<=0){ clearInterval(pI); pR=false; sfx('lvl'); addXp(20,'⏱️ Focus Complete!'); document.getElementById('pomoStart').innerHTML='▶ Start'; pL=pT; return; } pL--; updatePomo(); }, 1000); } }
+function pomoReset(){ clearInterval(pI); pR=false; pL=pT; document.getElementById('pomoStart').innerHTML='▶ Start'; updatePomo(); }
+function pomoMode(el,mins,lbl){ document.querySelectorAll('.pm').forEach(b=>b.classList.remove('active')); el.classList.add('active'); pT=mins*60; pL=mins*60; pR=false; clearInterval(pI); document.getElementById('pomoLbl').textContent=lbl; document.getElementById('pomoStart').innerHTML='▶ Start'; updatePomo(); }
+function updatePomo(){ const m=Math.floor(pL/60), s=pL%60; document.getElementById('pomoTime').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); const pct=1-(pL/pT); document.getElementById('pomoRing').style.strokeDashoffset=440-(440*pct); }
+
+// CLOCK
+const HV=['"This is the day the Lord has made; let us rejoice." — Ps 118:24','"His mercies are new every morning." — Lam 3:23','"In the morning, Lord, you hear my voice." — Ps 5:3','"The Lord will fight for you; you need only be still." — Ex 14:14','"Be still and know that I am God." — Ps 46:10','"The Lord is near to all who call on him." — Ps 145:18','"Let the peace of Christ rule in your hearts." — Col 3:15','"Cast all your anxiety on him because he cares for you." — 1 Pet 5:7'];
+function updateClock(){
+    const now=new Date();
+    document.getElementById('clockTime').textContent=now.toLocaleTimeString('en-US',{hour12:true,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    document.getElementById('clockDate').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+    const mins=now.getHours()*60+now.getMinutes(), dp=Math.max(0,Math.min(100,((mins-360)/(900-360))*100));
+    document.getElementById('dayBar').style.width=dp+'%'; document.getElementById('dayPct').textContent=Math.round(dp)+'%';
+    document.getElementById('clockVerse').textContent=HV[Math.floor(now.getHours()/3)%HV.length];
+}
+
+// STREAK
+function checkStreak(){ const today=new Date().toDateString(); if(S.lastDate!==today){ const y=new Date(); y.setDate(y.getDate()-1); S.streak = S.lastDate===y.toDateString() ? S.streak+1 : 1; S.lastDate=today; S.quests={}; if(S.streak>=7) S.achievements[3]=true; if(S.streak>=30) S.achievements[7]=true; sv(); } }
+
+// AVATAR
+const AV=['⚔️','🛡️','🗡️','👑','🦁','🕊️','✝️','🌟','🔱','⚡'];
+function cycleAvatar(){ sfx('click'); S.avatarIdx=(S.avatarIdx+1)%AV.length; document.getElementById('avatar').textContent=AV[S.avatarIdx]; sv(); }
+function resetDay(){ S.quests={}; document.querySelectorAll('.quest.done').forEach(q=>q.classList.remove('done')); sfx('click'); updateUI(); sv(); }
+
+// UPDATE UI MASTER
+function updateUI(){
+    document.getElementById('lvBadge').textContent='LV '+S.level; document.getElementById('xpBar').style.width=(S.xp)+'%'; document.getElementById('xpVal').textContent=S.xp+'/100';
+    document.getElementById('charClass').textContent=TITLES[Math.min(S.level-1,9)]; document.getElementById('totalXp').textContent=S.totalXp; document.getElementById('questCount').textContent=S.questsDone; document.getElementById('streakNum').textContent=S.streak;
+    const fth=Math.min(100,50+S.level*5), grc=Math.min(100,40+S.questsDone*2), wis=Math.min(100,20+Object.values(S.skills).reduce((a,b)=>a+b,0)*3);
+    document.getElementById('fthBar').style.width=fth+'%'; document.getElementById('fthVal').textContent=fth+'/100';
+    document.getElementById('grcBar').style.width=grc+'%'; document.getElementById('grcVal').textContent=grc+'/100';
+    document.getElementById('wisBar').style.width=wis+'%'; document.getElementById('wisVal').textContent=wis+'/100';
+    document.getElementById('qProg').textContent=document.querySelectorAll('.quest.done').length+'/'+document.querySelectorAll('.quest').length;
+    document.querySelectorAll('.quest').forEach(q=>{if(S.quests[q.dataset.id]) q.classList.add('done')});
+    document.getElementById('avatar').textContent=AV[S.avatarIdx]||'⚔️'; if(S.charName) document.getElementById('charName').textContent=S.charName;
+    
+    // Journey Path
+    const jp=Math.min(100,(S.totalXp/800)*100); document.getElementById('journeyFill').style.width=jp+'%'; document.getElementById('journeyPct').textContent=Math.round(jp)+'%';
+    document.querySelectorAll('.j-node').forEach((n,i)=>{ const t=(i/8)*100; n.classList.toggle('reached',jp>=t); n.classList.toggle('unreached',jp<t); });
+    
+    if(S.level>=10) S.achievements[8]=true; if(S.titheIncome) document.getElementById('titheInc').value=S.titheIncome;
+}
+
+document.getElementById('charName').addEventListener('blur',function(){ S.charName=this.textContent.trim()||'Faithful Warrior'; sv(); });
+
+// INITIALIZE APP
+function init(){
+    makeDust(); checkStreak(); renderBosses(); renderSK(); renderW(); renderH(); renderP(); renderL(); renderB(); drawR(); renderI(); renderT(); updatePomo(); calcTithe(); updateUI(); updateClock(); updateF(); 
+    setInterval(updateClock,1000); setInterval(updateF,60000);
+    const mv=document.getElementById('musicViz'); for(let i=0;i<24;i++){ const b=document.createElement('div'); b.className='music-bar'; b.style.height='3px'; mv.appendChild(b); }
+}
+init();
+</script>
+</body>
+</html>
