@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sacred Life OS - Sanctuary Widgets</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,600&family=Cinzel:wght@400;500;600&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Brand Colors */
+    --amber:       #D4A24C;
+    --amber-lt:    #F0CC80;
+    --cream:       #FFF8EE;
+    --warm-mid:    #A89878;
+    --warm-dk:     #685848;
+    --rose-tint:   rgba(212, 130, 108, 0.05);
+    
+    /* Exact Notion Matching Colors */
+    --notion-dark: #191919;       /* Native Notion dark mode background */
+    --notion-brown:#2B221B;       /* Native Notion brown callout block */
+    --card-border: rgba(212, 162, 76, 0.15); 
+  }
+
+  body {
+    margin: 0;
+    padding: 1.5rem;
+    background-color: var(--notion-dark);
+    font-family: 'Nunito', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  ::-webkit-scrollbar { display: none; }
+
+  .widget-container {
+    width: 100%;
+    max-width: 850px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding-bottom: 2.5rem;
+  }
+
+  /* Shared Card Styles */
+  .premium-card {
+    background-color: var(--notion-brown);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 2.5rem 3rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  }
+
+  /* ================== 1. SPIRIT WHEEL CARD ================== */
+  .spirit-wheel-card {
+    background-image: radial-gradient(circle at 100% 0%, rgba(212,162,76,0.05) 0%, transparent 50%);
+    display: flex;
+    align-items: center;
+    gap: 3.5rem;
+  }
+
+  .spirit-wheel-card::after {
+    content: '✝';
+    position: absolute; 
+    left: 2.5rem; 
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14rem; 
+    color: var(--amber); 
+    opacity: 0.02;
+    pointer-events: none;
+  }
+
+  .spirit-canvas-wrap { 
+    position: relative; 
+    flex-shrink: 0; 
+    width: 180px; 
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+  }
+
+  .ambient-glow {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: var(--amber);
+    filter: blur(40px);
+    opacity: 0.2;
+    transition: background 0.8s ease, opacity 0.8s ease;
+    animation: breathe-glow 4s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes breathe-glow {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.15; }
+    50%      { transform: translate(-50%, -50%) scale(1.2); opacity: 0.25; }
+  }
+
+  #spirit-canvas { 
+    display: block; 
+    cursor: pointer; 
+    position: relative;
+    z-index: 5;
+  }
+
+  .spirit-info { flex: 1; position: relative; z-index: 2; }
+
+  .card-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem; 
+    letter-spacing: 0.35em;
+    color: var(--amber); 
+    text-transform: uppercase;
+    margin-bottom: 0.8rem;
+    opacity: 0.9;
+  }
+
+  .text-transition-wrap { transition: opacity 0.4s ease, transform 0.4s ease; }
+  .text-transition-wrap.fade-out { opacity: 0; transform: translateY(5px); }
+
+  .spirit-current {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2rem, 4vw, 2.6rem); 
+    font-weight: 300;
+    color: var(--cream); 
+    line-height: 1.1;
+    letter-spacing: 0.02em;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+
+  .spirit-verse {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.05rem; 
+    font-style: italic;
+    color: var(--warm-mid); 
+    margin-top: 0.8rem; 
+    line-height: 1.6;
+    letter-spacing: 0.02em;
+    max-width: 90%;
+  }
+
+  .spirit-hint {
+    font-family: 'Cinzel', serif;
+    font-size: 0.55rem; 
+    letter-spacing: 0.25em;
+    color: var(--warm-dk); 
+    margin-top: 1.5rem;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .spirit-hint::before {
+    content: ''; display: block; width: 20px; height: 1px; background: rgba(212, 162, 76, 0.3);
+  }
+
+  /* ================== 2. SACRED PAUSE CARD ================== */
+  .sacred-pause-card {
+    background-image: radial-gradient(circle at 0% 100%, rgba(212,130,108,0.05) 0%, transparent 60%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 3rem;
+  }
+
+  .pause-info { flex: 1; z-index: 2; }
+
+  .pause-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.2rem;
+    font-weight: 300;
+    color: var(--cream);
+    margin-bottom: 0.5rem;
+  }
+
+  .pause-instruction {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem;
+    color: var(--warm-mid);
+    line-height: 1.6;
+    margin-bottom: 1.8rem;
+    max-width: 90%;
+    transition: opacity 0.5s ease;
+  }
+
+  .btn-soft {
+    background: transparent;
+    color: var(--amber-lt);
+    border: 1px solid rgba(212,162,76,0.4);
+    padding: 0.75rem 1.8rem;
+    border-radius: 8px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem; 
+    letter-spacing: 0.2em;
+    cursor: pointer; 
+    transition: all 0.4s ease;
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-soft:hover { 
+    background: rgba(212,162,76,0.12); 
+    border-color: rgba(212,162,76,0.8); 
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(212,162,76,0.15);
+    color: #FFF;
+  }
+
+  .btn-soft:disabled {
+    opacity: 0.5;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  /* Breathing Orb Visuals */
+  .orb-container {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* Infinite continuous breathing animation */
+  @keyframes continuous-breath {
+    0%, 100% {
+      transform: scale(0.6);
+      opacity: 0.5;
+      border-color: rgba(212, 162, 76, 0.3);
+    }
+    50% {
+      transform: scale(1.2);
+      opacity: 1;
+      border-color: rgba(212, 162, 76, 0.8);
+    }
+  }
+
+  .orb-outer {
+    position: absolute;
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    border: 1px solid rgba(212, 162, 76, 0.3);
+    background: radial-gradient(circle, rgba(212,162,76,0.15) 0%, transparent 70%);
+    animation: continuous-breath 8s ease-in-out infinite;
+  }
+
+  .orb-inner {
+    position: absolute;
+    width: 60%; height: 60%;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--amber-lt) 0%, var(--amber) 100%);
+    box-shadow: 0 0 30px var(--amber);
+    opacity: 0.8;
+  }
+
+  /* ================== BRAND WATERMARK ================== */
+  .brand-watermark {
+    position: absolute;
+    bottom: 0.5rem;
+    right: 0.5rem;
+    font-family: 'Cinzel', serif;
+    font-size: 0.55rem; 
+    letter-spacing: 0.25em;
+    color: var(--warm-dk); 
+    opacity: 0.6;
+    text-transform: uppercase; 
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  @media(max-width: 700px) {
+    .spirit-wheel-card, .sacred-pause-card {
+      flex-direction: column; 
+      text-align: center;
+      padding: 3rem 2rem; 
+      gap: 2rem;
+    }
+    .spirit-wheel-card::after { display: none; }
+    .spirit-hint { justify-content: center; }
+    .spirit-hint::before, .spirit-hint::after {
+      content: ''; width: 15px; height: 1px; background: rgba(212, 162, 76, 0.3);
+    }
+    .spirit-verse, .pause-instruction { max-width: 100%; margin: 0 auto 1.5rem auto; }
+    .brand-watermark { right: 50%; transform: translateX(50%); bottom: 0.5rem; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="widget-container">
+    
+    <!-- WIDGET 1: SPIRIT WHEEL -->
+    <div class="premium-card spirit-wheel-card">
+      <div class="spirit-canvas-wrap">
+        <div class="ambient-glow" id="ambient-glow"></div>
+        <canvas id="spirit-canvas" width="180" height="180" title="Click to align your spirit"></canvas>
+      </div>
+      
+      <div class="spirit-info">
+        <div class="card-label">✦ Today's Spirit State</div>
+        
+        <div class="text-transition-wrap" id="text-wrap">
+          <div class="spirit-current" id="spirit-current">Grateful & Hopeful</div>
+          <div class="spirit-verse" id="spirit-verse">"This is the day the Lord has made; rejoice and be glad in it." — Psalm 118:24</div>
+        </div>
+
+        <div class="spirit-hint">Click the wheel to align your focus</div>
+      </div>
+    </div>
+
+    <!-- WIDGET 2: SACRED PAUSE -->
+    <div class="premium-card sacred-pause-card">
+      <div class="pause-info">
+        <div class="card-label">✦ Guided Breath & Prayer</div>
+        <div class="pause-title">The Sacred Pause</div>
+        <div class="pause-instruction">Breathe in His grace, breathe out your worries.<br>Let this gentle rhythm anchor your heart as you abide in His presence today.</div>
+      </div>
+
+      <div class="orb-container">
+        <div class="orb-outer" id="orb-ring"></div>
+        <div class="orb-inner"></div>
+      </div>
+    </div>
+
+    <!-- Brand Watermark -->
+    <div class="brand-watermark">@faithreflects</div>
+
+  </div>
+
+<script>
+  // ==========================================
+  // 1. SPIRIT WHEEL LOGIC
+  // ==========================================
+  const SPIRIT_STATES = [
+    { label:'Grateful & Hopeful', color:'#D4A24C', verse:'"This is the day the Lord has made; rejoice and be glad in it." — Psalm 118:24' },
+    { label:'Peaceful & Rested', color:'#7AACCF', verse:'"He makes me lie down in green pastures… he leads me beside still waters." — Psalm 23:2' },
+    { label:'Strong & Courageous', color:'#D4826C', verse:'"Be strong and courageous. Do not be afraid; do not be discouraged." — Joshua 1:9' },
+    { label:'Surrendered & Trusting', color:'#5A8C6E', verse:'"Trust in the Lord with all your heart and lean not on your own understanding." — Prov 3:5' },
+    { label:'Joyful & Rejoicing', color:'#F0CC80', verse:'"The joy of the Lord is your strength." — Nehemiah 8:10' },
+    { label:'Seeking & Hungry', color:'#9ECFB2', verse:'"Blessed are those who hunger and thirst for righteousness, for they will be filled." — Matt 5:6' },
+    { label:'Weary & Leaning In', color:'#C4A0D4', verse:'"Come to me, all you who are weary and burdened, and I will give you rest." — Matthew 11:28' },
+    { label:'Faithful & Persevering', color:'#D4B090', verse:'"Let us not become weary in doing good, for at the proper time we will reap a harvest." — Gal 6:9' },
+  ];
+
+  let spiritIndex = 0;
+  let hoveredIndex = -1;
+  let currentRadii = Array(8).fill(65);
+  const baseRadius = 68;
+  const hoverRadius = 78;
+  const activeRadius = 74;
+
+  function initSpiritWheel() {
+    const canvas = document.getElementById('spirit-canvas');
+    const ctx = canvas.getContext('2d');
+    const cx = 90, cy = 90; 
+    const n = SPIRIT_STATES.length;
+
+    // Load saved state
+    const savedIndex = localStorage.getItem('faithReflectsSpiritIndex');
+    if (savedIndex !== null && !isNaN(savedIndex)) {
+      spiritIndex = parseInt(savedIndex) % n;
+      updateTextUI(spiritIndex, false);
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, 180, 180);
+      
+      SPIRIT_STATES.forEach((s, i) => {
+        const targetRadius = (i === hoveredIndex) ? hoverRadius : (i === spiritIndex) ? activeRadius : baseRadius;
+        currentRadii[i] += (targetRadius - currentRadii[i]) * 0.15; 
+
+        const gap = 0.04;
+        const startAngle = (i / n) * Math.PI * 2 - Math.PI / 2 + gap;
+        const endAngle   = ((i + 1) / n) * Math.PI * 2 - Math.PI / 2 - gap;
+        
+        const isActive = i === spiritIndex;
+        const isHov    = i === hoveredIndex;
+        
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, currentRadii[i], startAngle, endAngle);
+        ctx.closePath();
+        
+        if (isActive) ctx.fillStyle = s.color + 'FF'; 
+        else if (isHov) ctx.fillStyle = s.color + 'CC'; 
+        else ctx.fillStyle = s.color + '55'; 
+        
+        ctx.fill();
+
+        if (isActive || isHov) {
+          ctx.strokeStyle = isActive ? 'rgba(255, 248, 238, 0.6)' : 'rgba(255, 248, 238, 0.2)';
+          ctx.lineWidth = isActive ? 2 : 1;
+          ctx.stroke();
+        }
+      });
+
+      // Knockout center
+      ctx.beginPath(); ctx.arc(cx, cy, 22, 0, Math.PI * 2);
+      ctx.fillStyle = '#2B221B'; ctx.fill();
+
+      // Inner ring
+      ctx.beginPath(); ctx.arc(cx, cy, 18, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(212, 162, 76, 0.4)'; ctx.lineWidth = 1; ctx.stroke();
+
+      // Cross
+      ctx.strokeStyle = 'rgba(212, 162, 76, 0.8)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(cx, cy - 8); ctx.lineTo(cx, cy + 8); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx - 8, cy); ctx.lineTo(cx + 8, cy); ctx.stroke();
+
+      requestAnimationFrame(draw);
+    }
+    
+    draw();
+
+    // Mouse Events
+    canvas.addEventListener('mousemove', e => {
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      const dist = Math.sqrt((mx - cx)**2 + (my - cy)**2);
+      if (dist > 22 && dist < hoverRadius + 5) {
+        const angle = Math.atan2(my - cy, mx - cx) + Math.PI / 2;
+        hoveredIndex = Math.floor(((angle + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2) * n);
+      } else hoveredIndex = -1;
+    });
+
+    canvas.addEventListener('mouseleave', () => hoveredIndex = -1);
+
+    canvas.addEventListener('click', () => {
+      if (hoveredIndex !== -1 && hoveredIndex !== spiritIndex) {
+        spiritIndex = hoveredIndex;
+        localStorage.setItem('faithReflectsSpiritIndex', spiritIndex);
+        updateTextUI(spiritIndex, true);
+      }
+    });
+  }
+
+  function updateTextUI(index, animate) {
+    const s = SPIRIT_STATES[index];
+    const wrap = document.getElementById('text-wrap');
+    document.getElementById('ambient-glow').style.background = s.color;
+
+    if (animate) {
+      wrap.classList.add('fade-out');
+      setTimeout(() => {
+        document.getElementById('spirit-current').textContent = s.label;
+        document.getElementById('spirit-verse').textContent = s.verse;
+        document.getElementById('spirit-current').style.color = s.color;
+        wrap.classList.remove('fade-out');
+      }, 400); 
+    } else {
+      document.getElementById('spirit-current').textContent = s.label;
+      document.getElementById('spirit-verse').textContent = s.verse;
+      document.getElementById('spirit-current').style.color = s.color;
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', initSpiritWheel);
+</script>
+</body>
+</html>
