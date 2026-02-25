@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sacred Life OS - Welcome & Daily Widget</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,600&family=Cinzel:wght@400;500;600&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Brand Colors */
+    --amber:    #D4A24C;
+    --amber-lt: #F0CC80;
+    --cream:    #FFF8EE;
+    --warm-mid: #A89878;
+    --warm-dk:  #685848;
+    
+    /* Notion Matching Colors */
+    --notion-dark: #191919;       /* Exact Notion dark mode background */
+    --card-bg:     #241C16;       /* Warm dark brown matching your template buttons */
+    --border-gold: rgba(212,162,76,0.25);
+  }
+
+  /* Body is explicitly set to Notion's dark mode color to prevent any white iframe backgrounds */
+  body {
+    margin: 0;
+    padding: 1rem;
+    background-color: var(--notion-dark);
+    font-family: 'Nunito', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  /* Hide scrollbar for a cleaner iframe embed */
+  ::-webkit-scrollbar { display: none; }
+
+  .widget-container {
+    width: 100%;
+    max-width: 850px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    position: relative;
+    padding-bottom: 2.5rem; /* Space for the brand watermark */
+  }
+
+  /* ================== 1. WELCOME CARD ================== */
+  .welcome-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-gold);
+    border-radius: 16px;
+    padding: 2.2rem 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Faint cross in the background */
+  .welcome-card::after {
+    content:'✝';
+    position:absolute; right:1.5rem; top:50%;
+    transform:translateY(-50%) rotate(0deg);
+    font-size:6rem; color:var(--amber); opacity:0.04;
+    pointer-events:none;
+    animation:gentle-float 8s ease infinite;
+  }
+
+  @keyframes gentle-float {
+    0%,100% { transform:translateY(-50%) rotate(-2deg); }
+    50%      { transform:translateY(-52%) rotate(2deg); }
+  }
+
+  .welcome-info { flex: 1; position: relative; z-index: 2; }
+
+  .welcome-time {
+    font-family:'Cinzel', serif;
+    font-size:0.65rem; letter-spacing:0.3em;
+    color:var(--amber); text-transform:uppercase;
+    margin-bottom:0.4rem;
+  }
+
+  .welcome-greeting {
+    font-family:'Cormorant Garamond', serif;
+    font-size:clamp(1.5rem, 4vw, 2.2rem);
+    color:var(--cream); font-weight:300;
+    line-height: 1.2;
+  }
+
+  .welcome-greeting span { color:var(--amber-lt); font-style:italic; }
+
+  .welcome-sub {
+    font-size:0.85rem; color:var(--warm-mid);
+    margin-top:0.6rem; line-height:1.5;
+  }
+
+  .welcome-name-edit {
+    background:transparent; border:none;
+    border-bottom:1px dashed rgba(201,149,74,0.4);
+    color:var(--amber-lt); font-family:'Cormorant Garamond', serif;
+    font-size:inherit; font-style:italic;
+    cursor:text; width:140px;
+    outline:none; padding:0 0 1px 0;
+    transition: border-color 0.3s;
+  }
+
+  .welcome-name-edit:focus { border-bottom-color:var(--amber); }
+
+  .daily-clock {
+    background-color: rgba(25, 25, 25, 0.4); /* Solid fallback, no blur */
+    border: 1px solid var(--border-gold);
+    border-radius: 12px; 
+    padding: 1.5rem 2rem;
+    text-align: center;
+    min-width: 160px;
+    z-index: 2;
+  }
+
+  .clock-time {
+    font-family:'Cormorant Garamond', serif;
+    font-size:3.2rem; font-weight:300;
+    color:var(--amber-lt); letter-spacing:0.05em;
+    line-height:1;
+  }
+
+  .clock-date {
+    font-family:'Cinzel', serif;
+    font-size:0.65rem; letter-spacing:0.25em;
+    color:var(--warm-mid); margin-top:0.6rem;
+    text-transform: uppercase;
+  }
+
+  /* ================== 2. AFFIRMATION TICKER ================== */
+  .ticker-wrap {
+    overflow: hidden;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-gold);
+    border-radius: 8px;
+    padding: 0.7rem 0;
+    position: relative;
+  }
+
+  /* Crucial fix: Instead of "transparent", we use rgba(25,25,25,0) 
+    to stop browsers from rendering the gradient as white 
+  */
+  .ticker-wrap::before {
+    content:'';
+    position:absolute; top:0; left:0; bottom:0; width:60px;
+    background: linear-gradient(90deg, var(--notion-dark) 0%, rgba(25,25,25,0) 100%);
+    z-index:2; pointer-events:none;
+  }
+  
+  .ticker-wrap::after {
+    content:'';
+    position:absolute; top:0; right:0; bottom:0; width:60px;
+    background: linear-gradient(270deg, var(--notion-dark) 0%, rgba(25,25,25,0) 100%);
+    z-index:2; pointer-events:none;
+  }
+
+  .ticker-inner {
+    display: flex;
+    white-space: nowrap;
+    animation: ticker-scroll 60s linear infinite;
+    width: max-content;
+  }
+
+  .ticker-inner:hover { animation-play-state: paused; }
+
+  .ticker-item {
+    display: inline-flex; align-items: center; gap: 0.8rem;
+    padding: 0 2.5rem;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.95rem; font-style: italic;
+    color: var(--amber-lt); /* Changed to amber so it stands out */
+  }
+
+  .ticker-dot {
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--amber); flex-shrink: 0;
+    box-shadow: 0 0 6px var(--amber);
+  }
+
+  @keyframes ticker-scroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* ================== 3. VERSE OF THE DAY ================== */
+  .votd-wrap {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-gold);
+    border-radius: 16px;
+    padding: 3.5rem 4rem;
+    text-align: center;
+    position: relative;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .votd-wrap::before {
+    content: '\201C';
+    position: absolute; top: -1.5rem; left: 1.5rem;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 10rem; color: var(--amber); opacity: 0.04;
+    line-height: 1; pointer-events: none;
+  }
+
+  .votd-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem; letter-spacing: 0.4em;
+    color: var(--amber); text-transform: uppercase;
+    margin-bottom: 1.5rem; display: block;
+  }
+
+  .votd-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.4rem, 3vw, 1.8rem);
+    font-style: italic; color: var(--cream);
+    line-height: 1.6; max-width: 680px;
+    margin: 0 auto 1.2rem;
+    transition: opacity 0.5s ease;
+  }
+
+  .votd-ref {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem; letter-spacing: 0.25em;
+    color: var(--warm-mid);
+    text-transform: uppercase;
+    transition: opacity 0.5s ease;
+    margin-bottom: 2rem;
+  }
+
+  .btn-soft {
+    background: transparent;
+    color: var(--amber-lt);
+    border: 1px solid var(--border-gold);
+    padding: 0.65rem 1.6rem;
+    border-radius: 6px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem; letter-spacing: 0.2em;
+    cursor: pointer; transition: all 0.3s;
+    text-transform: uppercase;
+  }
+
+  .btn-soft:hover { 
+    background: rgba(212,162,76,0.1); 
+    border-color: rgba(212,162,76,0.6); 
+    transform: translateY(-2px);
+  }
+
+  /* ================== 4. BRAND WATERMARK ================== */
+  .brand-watermark {
+    position: absolute;
+    bottom: 0.5rem;
+    right: 0.5rem;
+    font-family: 'Cinzel', serif;
+    font-size: 0.55rem; letter-spacing: 0.2em;
+    color: var(--warm-dk); 
+    opacity: 0.6;
+    text-transform: uppercase; 
+    pointer-events: none;
+  }
+
+  @media(max-width: 650px) {
+    .welcome-card {
+      flex-direction: column; text-align: center;
+      padding: 2rem 1.5rem; gap: 1.5rem;
+    }
+    .welcome-card::after { display: none; }
+    .votd-wrap { padding: 2rem 1.5rem; }
+    .votd-text { font-size: 1.2rem; }
+    .brand-watermark { right: 50%; transform: translateX(50%); }
+  }
+</style>
+</head>
+<body>
+
+  <div class="widget-container">
+    
+    <!-- 1. WELCOME & CLOCK -->
+    <div class="welcome-card">
+      <div class="welcome-info">
+        <div class="welcome-time" id="greeting-time">Good morning</div>
+        <div class="welcome-greeting">
+          Welcome back, <input class="welcome-name-edit" id="user-name" value="Beloved" 
+            onblur="saveName()" onkeydown="if(event.key==='Enter')this.blur()">
+          <span style="color:var(--warm-mid);font-size:0.8em;">✦</span>
+        </div>
+        <div class="welcome-sub">Today is <span id="today-date" style="color:var(--amber-lt);"></span>.<br>Press forward in grace.</div>
+      </div>
+      
+      <div class="daily-clock">
+        <div class="clock-time" id="clock-display">00:00</div>
+        <div class="clock-date" id="clock-weekday">Monday</div>
+      </div>
+    </div>
+
+    <!-- 2. AFFIRMATION TICKER -->
+    <div class="ticker-wrap">
+      <div class="ticker-inner" id="ticker-inner">
+        <!-- Javascript will populate this -->
+      </div>
+    </div>
+
+    <!-- 3. VERSE OF THE DAY -->
+    <div class="votd-wrap">
+      <span class="votd-label">✦ Verse of the Day ✦</span>
+      <p class="votd-text" id="votd-text">"For I know the plans I have for you," declares the Lord, "plans to prosper you and not to harm you, plans to give you hope and a future."</p>
+      <div class="votd-ref" id="votd-ref">Jeremiah 29:11 · NIV</div>
+      <button class="btn-soft" onclick="nextVerse()">✦ NEW VERSE</button>
+    </div>
+
+    <!-- FaithReflects Watermark -->
+    <div class="brand-watermark">@faithreflects</div>
+
+  </div>
+
+<script>
+  // -------------------------
+  // 1. CLOCK & DATE LOGIC
+  // -------------------------
+  function initClock() {
+    const update = () => {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      
+      document.getElementById('clock-display').textContent = h + ':' + m;
+      document.getElementById('clock-weekday').textContent = now.toLocaleDateString('en-US', { weekday: 'long' });
+      document.getElementById('today-date').textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+      
+      const hour = now.getHours();
+      const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+      document.getElementById('greeting-time').textContent = greeting;
+    };
+    update();
+    setInterval(update, 1000);
+  }
+
+  // LocalStorage Name Save Logic
+  function loadName() {
+    const savedName = localStorage.getItem('faithReflectsName');
+    if (savedName) {
+      document.getElementById('user-name').value = savedName;
+    }
+  }
+
+  function saveName() {
+    let n = document.getElementById('user-name').value.trim();
+    if (!n) {
+      n = 'Beloved';
+      document.getElementById('user-name').value = n;
+    }
+    localStorage.setItem('faithReflectsName', n);
+  }
+
+  // -------------------------
+  // 2. TICKER LOGIC
+  // -------------------------
+  function initTicker() {
+    const affirmations = [
+      "You are fearfully and wonderfully made — Psalm 139:14",
+      "Greater is He who is in you than he who is in the world — 1 John 4:4",
+      "You are chosen, holy, and dearly loved — Colossians 3:12",
+      "The Lord your God is with you wherever you go — Joshua 1:9",
+      "He gives power to the faint and increases the strength of the weak — Isaiah 40:29",
+      "His compassions never fail; they are new every morning — Lamentations 3:22-23"
+    ];
+    const inner = document.getElementById('ticker-inner');
+    // Duplicate the array so it loops seamlessly
+    const allItems = [...affirmations, ...affirmations];
+    inner.innerHTML = allItems.map(a =>
+      `<span class="ticker-item"><span class="ticker-dot"></span>${a}</span>`
+    ).join('');
+  }
+
+  // -------------------------
+  // 3. VERSE OF THE DAY LOGIC
+  // -------------------------
+  const VERSES = [
+    {t: '"For I know the plans I have for you," declares the Lord, "plans to prosper you and not to harm you, plans to give you hope and a future."', r: 'Jeremiah 29:11 · NIV'},
+    {t: '"I can do all this through him who gives me strength."', r: 'Philippians 4:13 · NIV'},
+    {t: '"The Lord is my shepherd, I lack nothing."', r: 'Psalm 23:1 · NIV'},
+    {t: '"Trust in the Lord with all your heart and lean not on your own understanding."', r: 'Proverbs 3:5 · NIV'},
+    {t: '"And we know that in all things God works for the good of those who love him."', r: 'Romans 8:28 · NIV'},
+    {t: '"Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go."', r: 'Joshua 1:9 · NIV'},
+    {t: '"But seek first his kingdom and his righteousness, and all these things will be given to you as well."', r: 'Matthew 6:33 · NIV'},
+    {t: '"Be still, and know that I am God."', r: 'Psalm 46:10 · NIV'}
+  ];
+  
+  let vIdx = 0;
+  
+  function nextVerse() {
+    vIdx = (vIdx + 1) % VERSES.length;
+    const tEl = document.getElementById('votd-text');
+    const rEl = document.getElementById('votd-ref');
+    
+    // Fade out
+    tEl.style.opacity = '0'; 
+    rEl.style.opacity = '0';
+    
+    setTimeout(() => {
+      // Change text while invisible
+      tEl.textContent = VERSES[vIdx].t;
+      rEl.textContent = VERSES[vIdx].r;
+      // Fade back in
+      tEl.style.opacity = '1'; 
+      rEl.style.opacity = '1';
+    }, 400); // Wait for the transition to finish fading out
+  }
+
+  // -------------------------
+  // INITIALIZE EVERYTHING
+  // -------------------------
+  window.addEventListener('DOMContentLoaded', () => {
+    initClock();
+    loadName();
+    initTicker();
+  });
+</script>
+</body>
+</html>
