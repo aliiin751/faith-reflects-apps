@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spiritual Watches Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: transparent;
+            font-family: 'Cormorant Garamond', serif;
+            color: #3D3229;
+            overflow: hidden;
+        }
+
+        .widget-container {
+            width: 320px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding-bottom: 20px; /* Make room for watermark */
+        }
+
+        /* --- THE ARC VISUAL --- */
+        .arc-container {
+            position: relative;
+            width: 290px; /* Increased to prevent clipping */
+            height: 145px; /* Increased to prevent top clipping */
+            overflow: hidden;
+            margin-bottom: 25px;
+        }
+
+        .arc-line {
+            position: absolute;
+            top: 15px; /* Push down to clear top edge */
+            left: 17px; /* Center horizontally */
+            width: 256px;
+            height: 256px;
+            border-radius: 50%;
+            border: 1px dashed rgba(201, 169, 110, 0.4); /* Soft Gold dashed line */
+            box-sizing: border-box;
+        }
+
+        /* The celestial body (Sun or Moon) */
+        .celestial-body {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #D4AF37;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
+            top: 143px; /* Adjusted origin: 15px (top) + 128px (radius) */
+            left: 145px; /* Adjusted origin: 17px (left) + 128px (radius) */
+            margin-top: -12px;
+            margin-left: -12px;
+            transition: transform 1s ease-out;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        /* --- TYPOGRAPHY --- */
+        .time-label {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 11px;
+            letter-spacing: 0.15em;
+            color: #8C7B6B;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .watch-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0 0 10px 0;
+            color: #C9A96E;
+        }
+
+        .watch-timeframe {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 10px;
+            letter-spacing: 0.1em;
+            color: #8C7B6B;
+            margin-bottom: 20px;
+        }
+
+        .prayer-focus-box {
+            background-color: rgba(250, 248, 245, 0.8); /* Translucent cream */
+            border-left: 2px solid #C9A96E;
+            padding: 15px 20px;
+            font-style: italic;
+            font-size: 1.1rem;
+            line-height: 1.5;
+            width: 100%;
+            box-sizing: border-box;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .focus-label {
+            display: block;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 9px;
+            font-style: normal;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #8C7B6B;
+            margin-bottom: 5px;
+        }
+
+        .watermark {
+            position: absolute;
+            bottom: 0;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 9px;
+            letter-spacing: 0.15em;
+            color: #8C7B6B;
+            opacity: 0.5;
+            text-transform: uppercase;
+            pointer-events: none;
+        }
+
+        /* --- DARK MODE SUPPORT --- */
+        @media (prefers-color-scheme: dark) {
+            body {
+                color: #FAF8F5; /* Cream text */
+            }
+            .time-label, .watch-timeframe, .focus-label {
+                color: #A8A096;
+            }
+            .prayer-focus-box {
+                background-color: rgba(61, 50, 41, 0.6); /* Darker translucent background */
+            }
+            .watermark {
+                color: #A8A096;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="widget-container">
+        <!-- The visual arc representing the sky -->
+        <div class="arc-container">
+            <div class="arc-line"></div>
+            <!-- The sun/moon that will move along the arc -->
+            <div class="celestial-body" id="celestial">☀️</div>
+        </div>
+
+        <div class="time-label" id="currentTime">12:00 PM</div>
+        <h2 class="watch-title" id="watchTitle">The Sixth Hour</h2>
+        <div class="watch-timeframe" id="watchTimeframe">12:00 PM - 3:00 PM</div>
+        
+        <div class="prayer-focus-box">
+            <span class="focus-label">Current Prayer Focus</span>
+            <span id="prayerFocus">A time to pray for the foundations of your life, family, and work to be secure in Christ.</span>
+        </div>
+
+        <!-- Subtle Branding -->
+        <div class="watermark">✦ @faithreflects</div>
+    </div>
+
+    <script>
+        // Biblical Watches Data Structure
+        const watches = [
+            { start: 18, end: 21, title: "First Watch (Evening)", timeframe: "6:00 PM - 9:00 PM", icon: "🌙", color: "#A8B2C1", focus: "A time for quiet reflection, repentance, and committing the evening to the Lord's protection." },
+            { start: 21, end: 24, title: "Second Watch", timeframe: "9:00 PM - 12:00 AM", icon: "✨", color: "#5C6A82", focus: "A time to pray for divine protection, peace over your household, and defense against anxieties." },
+            { start: 0, end: 3, title: "Third Watch", timeframe: "12:00 AM - 3:00 AM", icon: "✨", color: "#3B475E", focus: "The deepest watch. A powerful time to pray for spiritual breakthroughs, dreams, and divine encounters." },
+            { start: 3, end: 6, title: "Fourth Watch (Morning)", timeframe: "3:00 AM - 6:00 AM", icon: "🌅", color: "#E09A5F", focus: "A time of commanding the morning. Pray for God's will to be established in the new day before it begins." },
+            { start: 6, end: 9, title: "First Hour of the Day", timeframe: "6:00 AM - 9:00 AM", icon: "☀️", color: "#F7D060", focus: "A time of praise and setting intentions. Pray for the Holy Spirit to guide your steps and words today." },
+            { start: 9, end: 12, title: "Third Hour", timeframe: "9:00 AM - 12:00 PM", icon: "☀️", color: "#F7C04A", focus: "The hour of the outpouring of the Holy Spirit. Pray for fresh grace, provision, and favor in your work." },
+            { start: 12, end: 15, title: "Sixth Hour", timeframe: "12:00 PM - 3:00 PM", icon: "☀️", color: "#F2A73B", focus: "A time to pause and pray for the foundations of your life, family, and work to remain secure in Christ." },
+            { start: 15, end: 18, title: "Ninth Hour", timeframe: "3:00 PM - 6:00 PM", icon: "🌤️", color: "#E88A35", focus: "The hour of answered prayer. Pray for healing, deliverance, and finishing the day's tasks with excellence." }
+        ];
+
+        function updateTracker() {
+            const now = new Date();
+            const currentHour = now.getHours();
+            const currentMinute = now.getMinutes();
+            
+            // Format 12-hour time for display
+            let displayHour = currentHour % 12 || 12;
+            let displayMinute = currentMinute < 10 ? '0' + currentMinute : currentMinute;
+            let ampm = currentHour >= 12 ? 'PM' : 'AM';
+            document.getElementById('currentTime').innerText = `${displayHour}:${displayMinute} ${ampm}`;
+
+            // Find current watch
+            let currentWatch;
+            for (let w of watches) {
+                // Handle the midnight wraparound (start 21, end 24 represents 9pm to midnight)
+                if (currentHour >= w.start && currentHour < w.end) {
+                    currentWatch = w;
+                    break;
+                }
+            }
+
+            // Update Text
+            document.getElementById('watchTitle').innerText = currentWatch.title;
+            document.getElementById('watchTimeframe').innerText = currentWatch.timeframe;
+            document.getElementById('prayerFocus').innerText = currentWatch.focus;
+
+            // Update Celestial Body Visuals
+            const celestial = document.getElementById('celestial');
+            celestial.innerText = currentWatch.icon;
+            celestial.style.background = currentWatch.color;
+            celestial.style.boxShadow = `0 0 15px ${currentWatch.color}80`; // 80 is hex opacity
+
+            // Calculate position on the arc
+            // The watch period is 3 hours (180 minutes). 
+            // We map this to a 180-degree half circle (-90deg to +90deg relative to top center).
+            const minutesIntoWatch = ((currentHour - currentWatch.start) * 60) + currentMinute;
+            const progress = minutesIntoWatch / 180; // 0.0 to 1.0
+            
+            // Map progress to an angle: starts at left (-90deg), peaks at top (0deg), ends at right (90deg)
+            const angleDegrees = -90 + (progress * 180);
+            
+            // Rotate the invisible arm that holds the celestial body
+            // Origin has been updated, radius is 128px
+            celestial.style.transform = `rotate(${angleDegrees}deg) translateY(-128px) rotate(${-angleDegrees}deg)`;
+        }
+
+        // Initialize and set interval to update every minute
+        updateTracker();
+        setInterval(updateTracker, 60000);
+    </script>
+</body>
+</html>

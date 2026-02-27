@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Bread Promise Vault</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: transparent;
+            font-family: 'Cormorant Garamond', serif;
+            color: #3D3229; /* Dark Chocolate */
+            overflow: hidden;
+            perspective: 1000px;
+        }
+
+        /* --- DARK MODE SUPPORT --- */
+        @media (prefers-color-scheme: dark) {
+            body {
+                color: #FAF8F5; /* Cream */
+            }
+            .card {
+                background-color: #2C241C !important; /* Dark Chocolate variant */
+                box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4) !important;
+            }
+            .verse-ref {
+                color: #A8A096 !important;
+            }
+            .seal-text {
+                color: #A8A096 !important;
+            }
+            .watermark {
+                color: #A8A096 !important;
+            }
+        }
+
+        .container {
+            position: relative;
+            width: 320px;
+            height: 400px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- THE SEAL (Initial State) --- */
+        .seal-wrapper {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 10;
+        }
+
+        .seal {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%); /* Rich Gold */
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(201, 169, 110, 0.4), inset 0 2px 5px rgba(255,255,255,0.3);
+            position: relative;
+            animation: pulse-seal 3s infinite alternate;
+        }
+
+        .seal::after {
+            content: "✦";
+            font-size: 32px;
+            color: #FAF8F5;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .seal-text {
+            margin-top: 20px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 11px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: #8C7B6B; /* Warm Gray */
+            text-align: center;
+        }
+
+        /* --- THE CARD (Revealed State) --- */
+        .card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: #FAF8F5; /* Cream */
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(61, 50, 41, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            box-sizing: border-box;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+            pointer-events: none;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 15px; bottom: 15px; left: 15px; right: 15px;
+            border: 1px solid rgba(201, 169, 110, 0.3); /* Soft Gold Border */
+            pointer-events: none;
+        }
+
+        .card-label {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 10px;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: #C9A96E;
+            margin-bottom: 25px;
+        }
+
+        .verse-text {
+            font-size: 1.4rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .verse-ref {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            color: #8C7B6B;
+        }
+
+        .reset-btn {
+            margin-top: 30px;
+            background: none;
+            border: none;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 10px;
+            letter-spacing: 0.1em;
+            color: #C9A96E;
+            cursor: pointer;
+            text-decoration: underline;
+            text-underline-offset: 4px;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+
+        .reset-btn:hover { opacity: 1; }
+
+        /* --- ANIMATION CLASSES --- */
+        .is-open .seal-wrapper {
+            opacity: 0;
+            transform: scale(0.5);
+            pointer-events: none;
+        }
+
+        .is-open .card {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+
+        @keyframes pulse-seal {
+            0% { box-shadow: 0 4px 15px rgba(201, 169, 110, 0.2), inset 0 2px 5px rgba(255,255,255,0.3); }
+            100% { box-shadow: 0 4px 25px rgba(201, 169, 110, 0.7), inset 0 2px 5px rgba(255,255,255,0.3); }
+        }
+
+        .watermark {
+            position: absolute;
+            bottom: 20px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 9px;
+            letter-spacing: 0.15em;
+            color: #8C7B6B;
+            opacity: 0.5;
+            text-transform: uppercase;
+            pointer-events: none;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="vaultContainer">
+        <!-- The Seal -->
+        <div class="seal-wrapper" onclick="openVault()">
+            <div class="seal"></div>
+            <div class="seal-text">Break the seal<br>for your daily promise</div>
+        </div>
+
+        <!-- The Revealed Card -->
+        <div class="card">
+            <div class="card-label">✦ Daily Bread ✦</div>
+            <div class="verse-text" id="verseText">"The Lord will fight for you; you need only to be still."</div>
+            <div class="verse-ref" id="verseRef">— Exodus 14:14</div>
+            <button class="reset-btn" onclick="closeVault()">Receive Another</button>
+        </div>
+
+        <!-- Subtle Branding -->
+        <div class="watermark">✦ @faithreflects</div>
+    </div>
+
+    <script>
+        const promises = [
+            { text: "The Lord will fight for you; you need only to be still.", ref: "Exodus 14:14" },
+            { text: "Do not fear, for I am with you; do not be dismayed, for I am your God. I will strengthen you and help you.", ref: "Isaiah 41:10" },
+            { text: "Come to me, all you who are weary and burdened, and I will give you rest.", ref: "Matthew 11:28" },
+            { text: "And my God will meet all your needs according to the riches of his glory in Christ Jesus.", ref: "Philippians 4:19" },
+            { text: "The Lord is close to the brokenhearted and saves those who are crushed in spirit.", ref: "Psalm 34:18" },
+            { text: "Cast all your anxiety on him because he cares for you.", ref: "1 Peter 5:7" },
+            { text: "But those who hope in the Lord will renew their strength. They will soar on wings like eagles.", ref: "Isaiah 40:31" },
+            { text: "Peace I leave with you; my peace I give you. I do not give to you as the world gives.", ref: "John 14:27" },
+            { text: "For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you.", ref: "Jeremiah 29:11" },
+            { text: "Surely your goodness and love will follow me all the days of my life.", ref: "Psalm 23:6" }
+        ];
+
+        const container = document.getElementById('vaultContainer');
+        const verseText = document.getElementById('verseText');
+        const verseRef = document.getElementById('verseRef');
+
+        function openVault() {
+            // Pick random verse
+            const randomPromise = promises[Math.floor(Math.random() * promises.length)];
+            verseText.innerHTML = `"${randomPromise.text}"`;
+            verseRef.innerHTML = `— ${randomPromise.ref}`;
+            
+            // Trigger animation
+            container.classList.add('is-open');
+        }
+
+        function closeVault() {
+            container.classList.remove('is-open');
+        }
+    </script>
+</body>
+</html>
