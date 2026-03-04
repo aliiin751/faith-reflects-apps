@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FaithReflects · Lofi Worship Player</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --bg:#ffffff;
+  --surface:#f7f6f3;
+  --surface-hover:#f0efeb;
+  --surface-active:#e9e8e4;
+  --border:#e9e9e7;
+  --border-soft:#f0efeb;
+  --text:#37352f;
+  --text-soft:#787774;
+  --text-faint:#b4b4b0;
+  --accent:#6b8fad;
+  --accent-soft:#8aabc4;
+  --accent-bg:rgba(107,143,173,0.07);
+  --accent-bg-strong:rgba(107,143,173,0.12);
+  --accent-glow:rgba(107,143,173,0.15);
+  --vinyl-shadow:rgba(107,143,173,0.1);
+  --callout-bg:#edf1f7;
+}
+
+/* Mood overrides — subtle shifts, staying light */
+.mood-peaceful{
+  --accent:#6b8fad;--accent-soft:#8aabc4;
+  --accent-bg:rgba(107,143,173,0.07);--accent-bg-strong:rgba(107,143,173,0.12);
+  --accent-glow:rgba(107,143,173,0.15);--vinyl-shadow:rgba(107,143,173,0.12);
+  --callout-bg:#edf1f7;
+}
+.mood-worship{
+  --accent:#b08a5e;--accent-soft:#c9a87a;
+  --accent-bg:rgba(176,138,94,0.07);--accent-bg-strong:rgba(176,138,94,0.12);
+  --accent-glow:rgba(176,138,94,0.15);--vinyl-shadow:rgba(176,138,94,0.12);
+  --callout-bg:#f5f0e8;
+}
+.mood-comfort{
+  --accent:#7a96a8;--accent-soft:#96b0be;
+  --accent-bg:rgba(122,150,168,0.07);--accent-bg-strong:rgba(122,150,168,0.12);
+  --accent-glow:rgba(122,150,168,0.15);--vinyl-shadow:rgba(122,150,168,0.12);
+  --callout-bg:#ecf1f4;
+}
+.mood-joy{
+  --accent:#a19350;--accent-soft:#bfb46e;
+  --accent-bg:rgba(161,147,80,0.07);--accent-bg-strong:rgba(161,147,80,0.12);
+  --accent-glow:rgba(161,147,80,0.15);--vinyl-shadow:rgba(161,147,80,0.12);
+  --callout-bg:#f5f3ea;
+}
+
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:background .6s ease;
+}
+
+/* ===== LANDSCAPE LAYOUT ===== */
+.player{
+  width:100%;max-width:880px;
+  padding:24px 28px;
+  display:flex;
+  align-items:center;
+  gap:0;
+  position:relative;
+}
+
+/* LEFT: Vinyl + brand */
+.col-left{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  min-width:200px;
+  padding-right:28px;
+  border-right:1px solid var(--border-soft);
+  opacity:0;animation:fu .7s ease .1s forwards;
+}
+
+.brand{
+  display:flex;align-items:center;gap:7px;
+  margin-bottom:18px;
+}
+.brand svg{width:22px;height:22px;flex-shrink:0}
+.brand-name{
+  font-weight:500;font-size:11px;letter-spacing:2.5px;
+  text-transform:uppercase;color:var(--text);opacity:.55;
+}
+
+/* Vinyl */
+.vinyl-wrap{
+  position:relative;width:140px;height:140px;
+  margin-bottom:14px;
+}
+.vinyl-glow{
+  position:absolute;inset:-16px;border-radius:50%;
+  background:radial-gradient(circle,var(--accent-glow) 0%,transparent 70%);
+  opacity:0;transition:opacity .8s ease;
+  animation:pulse 5s ease-in-out infinite;
+}
+.vinyl-glow.on{opacity:1}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+
+.vinyl{
+  width:140px;height:140px;border-radius:50%;
+  background:
+    radial-gradient(circle at 50% 50%,var(--surface) 17%,transparent 18%),
+    radial-gradient(circle at 50% 50%,rgba(0,0,0,.02) 30%,transparent 31%),
+    radial-gradient(circle at 50% 50%,rgba(0,0,0,.015) 46%,transparent 47%),
+    radial-gradient(circle at 50% 50%,rgba(0,0,0,.01) 62%,transparent 63%),
+    conic-gradient(from 0deg,rgba(0,0,0,.025) 0%,transparent 3%,rgba(0,0,0,.015) 10%,transparent 15%,rgba(0,0,0,.025) 25%,transparent 30%,rgba(0,0,0,.015) 40%,transparent 45%,rgba(0,0,0,.025) 55%,transparent 60%,rgba(0,0,0,.015) 70%,transparent 75%,rgba(0,0,0,.025) 85%,transparent 90%),
+    linear-gradient(135deg,#e8e6e1,#d8d5cf);
+  box-shadow:0 2px 16px var(--vinyl-shadow),0 0 0 1px rgba(0,0,0,.04);
+  position:relative;
+  transition:box-shadow .8s ease;
+}
+.vinyl.spinning{animation:spin 4s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.vinyl-label{
+  position:absolute;width:46px;height:46px;
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent-soft));
+  display:flex;align-items:center;justify-content:center;
+  transition:background .8s ease;
+  box-shadow:0 1px 6px rgba(0,0,0,.08);
+}
+.vinyl-label-inner{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--surface);
+  box-shadow:0 0 0 2px rgba(0,0,0,.06);
+}
+.vinyl::after{
+  content:'';position:absolute;
+  width:100px;height:50px;top:12px;left:18px;
+  border-radius:50%;
+  background:linear-gradient(180deg,rgba(255,255,255,.35),transparent);
+  transform:rotate(-20deg);pointer-events:none;
+}
+
+.brand-tag{
+  font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--text-faint);font-weight:400;
+}
+
+/* CENTER: Controls + info */
+.col-center{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;padding:0 28px;
+  opacity:0;animation:fu .7s ease .2s forwards;
+}
+
+/* Mood pills */
+.moods{
+  display:flex;gap:6px;margin-bottom:16px;
+}
+.mood-btn{
+  padding:6px 14px;border-radius:20px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  cursor:pointer;transition:all .4s ease;
+  display:flex;align-items:center;gap:5px;
+  font-size:11px;color:var(--text-soft);font-weight:400;
+}
+.mood-btn:hover{background:var(--surface-hover);border-color:var(--accent);color:var(--text)}
+.mood-btn.active{
+  background:var(--accent-bg-strong);
+  border-color:var(--accent);color:var(--accent);
+  font-weight:500;
+}
+.mood-emoji{font-size:14px}
+
+/* Song info */
+.song-info{text-align:center;margin-bottom:14px}
+.song-title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:20px;font-weight:500;color:var(--text);
+  margin-bottom:2px;
+}
+.song-sub{
+  font-size:11px;color:var(--text-soft);font-weight:300;
+  letter-spacing:.5px;
+}
+
+/* Equalizer */
+.equalizer{
+  display:flex;gap:2.5px;align-items:flex-end;
+  height:16px;justify-content:center;margin-bottom:8px;
+}
+.eq-bar{
+  width:2.5px;border-radius:1.5px;
+  background:var(--accent);transition:background .8s ease;
+  animation-play-state:paused;
+}
+.eq-bar:nth-child(1){height:6px;animation:e1 .8s ease-in-out infinite}
+.eq-bar:nth-child(2){height:11px;animation:e2 .6s ease-in-out infinite}
+.eq-bar:nth-child(3){height:8px;animation:e3 .7s ease-in-out infinite}
+.eq-bar:nth-child(4){height:13px;animation:e4 .55s ease-in-out infinite}
+.eq-bar:nth-child(5){height:5px;animation:e5 .75s ease-in-out infinite}
+.equalizer.on .eq-bar{animation-play-state:running}
+@keyframes e1{0%,100%{height:6px}50%{height:14px}}
+@keyframes e2{0%,100%{height:11px}50%{height:5px}}
+@keyframes e3{0%,100%{height:8px}50%{height:16px}}
+@keyframes e4{0%,100%{height:13px}50%{height:6px}}
+@keyframes e5{0%,100%{height:5px}50%{height:12px}}
+
+/* Status */
+.status{
+  display:flex;align-items:center;gap:6px;margin-bottom:12px;
+}
+.status-dot{
+  width:5px;height:5px;border-radius:50%;
+  background:var(--text-faint);transition:all .5s ease;
+}
+.status-dot.on{background:var(--accent);animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.status-txt{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-faint);font-weight:400}
+
+/* Controls */
+.controls{
+  display:flex;align-items:center;gap:14px;margin-bottom:14px;
+}
+.ctrl{
+  width:34px;height:34px;border-radius:50%;
+  background:var(--surface);border:1px solid var(--border);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .25s ease;color:var(--text-soft);
+}
+.ctrl:hover{background:var(--surface-hover);color:var(--text);border-color:var(--accent)}
+.ctrl svg{width:14px;height:14px;fill:currentColor}
+.play-btn{
+  width:48px;height:48px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-soft));
+  border:none;
+  box-shadow:0 3px 14px var(--accent-glow);
+  transition:all .35s ease;
+}
+.play-btn:hover{transform:scale(1.06);box-shadow:0 5px 20px var(--accent-glow)}
+.play-btn svg{fill:white;width:18px;height:18px}
+
+/* Volume */
+.vol-row{
+  display:flex;align-items:center;gap:8px;width:100%;max-width:200px;
+}
+.vol-icon{font-size:11px;color:var(--text-faint)}
+.vol-track{
+  flex:1;height:3px;background:var(--border);
+  border-radius:2px;position:relative;cursor:pointer;
+}
+.vol-fill{
+  height:100%;background:var(--accent);border-radius:2px;
+  width:70%;transition:background .8s ease;position:relative;
+}
+.vol-fill::after{
+  content:'';position:absolute;right:-4px;top:-2.5px;
+  width:8px;height:8px;border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 6px var(--accent-glow);
+  transition:background .8s ease,box-shadow .8s ease;
+}
+
+/* Audio mode tabs */
+.mode-tabs{
+  display:flex;gap:4px;margin-bottom:14px;
+  background:var(--surface);border-radius:8px;padding:2px;
+}
+.mode-tab{
+  font-size:9px;letter-spacing:1px;text-transform:uppercase;
+  padding:4px 10px;border-radius:6px;
+  background:transparent;border:none;
+  color:var(--text-faint);cursor:pointer;
+  transition:all .3s ease;font-family:'DM Sans',sans-serif;font-weight:400;
+}
+.mode-tab:hover{color:var(--text-soft)}
+.mode-tab.active{
+  background:var(--bg);color:var(--accent);
+  box-shadow:0 1px 4px rgba(0,0,0,.06);
+  font-weight:500;
+}
+
+/* RIGHT: Scripture */
+.col-right{
+  min-width:220px;max-width:260px;
+  padding-left:28px;
+  border-left:1px solid var(--border-soft);
+  display:flex;flex-direction:column;
+  align-items:center;
+  opacity:0;animation:fu .7s ease .3s forwards;
+}
+
+.scripture-card{
+  width:100%;
+  padding:20px;
+  background:var(--callout-bg);
+  border-radius:12px;
+  text-align:center;
+  cursor:pointer;
+  transition:background .6s ease;
+  position:relative;
+  min-height:130px;
+  display:flex;flex-direction:column;justify-content:center;
+}
+.scripture-card:hover{background:var(--surface-hover)}
+
+.scripture-quote{
+  position:absolute;top:8px;left:14px;
+  font-family:'Cormorant Garamond',serif;
+  font-size:36px;color:var(--accent);opacity:.2;line-height:1;
+}
+.scripture-text{
+  font-family:'Cormorant Garamond',serif;
+  font-size:14px;font-style:italic;font-weight:400;
+  color:var(--text);line-height:1.65;
+  margin-bottom:8px;opacity:.85;
+  transition:opacity .35s ease;
+}
+.scripture-ref{
+  font-size:10px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--accent);font-weight:500;
+  transition:color .8s ease,opacity .35s ease;
+}
+
+.scripture-hint{
+  font-size:9px;color:var(--text-faint);margin-top:8px;
+  letter-spacing:.5px;opacity:.6;
+}
+
+/* Divider dots */
+.divider-dots{
+  display:flex;gap:4px;margin:14px 0;
+}
+.divider-dot{
+  width:3px;height:3px;border-radius:50%;
+  background:var(--text-faint);opacity:.3;
+}
+
+/* Footer in scripture column */
+.col-footer{
+  margin-top:auto;padding-top:12px;text-align:center;
+}
+.col-footer span{
+  font-size:8px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--text-faint);opacity:.5;
+}
+
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== RESPONSIVE: Stack on narrow/mobile ===== */
+@media(max-width:740px){
+  .player{
+    flex-direction:column;gap:20px;
+    max-width:420px;padding:20px;
+  }
+  .col-left{
+    flex-direction:row;gap:16px;
+    border-right:none;border-bottom:1px solid var(--border-soft);
+    padding-right:0;padding-bottom:18px;
+    min-width:unset;width:100%;justify-content:center;
+  }
+  .vinyl-wrap{width:100px;height:100px}
+  .vinyl{width:100px;height:100px}
+  .vinyl-label{width:34px;height:34px}
+  .vinyl-label-inner{width:6px;height:6px}
+  .vinyl::after{width:70px;height:35px;top:8px;left:14px}
+  .vinyl-glow{inset:-12px}
+  .brand{margin-bottom:0}
+  .brand-tag{display:none}
+  .col-right{
+    border-left:none;border-top:1px solid var(--border-soft);
+    padding-left:0;padding-top:18px;
+    min-width:unset;max-width:unset;width:100%;
+  }
+  .scripture-card{min-height:100px}
+}
+</style>
+</head>
+<body class="mood-peaceful">
+
+<div id="ytC" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;overflow:hidden"><div id="ytPlayer"></div></div>
+
+<div class="player">
+
+  <!-- LEFT COLUMN: Brand + Vinyl -->
+  <div class="col-left">
+    <div class="brand">
+      <svg viewBox="0 0 40 40" fill="none">
+        <circle cx="20" cy="20" r="18" stroke="var(--accent)" stroke-width="1.2" opacity=".25" fill="none"/>
+        <path d="M20 8L20 32M12 20L28 20" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" opacity=".6"/>
+        <circle cx="20" cy="20" r="5" fill="none" stroke="var(--accent)" stroke-width="1" opacity=".3"/>
+      </svg>
+      <div class="brand-name">FaithReflects</div>
+    </div>
+
+    <div class="vinyl-wrap">
+      <div class="vinyl-glow" id="vGlow"></div>
+      <div class="vinyl" id="vinyl">
+        <div class="vinyl-label"><div class="vinyl-label-inner"></div></div>
+      </div>
+    </div>
+
+    <span class="brand-tag">Lofi Worship Player</span>
+  </div>
+
+  <!-- CENTER COLUMN: Controls -->
+  <div class="col-center">
+    <div class="moods" id="moodSel"></div>
+
+    <div class="song-info">
+      <h2 class="song-title" id="title">Peaceful Lofi Worship</h2>
+      <p class="song-sub" id="subtitle">Chill beats to rest your soul</p>
+    </div>
+
+    <div class="equalizer" id="eq">
+      <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+    </div>
+
+    <div class="status">
+      <div class="status-dot" id="sDot"></div>
+      <span class="status-txt" id="sTxt">Tap play to begin</span>
+    </div>
+
+    <div class="controls">
+      <button class="ctrl" onclick="cycle(-1)"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+      <button class="ctrl play-btn" id="playBtn" onclick="toggle()">
+        <svg viewBox="0 0 24 24" id="pI"><polygon points="9.5,6 19,12 9.5,18"/></svg>
+        <svg viewBox="0 0 24 24" id="paI" style="display:none"><rect x="7" y="5" width="3.5" height="14" rx="1"/><rect x="13.5" y="5" width="3.5" height="14" rx="1"/></svg>
+      </button>
+      <button class="ctrl" onclick="cycle(1)"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+    </div>
+
+    <div class="vol-row">
+      <span class="vol-icon">🔈</span>
+      <div class="vol-track" id="vTrack"><div class="vol-fill" id="vFill"></div></div>
+      <span class="vol-icon">🔊</span>
+    </div>
+
+    <div style="height:10px"></div>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" id="mGen" onclick="setMode('gen')">✦ Generated</button>
+      <button class="mode-tab" id="mYT" onclick="setMode('yt')">▶ YouTube</button>
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN: Scripture -->
+  <div class="col-right">
+    <div class="scripture-card" onclick="nextVerse()">
+      <span class="scripture-quote">"</span>
+      <p class="scripture-text" id="sV">Be still, and know that I am God.</p>
+      <p class="scripture-ref" id="sR">Psalm 46:10</p>
+      <span class="scripture-hint">tap for next verse</span>
+    </div>
+
+    <div class="divider-dots">
+      <div class="divider-dot"></div><div class="divider-dot"></div><div class="divider-dot"></div>
+    </div>
+
+    <div class="col-footer">
+      <span>✦ FaithReflects ✦</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const M={
+  peaceful:{
+    title:'Peaceful Lofi Worship',sub:'Chill beats to rest your soul',emoji:'🕊️',label:'Peaceful',ytId:'jBFCNMKMbxg',
+    gen:{bpm:68,filterHz:600,
+      chords:[[261.63,329.63,392],[220,261.63,329.63],[246.94,311.13,392],[174.61,220,261.63]],
+      bass:[130.81,146.83,164.81,174.61],
+      melody:[523.25,587.33,659.25,698.46,783.99,880]},
+    verses:[
+      {v:'Be still, and know that I am God.',r:'Psalm 46:10'},
+      {v:'He leads me beside quiet waters, he refreshes my soul.',r:'Psalm 23:2-3'},
+      {v:'In repentance and rest is your salvation, in quietness and trust is your strength.',r:'Isaiah 30:15'},
+      {v:'You will keep in perfect peace those whose minds are steadfast, because they trust in you.',r:'Isaiah 26:3'}]
+  },
+  worship:{
+    title:'Worship Lofi Beats',sub:'Draw near to His presence',emoji:'🔥',label:'Worship',ytId:'1ZYbU82GVz4',
+    gen:{bpm:75,filterHz:800,
+      chords:[[196,246.94,293.66],[164.81,196,246.94],[174.61,220,261.63],[146.83,196,220]],
+      bass:[98,110,130.81,123.47],
+      melody:[392,440,493.88,523.25,587.33,659.25]},
+    verses:[
+      {v:'Enter his gates with thanksgiving and his courts with praise.',r:'Psalm 100:4'},
+      {v:'The Lord is my strength and my song; he has become my salvation.',r:'Exodus 15:2'},
+      {v:'Great is the Lord and most worthy of praise; his greatness no one can fathom.',r:'Psalm 145:3'},
+      {v:'Let everything that has breath praise the Lord.',r:'Psalm 150:6'}]
+  },
+  comfort:{
+    title:'Comfort & Healing',sub:'For weary and heavy-laden hearts',emoji:'💧',label:'Comfort',ytId:'hLJh7lFTbPU',
+    gen:{bpm:60,filterHz:500,
+      chords:[[155.56,196,233.08],[130.81,155.56,196],[116.54,155.56,185],[138.59,174.61,207.65]],
+      bass:[77.78,87.31,98,103.83],
+      melody:[311.13,349.23,392,415.3,466.16,523.25]},
+    verses:[
+      {v:'The Lord is close to the brokenhearted and saves those who are crushed in spirit.',r:'Psalm 34:18'},
+      {v:'Come to me, all you who are weary and burdened, and I will give you rest.',r:'Matthew 11:28'},
+      {v:'Cast all your anxiety on him because he cares for you.',r:'1 Peter 5:7'},
+      {v:'He heals the brokenhearted and binds up their wounds.',r:'Psalm 147:3'}]
+  },
+  joy:{
+    title:'Joyful & Uplifting',sub:'Rejoice in the Lord always',emoji:'☀️',label:'Joy',ytId:'NLXys9sMbsk',
+    gen:{bpm:82,filterHz:1000,
+      chords:[[293.66,369.99,440],[220,277.18,329.63],[246.94,293.66,369.99],[196,246.94,293.66]],
+      bass:[146.83,164.81,174.61,196],
+      melody:[587.33,659.25,739.99,783.99,880,987.77]},
+    verses:[
+      {v:'The joy of the Lord is your strength.',r:'Nehemiah 8:10'},
+      {v:'This is the day the Lord has made; let us rejoice and be glad in it.',r:'Psalm 118:24'},
+      {v:'Rejoice always, pray continually, give thanks in all circumstances.',r:'1 Thessalonians 5:16-18'},
+      {v:'You make known to me the path of life; you will fill me with joy in your presence.',r:'Psalm 16:11'}]
+  }
+};
+
+const MO=['peaceful','worship','comfort','joy'];
+let cur='peaceful',playing=false,vol=.7,mode='gen',vIdx=0;
+
+// Build mood buttons
+const mSel=document.getElementById('moodSel');
+MO.forEach(k=>{
+  const b=document.createElement('button');
+  b.className='mood-btn'+(k===cur?' active':'');
+  b.dataset.mood=k;
+  b.innerHTML=`<span class="mood-emoji">${M[k].emoji}</span>${M[k].label}`;
+  b.onclick=()=>switchMood(k);
+  mSel.appendChild(b);
+});
+
+// ===== GENERATIVE AUDIO ENGINE =====
+let ax=null,master=null,lofi=null,conv=null,noise=null;
+let beatT=null,chordT=null,melT=null,beatS=0,chordS=0;
+
+function initAx(){
+  if(ax)return;
+  ax=new(window.AudioContext||window.webkitAudioContext)();
+  master=ax.createGain();master.gain.value=vol;
+  lofi=ax.createBiquadFilter();lofi.type='lowpass';lofi.frequency.value=800;lofi.Q.value=.7;
+  const wave=ax.createWaveShaper();
+  const c=new Float32Array(256);for(let i=0;i<256;i++){const x=i*2/256-1;c[i]=Math.tanh(x*1.5);}
+  wave.curve=c;wave.oversample='2x';
+  conv=ax.createConvolver();
+  const sr=ax.sampleRate,len=sr*3.5;
+  const imp=ax.createBuffer(2,len,sr);
+  for(let ch=0;ch<2;ch++){const d=imp.getChannelData(ch);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.5);}
+  conv.buffer=imp;
+  const dry=ax.createGain();dry.gain.value=.55;
+  const wet=ax.createGain();wet.gain.value=.45;
+  lofi.connect(wave);wave.connect(dry);wave.connect(conv);
+  conv.connect(wet);dry.connect(master);wet.connect(master);
+  master.connect(ax.destination);
+}
+
+function tone(f,dur,g,type='sine',del=0,atk=.1,rel=.3){
+  const o=ax.createOscillator(),gn=ax.createGain();
+  o.type=type;o.frequency.value=f;o.detune.value=(Math.random()-.5)*15;
+  const t=ax.currentTime+del;
+  gn.gain.setValueAtTime(0,t);gn.gain.linearRampToValueAtTime(g,t+atk);
+  gn.gain.setValueAtTime(g,t+dur-rel);gn.gain.linearRampToValueAtTime(0,t+dur);
+  o.connect(gn);gn.connect(lofi);o.start(t);o.stop(t+dur+.05);
+}
+function pad(freqs,dur){
+  freqs.forEach((f,i)=>{tone(f,dur,.055,'sine',i*.03,.8,1.2);tone(f*1.003,dur,.025,'triangle',i*.03+.05,1,1.5);});
+}
+function kick(){
+  const o=ax.createOscillator(),g=ax.createGain(),t=ax.currentTime;
+  o.type='sine';o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(30,t+.15);
+  g.gain.setValueAtTime(.22,t);g.gain.exponentialRampToValueAtTime(.001,t+.3);
+  o.connect(g);g.connect(lofi);o.start(t);o.stop(t+.35);
+}
+function hat(){
+  const b=ax.createBuffer(1,ax.sampleRate*.05,ax.sampleRate);
+  const d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+  const s=ax.createBufferSource();s.buffer=b;
+  const f=ax.createBiquadFilter();f.type='highpass';f.frequency.value=8000;
+  const g=ax.createGain();g.gain.setValueAtTime(.055,ax.currentTime);g.gain.exponentialRampToValueAtTime(.001,ax.currentTime+.06);
+  s.connect(f);f.connect(g);g.connect(lofi);s.start();s.stop(ax.currentTime+.08);
+}
+function snare(){
+  const t=ax.currentTime;
+  const b=ax.createBuffer(1,ax.sampleRate*.1,ax.sampleRate);
+  const d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+  const s=ax.createBufferSource();s.buffer=b;
+  const f=ax.createBiquadFilter();f.type='bandpass';f.frequency.value=4000;
+  const g=ax.createGain();g.gain.setValueAtTime(.09,t);g.gain.exponentialRampToValueAtTime(.001,t+.12);
+  s.connect(f);f.connect(g);g.connect(lofi);s.start();s.stop(t+.15);
+  const o=ax.createOscillator(),og=ax.createGain();
+  o.type='triangle';o.frequency.value=180;
+  og.gain.setValueAtTime(.07,t);og.gain.exponentialRampToValueAtTime(.001,t+.08);
+  o.connect(og);og.connect(lofi);o.start();o.stop(t+.1);
+}
+function startNoise(){
+  if(noise)return;
+  const b=ax.createBuffer(1,ax.sampleRate*2,ax.sampleRate);
+  const d=b.getChannelData(0);
+  for(let i=0;i<d.length;i++)d[i]=Math.random()<.002?(Math.random()*.3-.15):(Math.random()*.005-.0025);
+  const s=ax.createBufferSource();s.buffer=b;s.loop=true;
+  const f=ax.createBiquadFilter();f.type='bandpass';f.frequency.value=3000;f.Q.value=.5;
+  const g=ax.createGain();g.gain.value=.12;
+  s.connect(f);f.connect(g);g.connect(master);s.start();
+  noise={s,g};
+}
+function stopNoise(){if(noise){try{noise.s.stop();}catch(e){}noise=null;}}
+
+function startGen(){
+  const p=M[cur].gen,ms=(60/p.bpm)*1000/2;
+  lofi.frequency.value=p.filterHz;
+  startNoise();beatS=0;chordS=0;
+  beatT=setInterval(()=>{
+    const st=beatS%8;
+    if(st===0)kick();if(st===4)snare();
+    if(st%2===0&&Math.random()>.2)hat();
+    if(st===3&&Math.random()>.5)hat();
+    if(st===0){const bn=p.bass[chordS%p.bass.length];tone(bn,ms*3/1000,.1,'triangle',0,.05,.2);}
+    beatS++;
+  },ms);
+  const barMs=ms*8;
+  pad(p.chords[0],barMs*2/1000);
+  chordT=setInterval(()=>{chordS=(chordS+1)%p.chords.length;pad(p.chords[chordS],barMs*2/1000);},barMs*2);
+  melT=setInterval(()=>{
+    if(Math.random()>.4){
+      const n=p.melody[Math.floor(Math.random()*p.melody.length)];
+      tone(n,.4+Math.random()*.6,.035+Math.random()*.015,'sine',Math.random()*.1,.08,.3);
+    }
+  },(60/p.bpm)*1000*(.5+Math.random()*.5));
+}
+function stopGen(){clearInterval(beatT);clearInterval(chordT);clearInterval(melT);stopNoise();}
+
+// ===== YOUTUBE =====
+let ytp=null,ytOk=false,ytL=false;
+function loadYT(){if(ytL)return;ytL=true;const s=document.createElement('script');s.src='https://www.youtube.com/iframe_api';document.head.appendChild(s);}
+window.onYouTubeIframeAPIReady=function(){
+  ytp=new YT.Player('ytPlayer',{height:'1',width:'1',videoId:M[cur].ytId,
+    playerVars:{autoplay:0,controls:0,disablekb:1,fs:0,modestbranding:1,rel:0,loop:1},
+    events:{
+      onReady:()=>{ytOk=true;ytp.setVolume(vol*100);},
+      onStateChange:e=>{
+        if(e.data===YT.PlayerState.PLAYING){setUI(true);status(1,'Streaming from YouTube');}
+        else if(e.data===YT.PlayerState.PAUSED){setUI(false);status(0,'Paused');}
+        else if(e.data===YT.PlayerState.ENDED){ytp.seekTo(0);ytp.playVideo();}
+      },
+      onError:()=>status(0,'YouTube unavailable — try Generated')
+    }
+  });
+};
+
+// ===== CONTROLS =====
+function setMode(m){
+  if(m===mode)return;
+  if(playing){if(mode==='gen')stopGen();if(mode==='yt'&&ytp&&ytOk)ytp.pauseVideo();setUI(false);playing=false;}
+  mode=m;
+  document.getElementById('mGen').classList.toggle('active',m==='gen');
+  document.getElementById('mYT').classList.toggle('active',m==='yt');
+  if(m==='yt'&&!ytL)loadYT();
+  status(0,'Tap play to begin');
+}
+
+function toggle(){
+  if(!playing){
+    if(mode==='gen'){initAx();if(ax.state==='suspended')ax.resume();startGen();setUI(true);status(1,'Generating lofi beats');playing=true;}
+    else{if(!ytL)loadYT();if(ytp&&ytOk){ytp.playVideo();playing=true;}
+    else{status(0,'Loading YouTube...');setTimeout(()=>{if(ytp&&ytOk){ytp.playVideo();playing=true;}else status(0,'YouTube failed — switch to Generated');},3000);}}
+  }else{
+    if(mode==='gen'){stopGen();setUI(false);status(0,'Paused');}
+    else if(ytp&&ytOk)ytp.pauseVideo();
+    playing=false;
+  }
+}
+
+function switchMood(k){
+  if(k===cur)return;const was=playing;
+  if(playing){if(mode==='gen')stopGen();if(mode==='yt'&&ytp&&ytOk)ytp.pauseVideo();playing=false;}
+  cur=k;document.body.className='mood-'+k;
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.toggle('active',b.dataset.mood===k));
+  document.getElementById('title').textContent=M[k].title;
+  document.getElementById('subtitle').textContent=M[k].sub;
+  vIdx=0;showVerse(M[k].verses[0]);
+  if(mode==='yt'&&ytp&&ytOk){ytp.loadVideoById(M[k].ytId);if(!was)ytp.pauseVideo();}
+  if(was){if(mode==='gen'){startGen();setUI(true);status(1,'Generating lofi beats');}playing=was;}
+  else{setUI(false);status(0,'Tap play to begin');}
+}
+
+function cycle(d){const i=MO.indexOf(cur);switchMood(MO[(i+d+MO.length)%MO.length]);}
+
+function setUI(on){
+  document.getElementById('pI').style.display=on?'none':'block';
+  document.getElementById('paI').style.display=on?'block':'none';
+  document.getElementById('vinyl').classList.toggle('spinning',on);
+  document.getElementById('vGlow').classList.toggle('on',on);
+  document.getElementById('eq').classList.toggle('on',on);
+}
+function status(on,t){
+  document.getElementById('sDot').className='status-dot'+(on?' on':'');
+  document.getElementById('sTxt').textContent=t;
+}
+
+// Volume
+const vT=document.getElementById('vTrack'),vF=document.getElementById('vFill');
+vF.style.width=(vol*100)+'%';
+function setVol(v){vol=Math.max(0,Math.min(1,v));vF.style.width=(vol*100)+'%';if(master)master.gain.value=vol;if(ytp&&ytOk)ytp.setVolume(vol*100);}
+vT.addEventListener('click',e=>{const r=vT.getBoundingClientRect();setVol((e.clientX-r.left)/r.width);});
+let drag=false;
+vT.addEventListener('mousedown',()=>drag=true);
+document.addEventListener('mousemove',e=>{if(!drag)return;const r=vT.getBoundingClientRect();setVol((e.clientX-r.left)/r.width);});
+document.addEventListener('mouseup',()=>drag=false);
+vT.addEventListener('touchmove',e=>{const r=vT.getBoundingClientRect();setVol((e.touches[0].clientX-r.left)/r.width);e.preventDefault();},{passive:false});
+
+// Scripture
+const svE=document.getElementById('sV'),srE=document.getElementById('sR');
+svE.style.transition='opacity .35s ease';srE.style.transition='opacity .35s ease';
+function showVerse(s){svE.style.opacity='0';srE.style.opacity='0';setTimeout(()=>{svE.textContent=s.v;srE.textContent=s.r;svE.style.opacity='.85';srE.style.opacity='1';},350);}
+function nextVerse(){const vs=M[cur].verses;vIdx=(vIdx+1)%vs.length;showVerse(vs[vIdx]);}
+setInterval(nextVerse,15000);
+</script>
+</body>
+</html>
