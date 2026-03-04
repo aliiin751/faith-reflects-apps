@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FaithReflects Hero Banner</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-text': '#4A433A', // Slightly warmer dark brown
+                        'brand-accent': '#8C9A86', // The FaithReflects Sage Green
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* The "Living Background" - Warmer, softer golden hour tones */
+        .living-bg {
+            background: linear-gradient(120deg, #FDF8F2, #F3E7D8, #FAF0E6, #EBDCCB);
+            background-size: 300% 300%;
+            animation: gradientMove 18s ease infinite;
+            position: relative;
+        }
+
+        /* Tactile Film Grain Overlay */
+        .living-bg::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            opacity: 0.04;
+            pointer-events: none;
+            background-image: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E');
+            z-index: 1;
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Soft Floating Light Orbs - Warmed up */
+        .light-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(50px);
+            opacity: 0.5;
+            animation: floatOrb 14s infinite ease-in-out alternate;
+            z-index: 0;
+        }
+
+        .orb-1 {
+            width: 300px; height: 300px;
+            background: rgba(221, 161, 94, 0.25); /* Golden Warmth */
+            top: -80px; left: -80px;
+        }
+
+        .orb-2 {
+            width: 350px; height: 350px;
+            background: rgba(203, 153, 126, 0.2); /* Soft Blush/Terracotta */
+            bottom: -150px; right: -80px;
+            animation-delay: -7s;
+        }
+
+        .orb-3 {
+            width: 250px; height: 250px;
+            background: rgba(244, 241, 222, 0.5); /* Soft Ivory Luma */
+            top: 40%; left: 40%;
+            transform: translate(-50%, -50%);
+            animation-duration: 20s;
+        }
+
+        @keyframes floatOrb {
+            0% { transform: translateY(0) scale(1); }
+            100% { transform: translateY(-40px) scale(1.15); }
+        }
+
+        /* Upward drifting ambient dust/sparks */
+        .ambient-dust {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            filter: blur(1px);
+            animation: driftUp linear forwards;
+            z-index: 1;
+        }
+
+        @keyframes driftUp {
+            0% { transform: translateY(0) scale(0.5); opacity: 0; }
+            20% { opacity: 0.6; }
+            80% { opacity: 0.6; }
+            100% { transform: translateY(-100px) scale(1.2); opacity: 0; }
+        }
+
+        /* Premium Glassmorphism Effect */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.35);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 10px 40px -10px rgba(139, 115, 85, 0.15); /* Warm shadow */
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Subtle Breathing pulse for the button */
+        .btn-breathe {
+            animation: gentlePulse 4s infinite ease-in-out;
+        }
+
+        @keyframes gentlePulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(140, 154, 134, 0); transform: scale(1); }
+            50% { box-shadow: 0 0 15px 0 rgba(140, 154, 134, 0.15); transform: scale(1.02); }
+        }
+
+        /* Smooth Scripture Transitions */
+        .truth-fade {
+            transition: opacity 1.2s ease, transform 1.2s ease;
+        }
+        
+        .truth-hidden {
+            opacity: 0;
+            transform: translateY(10px) scale(0.98);
+        }
+    </style>
+</head>
+<body class="bg-transparent flex items-center justify-center p-4 m-0 overflow-hidden min-h-screen">
+
+    <!-- Hero Banner Container (Wide format for Notion top section) -->
+    <div class="relative w-full max-w-4xl h-[340px] rounded-[2.5rem] overflow-hidden living-bg shadow-[0_20px_40px_-15px_rgba(139,115,85,0.12)] group cursor-default">
+        
+        <!-- Floating Light Orbs Layer -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="light-orb orb-1"></div>
+            <div class="light-orb orb-2"></div>
+            <div class="light-orb orb-3"></div>
+        </div>
+
+        <!-- Ambient Dust Particle Container -->
+        <div id="dust-container" class="absolute inset-0 overflow-hidden pointer-events-none"></div>
+
+        <!-- Foreground Content Layer -->
+        <div class="relative z-10 w-full h-full flex flex-col justify-between p-8 sm:p-10">
+            
+            <!-- Top Row: Greeting & Date -->
+            <div class="flex justify-between items-start w-full">
+                <div>
+                    <h2 id="time-greeting" class="font-sans font-medium tracking-[0.15em] text-brand-text/60 text-xs uppercase mb-1.5 drop-shadow-sm">
+                        Good Morning
+                    </h2>
+                    <h1 class="font-serif text-3xl sm:text-[2.5rem] text-brand-text leading-tight text-shadow-sm">
+                        Welcome to your quiet place.
+                    </h1>
+                </div>
+                
+                <div class="text-right hidden sm:block">
+                    <div id="current-date" class="font-serif italic text-lg text-brand-text/80 drop-shadow-sm">
+                        <!-- Date injects here -->
+                    </div>
+                    <div class="font-sans font-medium tracking-widest text-[0.65rem] uppercase text-brand-accent mt-1.5">
+                        FaithReflects
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Row: The Anchoring Truth Card -->
+            <div class="glass-card rounded-[2rem] p-6 sm:px-8 sm:py-7 w-full flex flex-col sm:flex-row items-center justify-between gap-6 transition-transform duration-500 hover:scale-[1.01]">
+                
+                <div class="flex-1 w-full text-center sm:text-left overflow-hidden">
+                    <span class="inline-flex items-center gap-1.5 font-sans text-[0.65rem] font-semibold tracking-[0.2em] uppercase text-brand-accent mb-2.5">
+                        <i class="ph-fill ph-sparkle text-xs animate-pulse"></i> Anchoring Truth
+                    </span>
+                    
+                    <!-- Scripture Text -->
+                    <div id="scripture-container" class="truth-fade opacity-100 transform-none">
+                        <p id="truth-text" class="font-serif text-[1.35rem] sm:text-2xl text-brand-text leading-snug drop-shadow-sm">
+                            "When anxiety was great within me, your consolation brought me joy."
+                        </p>
+                        <p id="truth-ref" class="font-sans text-sm font-light tracking-wide text-brand-text/60 mt-3">
+                            — Psalm 94:19
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Draw Truth Button -->
+                <button onclick="drawNewTruth()" class="shrink-0 flex items-center justify-center gap-2 bg-white/60 hover:bg-white text-brand-accent border border-white/80 transition-all duration-300 rounded-full px-6 py-3.5 font-sans text-sm font-medium tracking-wide group/btn shadow-sm btn-breathe">
+                    <span>Draw Truth</span>
+                    <i class="ph ph-arrow-right transition-transform duration-300 group-hover/btn:translate-x-1"></i>
+                </button>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- ANCHORING TRUTHS DATA ---
+        const truths = [
+            { text: '"When anxiety was great within me, your consolation brought me joy."', ref: 'Psalm 94:19' },
+            { text: '"Peace I leave with you; my peace I give you. I do not give to you as the world gives. Do not let your hearts be troubled and do not be afraid."', ref: 'John 14:27' },
+            { text: '"Cast all your anxiety on him because he cares for you."', ref: '1 Peter 5:7' },
+            { text: '"Do not be anxious about anything, but in every situation, by prayer and petition, with thanksgiving, present your requests to God."', ref: 'Philippians 4:6' },
+            { text: '"For God has not given us a spirit of fear, but of power and of love and of a sound mind."', ref: '2 Timothy 1:7' },
+            { text: '"But those who hope in the Lord will renew their strength. They will soar on wings like eagles."', ref: 'Isaiah 40:31' },
+            { text: '"The Lord is my light and my salvation—whom shall I fear? The Lord is the stronghold of my life—of whom shall I be afraid?"', ref: 'Psalm 27:1' },
+            { text: '"Be still, and know that I am God."', ref: 'Psalm 46:10' }
+        ];
+
+        let currentTruthIndex = 0;
+        const container = document.getElementById('scripture-container');
+        const textEl = document.getElementById('truth-text');
+        const refEl = document.getElementById('truth-ref');
+
+        // --- DRAW NEW TRUTH LOGIC ---
+        function drawNewTruth() {
+            let newIndex;
+            do {
+                newIndex = Math.floor(Math.random() * truths.length);
+            } while (newIndex === currentTruthIndex);
+            
+            currentTruthIndex = newIndex;
+
+            // Smooth fade out with scale down
+            container.classList.add('truth-hidden');
+
+            setTimeout(() => {
+                textEl.innerText = truths[currentTruthIndex].text;
+                refEl.innerText = "— " + truths[currentTruthIndex].ref;
+                // Fade back in
+                container.classList.remove('truth-hidden');
+            }, 600);
+        }
+
+        // --- TIME & GREETING LOGIC ---
+        function setTimeAndGreeting() {
+            const now = new Date();
+            const hour = now.getHours();
+            
+            let greeting = "Peaceful Night";
+            if (hour >= 5 && hour < 12) greeting = "Good Morning";
+            else if (hour >= 12 && hour < 17) greeting = "Good Afternoon";
+            else if (hour >= 17 && hour < 21) greeting = "Good Evening";
+            
+            document.getElementById('time-greeting').innerText = greeting;
+
+            const options = { month: 'long', day: 'numeric' };
+            let dateStr = now.toLocaleDateString('en-US', options);
+            
+            const day = now.getDate();
+            let suffix = "th";
+            if (day % 10 === 1 && day !== 11) suffix = "st";
+            else if (day % 10 === 2 && day !== 12) suffix = "nd";
+            else if (day % 10 === 3 && day !== 13) suffix = "rd";
+            
+            dateStr = dateStr.replace(/\d+/, day + suffix);
+            document.getElementById('current-date').innerText = dateStr;
+        }
+
+        // --- MAGICAL DUST PARTICLE GENERATOR ---
+        function createDustParticle() {
+            const dustContainer = document.getElementById('dust-container');
+            if (!dustContainer) return;
+
+            const particle = document.createElement('div');
+            particle.classList.add('ambient-dust');
+            
+            // Randomize size, position, and duration
+            const size = Math.random() * 3 + 1; // 1px to 4px
+            const left = Math.random() * 100; // 0% to 100% width
+            const top = Math.random() * 100; // 0% to 100% height
+            const duration = Math.random() * 6 + 4; // 4s to 10s
+
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            particle.style.left = `${left}%`;
+            particle.style.top = `${top}%`;
+            particle.style.animationDuration = `${duration}s`;
+
+            dustContainer.appendChild(particle);
+
+            // Remove particle from DOM after animation completes to save memory
+            setTimeout(() => {
+                particle.remove();
+            }, duration * 1000);
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeAndGreeting();
+            
+            // Initialize random truth
+            currentTruthIndex = Math.floor(Math.random() * truths.length);
+            textEl.innerText = truths[currentTruthIndex].text;
+            refEl.innerText = "— " + truths[currentTruthIndex].ref;
+
+            // Start generating magical ambient dust periodically
+            setInterval(createDustParticle, 800);
+        });
+
+    </script>
+</body>
+</html>
