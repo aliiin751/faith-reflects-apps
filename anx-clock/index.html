@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FaithReflects Aesthetic Clock</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-text': '#4A433A', 
+                        'brand-accent': '#8C9A86', 
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* The "Living Background" - Golden Hour Tones matching the Hero Banner */
+        .living-bg {
+            background: linear-gradient(120deg, #FDF8F2, #F3E7D8, #FAF0E6, #EBDCCB);
+            background-size: 300% 300%;
+            animation: gradientMove 18s ease infinite;
+            position: relative;
+        }
+
+        /* Tactile Film Grain Overlay */
+        .living-bg::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            opacity: 0.04;
+            pointer-events: none;
+            background-image: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E');
+            z-index: 1;
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Soft Floating Light Orbs */
+        .light-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(45px);
+            opacity: 0.5;
+            animation: floatOrb 14s infinite ease-in-out alternate;
+            z-index: 0;
+        }
+
+        .orb-1 {
+            width: 250px; height: 250px;
+            background: rgba(221, 161, 94, 0.25); /* Golden Warmth */
+            top: -60px; left: -60px;
+        }
+
+        .orb-2 {
+            width: 300px; height: 300px;
+            background: rgba(203, 153, 126, 0.2); /* Soft Blush/Terracotta */
+            bottom: -100px; right: -60px;
+            animation-delay: -7s;
+        }
+
+        .orb-3 {
+            width: 200px; height: 200px;
+            background: rgba(244, 241, 222, 0.5); /* Soft Ivory Luma */
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            animation-duration: 20s;
+        }
+
+        @keyframes floatOrb {
+            0% { transform: translateY(0) scale(1); }
+            100% { transform: translateY(-30px) scale(1.1); }
+        }
+
+        /* Upward drifting ambient dust/sparks */
+        .ambient-dust {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            filter: blur(1px);
+            animation: driftUp linear forwards;
+            z-index: 1;
+        }
+
+        @keyframes driftUp {
+            0% { transform: translateY(0) scale(0.5); opacity: 0; }
+            20% { opacity: 0.6; }
+            80% { opacity: 0.6; }
+            100% { transform: translateY(-80px) scale(1.2); opacity: 0; }
+        }
+
+        /* Premium Glassmorphism Effect */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.35);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 10px 40px -10px rgba(139, 115, 85, 0.15); /* Warm shadow */
+            position: relative;
+            z-index: 10;
+        }
+
+    </style>
+</head>
+<body class="bg-transparent flex items-center justify-center p-4 m-0 overflow-hidden min-h-screen">
+
+    <!-- Clock Container (Square format perfect for Notion side columns) -->
+    <div class="relative w-full max-w-[320px] aspect-square rounded-[2.5rem] overflow-hidden living-bg shadow-[0_20px_40px_-15px_rgba(139,115,85,0.12)] group cursor-default p-5">
+        
+        <!-- Floating Light Orbs Layer -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="light-orb orb-1"></div>
+            <div class="light-orb orb-2"></div>
+            <div class="light-orb orb-3"></div>
+        </div>
+
+        <!-- Ambient Dust Particle Container -->
+        <div id="dust-container" class="absolute inset-0 overflow-hidden pointer-events-none"></div>
+
+        <!-- Foreground Glass Card -->
+        <div class="glass-card w-full h-full rounded-[2rem] flex flex-col items-center justify-center relative p-6">
+            
+            <!-- Main Clock Dial -->
+            <div class="relative flex items-center justify-center mb-2">
+                <!-- SVG Progress Ring -->
+                <svg class="w-44 h-44 transform -rotate-90 drop-shadow-sm">
+                    <!-- Background Track -->
+                    <circle cx="88" cy="88" r="84" stroke="rgba(140, 154, 134, 0.15)" stroke-width="1.5" fill="none" />
+                    <!-- Dynamic Progress Line -->
+                    <circle id="time-ring" cx="88" cy="88" r="84" stroke="#8C9A86" stroke-width="1.5" fill="none" stroke-dasharray="527.79" stroke-dashoffset="527.79" stroke-linecap="round" class="transition-all duration-1000 ease-in-out" style="filter: drop-shadow(0 0 4px rgba(140, 154, 134, 0.3));" />
+                </svg>
+
+                <!-- Digital Time Output -->
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                    <i id="time-icon" class="ph-fill ph-sun text-brand-accent/80 mb-1.5 text-xl drop-shadow-sm transition-all duration-1000"></i>
+                    
+                    <div class="font-serif text-[2.75rem] text-brand-text leading-none tracking-tight flex items-center justify-center drop-shadow-sm ml-2">
+                        <span id="hours">12</span>
+                        <span class="text-brand-accent/60 animate-[pulse_2s_ease-in-out_infinite] font-light mx-1 transform -translate-y-1">:</span>
+                        <span id="minutes">00</span>
+                    </div>
+                    
+                    <div id="ampm" class="font-sans text-[0.65rem] font-semibold tracking-[0.2em] uppercase text-brand-accent mt-2 drop-shadow-sm">
+                        PM
+                    </div>
+                </div>
+            </div>
+
+            <!-- Time of Day Phase -->
+            <div class="mt-4 text-center flex flex-col items-center">
+                <span class="inline-flex items-center gap-1.5 font-sans text-[0.55rem] font-bold tracking-[0.25em] uppercase text-brand-accent/70 mb-1 drop-shadow-sm">
+                    <i class="ph-fill ph-sparkle text-[10px]"></i> Daily Rhythm
+                </span>
+                <div id="time-phase" class="font-serif italic text-[1.15rem] text-brand-text/90 drop-shadow-sm">
+                    Morning Light
+                </div>
+                
+                <!-- Brand Watermark (Moved to bottom) -->
+                <div class="mt-3 font-sans font-medium tracking-[0.25em] text-[0.55rem] uppercase text-brand-accent/60 drop-shadow-sm">
+                    FaithReflects
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- CLOCK & PROGRESS LOGIC ---
+        function updateClock() {
+            const now = new Date();
+            let h = now.getHours();
+            let m = now.getMinutes();
+            let s = now.getSeconds();
+
+            // Calculate exact day progress (0 to 1) for the smooth SVG ring
+            const totalSecondsInDay = 86400; // 24 * 60 * 60
+            const currentSeconds = (h * 3600) + (m * 60) + s;
+            const dayProgress = currentSeconds / totalSecondsInDay;
+            
+            // Update SVG Ring (Circumference = 527.79)
+            const circumference = 527.79;
+            const offset = circumference - (dayProgress * circumference);
+            document.getElementById('time-ring').style.strokeDashoffset = offset;
+
+            // Format 12-hour display
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            let displayH = h % 12;
+            displayH = displayH ? displayH : 12; // 0 becomes 12
+            let displayM = m < 10 ? '0' + m : m;
+
+            // Update DOM
+            document.getElementById('hours').innerText = displayH;
+            document.getElementById('minutes').innerText = displayM;
+            document.getElementById('ampm').innerText = ampm;
+
+            // Determine "Daily Rhythm" Phase & Icon
+            let phase = "";
+            let iconClass = "";
+
+            if (h >= 0 && h < 5) {
+                phase = "The Night Watch";
+                iconClass = "ph-moon-stars";
+            } else if (h >= 5 && h < 8) {
+                phase = "Morning Mercies";
+                iconClass = "ph-sunrise";
+            } else if (h >= 8 && h < 12) {
+                phase = "Morning Light";
+                iconClass = "ph-sun";
+            } else if (h >= 12 && h < 15) {
+                phase = "Midday Grace";
+                iconClass = "ph-sun";
+            } else if (h >= 15 && h < 18) {
+                phase = "Afternoon Stillness";
+                iconClass = "ph-cloud-sun";
+            } else if (h >= 18 && h < 20) {
+                phase = "Golden Hour";
+                iconClass = "ph-sunset";
+            } else {
+                // 20 to 24 (8pm to Midnight)
+                phase = "Evening Peace";
+                iconClass = "ph-moon";
+            }
+
+            document.getElementById('time-phase').innerText = phase;
+            document.getElementById('time-icon').className = `ph-fill ${iconClass} text-brand-accent/80 mb-1.5 text-xl drop-shadow-sm transition-all duration-1000`;
+        }
+
+        // --- MAGICAL DUST PARTICLE GENERATOR (Matches Hero Banner) ---
+        function createDustParticle() {
+            const dustContainer = document.getElementById('dust-container');
+            if (!dustContainer) return;
+
+            const particle = document.createElement('div');
+            particle.classList.add('ambient-dust');
+            
+            // Randomize size, position, and duration
+            const size = Math.random() * 2.5 + 1; // 1px to 3.5px
+            const left = Math.random() * 100; // 0% to 100% width
+            const top = Math.random() * 100; // 0% to 100% height
+            const duration = Math.random() * 5 + 4; // 4s to 9s
+
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            particle.style.left = `${left}%`;
+            particle.style.top = `${top}%`;
+            particle.style.animationDuration = `${duration}s`;
+
+            dustContainer.appendChild(particle);
+
+            // Remove particle from DOM after animation completes
+            setTimeout(() => {
+                particle.remove();
+            }, duration * 1000);
+        }
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Run clock immediately so there's no 1-second delay flash
+            updateClock();
+            
+            // Update clock every second
+            setInterval(updateClock, 1000);
+
+            // Generate ambient dust periodically
+            setInterval(createDustParticle, 800);
+        });
+
+    </script>
+</body>
+</html>
