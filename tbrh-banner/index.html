@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FaithReflects Banner</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+    background: #F5F0E8;
+  }
+
+  .banner {
+    width: 100%;
+    max-width: 900px;
+    height: 150px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    background: linear-gradient(135deg, #F5F0E8, #F0DCA0, #F5F0E8, #EDE5D5);
+    background-size: 400% 400%;
+    animation: gradientShift 10s ease infinite;
+  }
+
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Particle canvas */
+  .particles {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+
+  /* Cross icon */
+  .cross-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.04;
+    animation: glowPulse 4s ease-in-out infinite;
+  }
+
+  @keyframes glowPulse {
+    0%, 100% { opacity: 0.04; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 0.07; transform: translate(-50%, -50%) scale(1.05); }
+  }
+
+  /* Brand name with shimmer */
+  .brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #8B6914, #D4A853, #FFFDE0, #D4A853, #8B6914);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 4s linear infinite;
+    position: relative;
+    z-index: 2;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+
+  .tagline {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 300;
+    color: #8B6914;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-top: 6px;
+    opacity: 0;
+    animation: fadeUp 1s ease 0.5s forwards;
+    position: relative;
+    z-index: 2;
+  }
+
+  .verse {
+    font-family: 'Playfair Display', serif;
+    font-size: 11px;
+    font-style: italic;
+    color: #A0937D;
+    margin-top: 14px;
+    opacity: 0;
+    animation: fadeUp 1s ease 0.8s forwards;
+    position: relative;
+    z-index: 2;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Decorative lines */
+  .line-left, .line-right {
+    position: absolute;
+    top: 50%;
+    width: 60px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #D4A853);
+    opacity: 0.3;
+    z-index: 2;
+  }
+  .line-left { right: calc(50% + 180px); transform: translateY(-50%); }
+  .line-right { left: calc(50% + 180px); transform: translateY(-50%) rotate(180deg); }
+
+  @media (max-width: 580px) {
+    .brand { font-size: 24px; letter-spacing: 4px; }
+    .tagline { font-size: 10px; letter-spacing: 3px; }
+    .line-left, .line-right { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="banner">
+  <canvas class="particles" id="particles"></canvas>
+
+  <!-- Large faint cross behind text -->
+  <svg class="cross-icon" width="120" height="120" viewBox="0 0 120 120">
+    <rect x="50" y="10" width="20" height="100" rx="3" fill="#D4A853"/>
+    <rect x="20" y="35" width="80" height="20" rx="3" fill="#D4A853"/>
+  </svg>
+
+  <div class="line-left"></div>
+  <div class="line-right"></div>
+
+  <div class="brand">FaithReflects</div>
+  <div class="tagline">Bible Reading Hub</div>
+  <div class="verse">&ldquo;Your word is a lamp for my feet, a light on my path.&rdquo;</div>
+</div>
+
+<script>
+  const canvas = document.getElementById('particles');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  const PARTICLE_COUNT = 25;
+
+  function resize() {
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  class Particle {
+    constructor() { this.reset(); }
+    reset() {
+      this.x = Math.random() * canvas.width;
+      this.y = canvas.height + Math.random() * 20;
+      this.size = Math.random() * 2 + 0.5;
+      this.speedY = -(Math.random() * 0.4 + 0.15);
+      this.speedX = (Math.random() - 0.5) * 0.2;
+      this.opacity = Math.random() * 0.4 + 0.1;
+      this.fadeRate = Math.random() * 0.002 + 0.001;
+    }
+    update() {
+      this.x += this.speedX;
+      this.y += this.speedY;
+      this.opacity -= this.fadeRate;
+      if (this.opacity <= 0 || this.y < -10) this.reset();
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(212, 168, 83, ${this.opacity})`;
+      ctx.fill();
+    }
+  }
+
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
+    const p = new Particle();
+    p.y = Math.random() * canvas.height;
+    particles.push(p);
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => { p.update(); p.draw(); });
+    requestAnimationFrame(animate);
+  }
+  animate();
+</script>
+</body>
+</html>

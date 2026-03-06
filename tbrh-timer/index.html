@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scripture Reading Timer — FaithReflects</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #F5F0E8;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  .widget {
+    width: 100%;
+    max-width: 800px;
+    padding: 28px 32px 22px;
+    display: flex;
+    align-items: center;
+    gap: 36px;
+    position: relative;
+  }
+
+  /* — LEFT: Timer Ring — */
+  .timer-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .ring-container {
+    position: relative;
+    width: 140px;
+    height: 140px;
+  }
+
+  .ring-svg {
+    width: 140px;
+    height: 140px;
+    transform: rotate(-90deg);
+  }
+
+  .ring-bg {
+    fill: none;
+    stroke: #E8E0D0;
+    stroke-width: 7;
+  }
+
+  .ring-progress {
+    fill: none;
+    stroke: url(#goldGradient);
+    stroke-width: 7;
+    stroke-linecap: round;
+    stroke-dasharray: 408.41;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 0.5s ease;
+  }
+
+  .ring-glow {
+    fill: none;
+    stroke: url(#goldGradient);
+    stroke-width: 12;
+    stroke-linecap: round;
+    stroke-dasharray: 408.41;
+    stroke-dashoffset: 0;
+    opacity: 0.15;
+    filter: blur(4px);
+    transition: stroke-dashoffset 0.5s ease;
+  }
+
+  .time-display {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+
+  .time-display .time {
+    font-family: 'Inter', sans-serif;
+    font-size: 28px;
+    font-weight: 600;
+    color: #3D2B1F;
+    letter-spacing: 1px;
+  }
+
+  .time-display .label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #A0937D;
+    margin-top: 2px;
+  }
+
+  /* — CENTER: Verse & Controls — */
+  .content-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .verse-area {
+    margin-bottom: 18px;
+  }
+
+  .verse-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px;
+    font-style: italic;
+    color: #3D2B1F;
+    line-height: 1.55;
+    opacity: 1;
+    transition: opacity 0.6s ease;
+  }
+
+  .verse-text.fading { opacity: 0; }
+
+  .verse-ref {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: #D4A853;
+    margin-top: 6px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Duration pills */
+  .duration-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .dur-btn {
+    padding: 5px 14px;
+    border: 1.5px solid #D4C9B0;
+    border-radius: 20px;
+    background: transparent;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    color: #6B5D4F;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    letter-spacing: 0.3px;
+  }
+
+  .dur-btn:hover {
+    border-color: #D4A853;
+    color: #D4A853;
+    background: rgba(212,168,83,0.06);
+  }
+
+  .dur-btn.active {
+    background: linear-gradient(135deg, #D4A853, #C49B45);
+    color: #FFFDF8;
+    border-color: #D4A853;
+    box-shadow: 0 2px 8px rgba(212,168,83,0.25);
+  }
+
+  /* Control buttons */
+  .controls {
+    display: flex;
+    gap: 8px;
+  }
+
+  .ctrl-btn {
+    padding: 7px 22px;
+    border: none;
+    border-radius: 20px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    letter-spacing: 0.5px;
+  }
+
+  .ctrl-btn.primary {
+    background: linear-gradient(135deg, #D4A853, #B8922F);
+    color: #FFFDF8;
+    box-shadow: 0 2px 10px rgba(212,168,83,0.3);
+  }
+
+  .ctrl-btn.primary:hover {
+    box-shadow: 0 4px 16px rgba(212,168,83,0.45);
+    transform: translateY(-1px);
+  }
+
+  .ctrl-btn.secondary {
+    background: rgba(61,43,31,0.06);
+    color: #6B5D4F;
+  }
+
+  .ctrl-btn.secondary:hover {
+    background: rgba(61,43,31,0.12);
+  }
+
+  /* Chime toggle */
+  .chime-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .chime-toggle label {
+    font-size: 10px;
+    color: #A0937D;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+  }
+
+  .chime-toggle input {
+    accent-color: #D4A853;
+    cursor: pointer;
+  }
+
+  /* Watermark */
+  .watermark {
+    position: absolute;
+    bottom: 8px;
+    right: 16px;
+    font-family: 'Playfair Display', serif;
+    font-size: 9px;
+    color: #D4C9B0;
+    letter-spacing: 1.5px;
+  }
+
+  /* Completion state */
+  .completed .time { color: #D4A853; }
+
+  /* — Responsive — */
+  @media (max-width: 580px) {
+    .widget {
+      flex-direction: column;
+      padding: 24px 20px 18px;
+      gap: 20px;
+    }
+    .ring-container { width: 120px; height: 120px; }
+    .ring-svg { width: 120px; height: 120px; }
+    .time-display .time { font-size: 24px; }
+    .verse-text { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<div class="widget">
+  <!-- Timer Ring -->
+  <div class="timer-section">
+    <div class="ring-container">
+      <svg class="ring-svg" viewBox="0 0 140 140">
+        <defs>
+          <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#D4A853"/>
+            <stop offset="100%" stop-color="#8B6914"/>
+          </linearGradient>
+        </defs>
+        <circle class="ring-bg" cx="70" cy="70" r="65"/>
+        <circle class="ring-glow" cx="70" cy="70" r="65"/>
+        <circle class="ring-progress" cx="70" cy="70" r="65"/>
+      </svg>
+      <div class="time-display">
+        <div class="time" id="timeText">25:00</div>
+        <div class="label">minutes</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content-section">
+    <div class="verse-area">
+      <div class="verse-text" id="verseText">&ldquo;Your word is a lamp for my feet, a light on my path.&rdquo;</div>
+      <div class="verse-ref" id="verseRef">— Psalm 119:105</div>
+    </div>
+
+    <div class="duration-row">
+      <button class="dur-btn" data-min="10">10 min</button>
+      <button class="dur-btn" data-min="15">15 min</button>
+      <button class="dur-btn active" data-min="25">25 min</button>
+      <button class="dur-btn" data-min="45">45 min</button>
+      <button class="dur-btn" data-min="60">1 hour</button>
+    </div>
+
+    <div class="controls">
+      <button class="ctrl-btn primary" id="startBtn">Start</button>
+      <button class="ctrl-btn secondary" id="resetBtn">Reset</button>
+    </div>
+
+    <div class="chime-toggle">
+      <input type="checkbox" id="chimeCheck" checked>
+      <label for="chimeCheck">🔔 Chime on complete</label>
+    </div>
+  </div>
+
+  <div class="watermark">FAITHREFLECTS</div>
+</div>
+
+<script>
+  const verses = [
+    { text: '\u201cYour word is a lamp for my feet, a light on my path.\u201d', ref: '\u2014 Psalm 119:105' },
+    { text: '\u201cBe still, and know that I am God.\u201d', ref: '\u2014 Psalm 46:10' },
+    { text: '\u201cThe Lord is my shepherd; I shall not want.\u201d', ref: '\u2014 Psalm 23:1' },
+    { text: '\u201cTrust in the Lord with all your heart and lean not on your own understanding.\u201d', ref: '\u2014 Proverbs 3:5' },
+    { text: '\u201cI can do all things through Christ who strengthens me.\u201d', ref: '\u2014 Philippians 4:13' },
+    { text: '\u201cFor God so loved the world that He gave His only begotten Son.\u201d', ref: '\u2014 John 3:16' },
+    { text: '\u201cThe grass withers, the flower fades, but the word of our God stands forever.\u201d', ref: '\u2014 Isaiah 40:8' },
+    { text: '\u201cDraw near to God, and He will draw near to you.\u201d', ref: '\u2014 James 4:8' },
+    { text: '\u201cGreat is Thy faithfulness, O Lord my God.\u201d', ref: '\u2014 Lamentations 3:23' },
+    { text: '\u201cHis mercies are new every morning.\u201d', ref: '\u2014 Lamentations 3:22-23' },
+    { text: '\u201cThe joy of the Lord is your strength.\u201d', ref: '\u2014 Nehemiah 8:10' },
+    { text: '\u201cCome to me, all you who are weary and burdened, and I will give you rest.\u201d', ref: '\u2014 Matthew 11:28' },
+  ];
+
+  let totalSeconds = 25 * 60;
+  let remainingSeconds = totalSeconds;
+  let timerInterval = null;
+  let running = false;
+  let currentVerseIndex = 0;
+  const circumference = 2 * Math.PI * 65; // ~408.41
+
+  const timeText = document.getElementById('timeText');
+  const verseText = document.getElementById('verseText');
+  const verseRef = document.getElementById('verseRef');
+  const startBtn = document.getElementById('startBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const ringProgress = document.querySelector('.ring-progress');
+  const ringGlow = document.querySelector('.ring-glow');
+
+  function formatTime(s) {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+  }
+
+  function updateRing() {
+    const fraction = remainingSeconds / totalSeconds;
+    const offset = circumference * (1 - fraction);
+    ringProgress.style.strokeDashoffset = offset;
+    ringGlow.style.strokeDashoffset = offset;
+  }
+
+  function updateDisplay() {
+    timeText.textContent = formatTime(remainingSeconds);
+    updateRing();
+  }
+
+  function rotateVerse() {
+    verseText.classList.add('fading');
+    setTimeout(() => {
+      currentVerseIndex = (currentVerseIndex + 1) % verses.length;
+      verseText.innerHTML = verses[currentVerseIndex].text;
+      verseRef.textContent = verses[currentVerseIndex].ref;
+      verseText.classList.remove('fading');
+    }, 600);
+  }
+
+  let verseTimer = null;
+
+  function startTimer() {
+    if (running) {
+      // Pause
+      clearInterval(timerInterval);
+      clearInterval(verseTimer);
+      running = false;
+      startBtn.textContent = 'Resume';
+      return;
+    }
+    running = true;
+    startBtn.textContent = 'Pause';
+
+    timerInterval = setInterval(() => {
+      remainingSeconds--;
+      updateDisplay();
+      if (remainingSeconds <= 0) {
+        clearInterval(timerInterval);
+        clearInterval(verseTimer);
+        running = false;
+        startBtn.textContent = 'Start';
+        timeText.textContent = '\u2714';
+        document.querySelector('.time-display').classList.add('completed');
+        if (document.getElementById('chimeCheck').checked) playChime();
+      }
+    }, 1000);
+
+    verseTimer = setInterval(rotateVerse, 5 * 60 * 1000);
+  }
+
+  function resetTimer() {
+    clearInterval(timerInterval);
+    clearInterval(verseTimer);
+    running = false;
+    remainingSeconds = totalSeconds;
+    startBtn.textContent = 'Start';
+    document.querySelector('.time-display').classList.remove('completed');
+    updateDisplay();
+  }
+
+  function playChime() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.15, ctx.currentTime + i * 0.3);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.3 + 1.2);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + i * 0.3);
+        osc.stop(ctx.currentTime + i * 0.3 + 1.2);
+      });
+    } catch(e) {}
+  }
+
+  // Duration buttons
+  document.querySelectorAll('.dur-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      totalSeconds = parseInt(btn.dataset.min) * 60;
+      remainingSeconds = totalSeconds;
+      clearInterval(timerInterval);
+      clearInterval(verseTimer);
+      running = false;
+      startBtn.textContent = 'Start';
+      document.querySelector('.time-display').classList.remove('completed');
+      updateDisplay();
+    });
+  });
+
+  startBtn.addEventListener('click', startTimer);
+  resetBtn.addEventListener('click', resetTimer);
+
+  // Init
+  currentVerseIndex = Math.floor(Math.random() * verses.length);
+  verseText.innerHTML = verses[currentVerseIndex].text;
+  verseRef.textContent = verses[currentVerseIndex].ref;
+  updateDisplay();
+</script>
+</body>
+</html>
