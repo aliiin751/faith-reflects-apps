@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FaithReflects Bible Reading Plan</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-text': '#4A433A', 
+                        'brand-accent': '#C87A5E', /* Warm Terracotta */
+                        'brand-gold': '#DDA15E',
+                        'brand-sage': '#8C9A86',
+                        'brand-bg': '#FDFBF7',
+                        'brand-card': '#F8F4FA'
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: transparent;
+        }
+
+        /* Premium Card Styling */
+        .plan-card {
+            background: linear-gradient(145deg, #ffffff, #FDFBF7);
+            border: 1px solid rgba(200, 122, 94, 0.15);
+            box-shadow: 0 10px 30px -10px rgba(74, 67, 58, 0.08);
+        }
+
+        /* Custom Progress Bar */
+        .progress-track {
+            background: #EAE3DE;
+            border-radius: 999px;
+            overflow: hidden;
+            height: 6px;
+        }
+        
+        .progress-fill {
+            background: linear-gradient(90deg, #8C9A86, #C87A5E);
+            height: 100%;
+            border-radius: 999px;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Checkbox Customization */
+        .custom-checkbox input:checked + div {
+            background-color: #8C9A86;
+            border-color: #8C9A86;
+        }
+        
+        .custom-checkbox input:checked + div i {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Sparkle Animation for Completion */
+        @keyframes pop {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        .animate-pop {
+            animation: pop 0.6s ease-out forwards;
+        }
+
+        /* Tab Transitions */
+        .tab-btn {
+            transition: all 0.3s ease;
+        }
+        .tab-active {
+            background: #C87A5E;
+            color: white;
+            box-shadow: 0 4px 12px rgba(200, 122, 94, 0.25);
+        }
+
+        /* Custom Scrollbar for List */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(234, 227, 222, 0.4);
+            border-radius: 10px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(140, 154, 134, 0.5);
+            border-radius: 10px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(140, 154, 134, 0.8);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4 m-0 min-h-screen">
+
+    <div class="plan-card relative w-full max-w-lg rounded-[2rem] overflow-hidden p-6 sm:p-8 flex flex-col gap-6">
+        
+        <!-- Header -->
+        <div class="flex justify-between items-start">
+            <div>
+                <span class="inline-flex items-center gap-1.5 font-sans text-[0.65rem] font-bold tracking-[0.2em] uppercase text-brand-accent mb-1">
+                    <i class="ph-fill ph-book-open-text text-[10px]"></i> Reading Journey
+                </span>
+                <h2 class="font-serif text-2xl text-brand-text leading-tight">Your Daily Bread</h2>
+            </div>
+        </div>
+
+        <!-- Plan Selection Tabs -->
+        <div class="flex bg-[#EAE3DE]/40 p-1.5 rounded-full relative z-10">
+            <button onclick="setPlan(90)" id="tab-90" class="tab-btn flex-1 py-2 rounded-full text-sm font-medium text-brand-text/70">90 Days</button>
+            <button onclick="setPlan(180)" id="tab-180" class="tab-btn flex-1 py-2 rounded-full text-sm font-medium text-brand-text/70">180 Days</button>
+            <button onclick="setPlan(365)" id="tab-365" class="tab-btn flex-1 py-2 rounded-full text-sm font-medium text-brand-text/70">365 Days</button>
+        </div>
+
+        <!-- Jump to Day Input -->
+        <div class="flex items-center gap-3 mt-1 bg-white/60 border border-brand-text/10 rounded-full px-4 py-2.5 focus-within:border-brand-sage focus-within:bg-white transition-all shadow-sm">
+            <i class="ph ph-magnifying-glass text-brand-text/40 text-lg"></i>
+            <input type="number" id="jump-input" placeholder="Jump to Day..." class="bg-transparent outline-none font-sans text-sm text-brand-text w-full placeholder:text-brand-text/40" oninput="jumpToDay(this.value)">
+        </div>
+
+        <!-- Main Reading Schedule List -->
+        <div class="relative w-full rounded-[1.25rem] border border-brand-text/5 bg-white/40 overflow-hidden shadow-inner">
+            <div id="plan-list" class="custom-scroll flex flex-col max-h-[280px] overflow-y-auto">
+                <!-- List items injected by JS -->
+            </div>
+        </div>
+
+        <!-- Brand Watermark Footer -->
+        <div class="text-center w-full mt-1">
+            <a href="https://instagram.com/faithreflects" target="_blank" class="font-sans font-medium tracking-[0.25em] text-[0.6rem] uppercase text-brand-text/40 hover:text-brand-accent transition-colors cursor-pointer inline-flex items-center gap-1">
+                <i class="ph-fill ph-sparkle text-[8px] text-brand-accent/50"></i> @FAITHREFLECTS
+            </a>
+        </div>
+
+    </div>
+
+    <script>
+        // --- BIBLE DATA ALGORITHM ---
+        // Array of all 66 books and their chapter counts
+        const bibleBooks = [
+            {n:"Genesis", c:50}, {n:"Exodus", c:40}, {n:"Leviticus", c:27}, {n:"Numbers", c:36}, {n:"Deuteronomy", c:34},
+            {n:"Joshua", c:24}, {n:"Judges", c:21}, {n:"Ruth", c:4}, {n:"1 Samuel", c:31}, {n:"2 Samuel", c:24},
+            {n:"1 Kings", c:22}, {n:"2 Kings", c:25}, {n:"1 Chronicles", c:29}, {n:"2 Chronicles", c:36},
+            {n:"Ezra", c:10}, {n:"Nehemiah", c:13}, {n:"Esther", c:10}, {n:"Job", c:42}, {n:"Psalms", c:150},
+            {n:"Proverbs", c:31}, {n:"Ecclesiastes", c:12}, {n:"Song of Solomon", c:8}, {n:"Isaiah", c:66},
+            {n:"Jeremiah", c:52}, {n:"Lamentations", c:5}, {n:"Ezekiel", c:48}, {n:"Daniel", c:12},
+            {n:"Hosea", c:14}, {n:"Joel", c:3}, {n:"Amos", c:9}, {n:"Obadiah", c:1}, {n:"Jonah", c:4},
+            {n:"Micah", c:7}, {n:"Nahum", c:3}, {n:"Habakkuk", c:3}, {n:"Zephaniah", c:3}, {n:"Haggai", c:2},
+            {n:"Zechariah", c:14}, {n:"Malachi", c:4}, {n:"Matthew", c:28}, {n:"Mark", c:16}, {n:"Luke", c:24},
+            {n:"John", c:21}, {n:"Acts", c:28}, {n:"Romans", c:16}, {n:"1 Corinthians", c:16}, {n:"2 Corinthians", c:13},
+            {n:"Galatians", c:6}, {n:"Ephesians", c:6}, {n:"Philippians", c:4}, {n:"Colossians", c:4},
+            {n:"1 Thessalonians", c:5}, {n:"2 Thessalonians", c:3}, {n:"1 Timothy", c:6}, {n:"2 Timothy", c:4},
+            {n:"Titus", c:3}, {n:"Philemon", c:1}, {n:"Hebrews", c:13}, {n:"James", c:5}, {n:"1 Peter", c:5},
+            {n:"2 Peter", c:3}, {n:"1 John", c:5}, {n:"2 John", c:1}, {n:"3 John", c:1}, {n:"Jude", c:1}, {n:"Revelation", c:22}
+        ];
+
+        // Create a flat array of all 1189 chapters for easy math
+        const allChapters = [];
+        bibleBooks.forEach(book => {
+            for (let i = 1; i <= book.c; i++) {
+                allChapters.push(`${book.n} ${i}`);
+            }
+        });
+        const totalChapters = allChapters.length;
+
+        // --- APP STATE ---
+        let currentPlan = 90; // Default to 90 days
+
+        // --- INITIALIZATION ---
+        function init() {
+            setPlan(currentPlan);
+        }
+
+        // --- LOGIC ---
+        function setPlan(days) {
+            currentPlan = days;
+            
+            // Update UI Tabs
+            [90, 180, 365].forEach(d => {
+                document.getElementById(`tab-${d}`).classList.remove('tab-active');
+            });
+            document.getElementById(`tab-${days}`).classList.add('tab-active');
+
+            // Clear Jump Input
+            document.getElementById('jump-input').value = '';
+
+            renderList(days);
+        }
+
+        function getReadingString(dayNum, totalDays) {
+            // Calculate which chapters fall on this day
+            const chaptersPerDayExact = totalChapters / totalDays;
+            
+            // Start index (inclusive)
+            const startIndex = Math.floor((dayNum - 1) * chaptersPerDayExact);
+            
+            // End index (exclusive)
+            let endIndex = Math.floor(dayNum * chaptersPerDayExact);
+            
+            // Edge case: ensure the very last day catches any rounding remainders so they finish Revelation 22
+            if (dayNum === totalDays) endIndex = totalChapters;
+            
+            const firstChapter = allChapters[startIndex];
+            const lastChapter = allChapters[endIndex - 1];
+
+            // Clean formatting if it's the same book
+            const firstBook = firstChapter.split(' ').slice(0, -1).join(' ');
+            const lastBook = lastChapter.split(' ').slice(0, -1).join(' ');
+            
+            const firstNum = firstChapter.split(' ').pop();
+            const lastNum = lastChapter.split(' ').pop();
+
+            if (firstBook === lastBook) {
+                if (firstNum === lastNum) return `${firstChapter}`;
+                return `${firstBook} ${firstNum} - ${lastNum}`;
+            } else {
+                return `${firstChapter} - ${lastChapter}`;
+            }
+        }
+
+        function renderList(days) {
+            const container = document.getElementById('plan-list');
+            let html = '';
+            
+            for(let i = 1; i <= days; i++) {
+                const reading = getReadingString(i, days);
+                html += `
+                    <div id="day-item-${i}" class="flex flex-col sm:flex-row justify-between items-start sm:items-center py-3.5 sm:py-4 border-b border-brand-text/5 hover:bg-white transition-colors px-5 sm:px-6 gap-1 group">
+                        <span class="font-sans text-[0.65rem] sm:text-[0.7rem] font-bold text-brand-sage uppercase tracking-widest shrink-0 group-hover:text-brand-accent transition-colors">Day ${i}</span>
+                        <span class="font-serif text-[1.05rem] sm:text-[1.15rem] text-brand-text text-left sm:text-right">${reading}</span>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+            
+            // Scroll back to the top when changing plans
+            container.scrollTop = 0;
+        }
+
+        function jumpToDay(day) {
+            if(!day) return;
+            const targetId = `day-item-${day}`;
+            const targetElement = document.getElementById(targetId);
+            
+            if(targetElement) {
+                // Smooth scroll down to the specific day
+                targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // Highlight momentarily so they see where they landed
+                targetElement.style.backgroundColor = 'rgba(140, 154, 134, 0.15)'; // Soft Sage glow
+                targetElement.style.transition = 'background-color 0.3s ease';
+                
+                setTimeout(() => {
+                    targetElement.style.backgroundColor = '';
+                }, 1200);
+            }
+        }
+
+        // Boot up
+        document.addEventListener('DOMContentLoaded', init);
+
+    </script>
+</body>
+</html>
