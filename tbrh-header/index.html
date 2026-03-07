@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FaithReflects Bible Hub Banner</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-text': '#4A433A', 
+                        'brand-accent': '#C87A5E', /* Warm Terracotta to match autumn leaves */
+                        'brand-gold': '#DDA15E',
+                        'brand-sage': '#8C9A86',
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* The "Living Background" - Blending the Purple and Peach from the Notion Callouts */
+        .living-bg {
+            background: linear-gradient(135deg, #F8F4FA, #FDF5F0, #FDFBF7, #F5EEF0);
+            background-size: 300% 300%;
+            animation: gradientMove 20s ease infinite;
+            position: relative;
+        }
+
+        /* Tactile Film Grain Overlay for premium aesthetic */
+        .living-bg::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            opacity: 0.035;
+            pointer-events: none;
+            background-image: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E');
+            z-index: 1;
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Ambient Dust / Sparkles */
+        .ambient-dust {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            filter: blur(1px);
+            animation: driftUp linear forwards;
+            z-index: 1;
+        }
+
+        @keyframes driftUp {
+            0% { transform: translateY(0) scale(0.5); opacity: 0; }
+            20% { opacity: 0.7; }
+            80% { opacity: 0.7; }
+            100% { transform: translateY(-60px) scale(1.2); opacity: 0; }
+        }
+
+        /* Falling Autumn Leaves */
+        .falling-leaf {
+            position: absolute;
+            top: -30px;
+            animation: fallDown linear forwards;
+            z-index: 0;
+            opacity: 0;
+        }
+
+        @keyframes fallDown {
+            0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.6; }
+            80% { opacity: 0.6; }
+            100% { transform: translate(40px, 300px) rotate(360deg); opacity: 0; }
+        }
+
+        /* Glassmorphism Inner Card */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 10px 30px -10px rgba(139, 115, 85, 0.08);
+        }
+
+        /* Smooth Scripture Transitions */
+        .truth-fade {
+            transition: opacity 1.2s ease, transform 1.2s ease;
+        }
+        .truth-hidden {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+
+        /* Blinking Colon for Clock */
+        .blink {
+            animation: blinker 2s linear infinite;
+        }
+        @keyframes blinker {
+            50% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body class="bg-transparent flex items-center justify-center p-2 sm:p-4 m-0 overflow-hidden min-h-screen">
+
+    <!-- Main Wide Banner Container -->
+    <div class="relative w-full max-w-5xl rounded-[2rem] overflow-hidden living-bg shadow-sm border border-[#EAE3DE] group cursor-default">
+        
+        <!-- Animated Background Elements Layer -->
+        <div id="particle-layer" class="absolute inset-0 overflow-hidden pointer-events-none z-0"></div>
+
+        <!-- Foreground Content Layer -->
+        <div class="relative z-10 w-full p-5 sm:p-8 flex flex-col md:flex-row gap-6 md:gap-8 lg:gap-12 items-stretch justify-between">
+            
+            <!-- LEFT COLUMN: The Daily Word (Takes up more space) -->
+            <div class="glass-panel flex-1 rounded-3xl p-6 sm:p-8 flex flex-col justify-center relative overflow-hidden">
+                <!-- Decorative Icon -->
+                <i class="ph-fill ph-book-open-text absolute -right-6 -bottom-8 text-[8rem] text-brand-accent opacity-[0.04] transform -rotate-12"></i>
+
+                <span class="inline-flex items-center gap-1.5 font-sans text-[0.65rem] font-bold tracking-[0.2em] uppercase text-brand-accent mb-4 drop-shadow-sm">
+                    <i class="ph-fill ph-sparkle text-[10px] animate-pulse"></i> Daily Anchor
+                </span>
+                
+                <div id="scripture-container" class="truth-fade opacity-100 transform-none relative z-10 min-h-[90px] flex flex-col justify-center">
+                    <p id="truth-text" class="font-serif text-xl sm:text-[1.35rem] text-brand-text leading-relaxed text-shadow-sm">
+                        "Your word is a lamp for my feet, a light on my path."
+                    </p>
+                    <p id="truth-ref" class="font-sans text-sm font-medium tracking-wide text-brand-text/60 mt-3">
+                        — Psalm 119:105
+                    </p>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Time & Grace Reminder -->
+            <div class="w-full md:w-[320px] lg:w-[380px] flex flex-col justify-center shrink-0 gap-5">
+                
+                <!-- Live Date & Time -->
+                <div class="flex items-center justify-between border-b border-brand-text/10 pb-4">
+                    <div>
+                        <div id="current-date" class="font-serif italic text-lg text-brand-text/90">
+                            October 14th
+                        </div>
+                        <div id="current-day" class="font-sans text-xs font-medium tracking-widest uppercase text-brand-text/50 mt-1">
+                            Wednesday
+                        </div>
+                    </div>
+                    
+                    <div class="text-right">
+                        <div class="font-serif text-3xl text-brand-text leading-none tracking-tight flex items-center justify-end">
+                            <span id="hours">08</span>
+                            <span class="blink font-light mx-0.5 transform -translate-y-[2px]">:</span>
+                            <span id="minutes">30</span>
+                        </div>
+                        <div id="ampm" class="font-sans text-[0.65rem] font-bold tracking-[0.2em] uppercase text-brand-accent mt-1.5">
+                            AM
+                        </div>
+                    </div>
+                </div>
+
+                <!-- The Grace Philosophy Reminder -->
+                <div class="flex gap-3 items-start">
+                    <div class="mt-1 shrink-0 w-6 h-6 rounded-full bg-brand-accent/10 flex items-center justify-center">
+                        <i class="ph-fill ph-plant text-brand-accent text-xs"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-sans text-[0.7rem] font-bold tracking-widest uppercase text-brand-text/80 mb-1">Grace Abounds</h4>
+                        <p class="font-serif text-sm italic text-brand-text/70 leading-relaxed">
+                            His mercies are new every morning. Focus on consistency, not perfection today.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Brand Watermark -->
+                <div class="text-right w-full mt-2">
+                    <span class="font-sans font-medium tracking-[0.25em] text-[0.55rem] uppercase text-brand-text/30 hover:text-brand-accent transition-colors cursor-default">
+                        @FaithReflects
+                    </span>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- SCRIPTURES FOR BIBLE READING CONSISTENCY ---
+        const truths = [
+            { text: '"Your word is a lamp for my feet, a light on my path."', ref: 'Psalm 119:105' },
+            { text: '"The grass withers and the flowers fall, but the word of our God endures forever."', ref: 'Isaiah 40:8' },
+            { text: '"Let the morning bring me word of your unfailing love, for I have put my trust in you."', ref: 'Psalm 143:8' },
+            { text: '"For the word of God is alive and active. Sharper than any double-edged sword..."', ref: 'Hebrews 4:12' },
+            { text: '"Every word of God is flawless; he is a shield to those who take refuge in him."', ref: 'Proverbs 30:5' },
+            { text: '"I have hidden your word in my heart that I might not sin against you."', ref: 'Psalm 119:11' },
+            { text: '"Jesus answered, \'It is written: Man shall not live on bread alone, but on every word that comes from the mouth of God.\'"', ref: 'Matthew 4:4' }
+        ];
+
+        let currentTruthIndex = 0;
+        const container = document.getElementById('scripture-container');
+        const textEl = document.getElementById('truth-text');
+        const refEl = document.getElementById('truth-ref');
+
+        // Cycle verses every 15 seconds
+        function cycleScriptures() {
+            currentTruthIndex = (currentTruthIndex + 1) % truths.length;
+            
+            container.classList.add('truth-hidden');
+
+            setTimeout(() => {
+                textEl.innerText = truths[currentTruthIndex].text;
+                refEl.innerText = "— " + truths[currentTruthIndex].ref;
+                container.classList.remove('truth-hidden');
+            }, 600);
+        }
+
+        // --- CLOCK & DATE LOGIC ---
+        function updateClock() {
+            const now = new Date();
+            
+            // Time
+            let h = now.getHours();
+            let m = now.getMinutes();
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            
+            h = h % 12;
+            h = h ? h : 12; 
+            m = m < 10 ? '0' + m : m;
+
+            document.getElementById('hours').innerText = h < 10 ? '0'+h : h; // Pad hours for aesthetic balance
+            document.getElementById('minutes').innerText = m;
+            document.getElementById('ampm').innerText = ampm;
+
+            // Date (e.g., October 14th)
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+            
+            const month = monthNames[now.getMonth()];
+            const dayNum = now.getDate();
+            const dayOfWeek = dayNames[now.getDay()];
+
+            let suffix = "th";
+            if (dayNum % 10 === 1 && dayNum !== 11) suffix = "st";
+            else if (dayNum % 10 === 2 && dayNum !== 12) suffix = "nd";
+            else if (dayNum % 10 === 3 && dayNum !== 13) suffix = "rd";
+
+            document.getElementById('current-date').innerText = `${month} ${dayNum}${suffix}`;
+            document.getElementById('current-day').innerText = dayOfWeek;
+        }
+
+        // --- AUTUMN PARTICLE SYSTEM ---
+        const colors = ['#C87A5E', '#DDA15E', '#8C9A86', '#A68A6A']; // Terracotta, Gold, Sage, Warm Brown
+        
+        function createParticle() {
+            const layer = document.getElementById('particle-layer');
+            if (!layer) return;
+
+            // 70% chance for ambient light dust, 30% chance for a falling autumn leaf
+            const isLeaf = Math.random() > 0.7;
+            const particle = document.createElement(isLeaf ? 'i' : 'div');
+            
+            if (isLeaf) {
+                // Leaf Setup
+                particle.className = `falling-leaf ph-fill ph-leaf text-xl sm:text-2xl`;
+                particle.style.color = colors[Math.floor(Math.random() * colors.length)];
+                // Make leaves slightly transparent so they blend with the background
+                particle.style.opacity = "0.3"; 
+                
+                const left = Math.random() * 100;
+                const duration = Math.random() * 8 + 7; // 7 to 15 seconds falling
+                
+                particle.style.left = `${left}%`;
+                particle.style.animationDuration = `${duration}s`;
+                
+                // Add subtle rotation variation
+                particle.style.transform = `rotate(${Math.random() * 360}deg)`;
+            } else {
+                // Light Dust Setup
+                particle.className = 'ambient-dust';
+                const size = Math.random() * 2.5 + 1;
+                const left = Math.random() * 100;
+                const top = Math.random() * 100;
+                const duration = Math.random() * 5 + 5;
+
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${left}%`;
+                particle.style.top = `${top}%`;
+                particle.style.animationDuration = `${duration}s`;
+            }
+
+            layer.appendChild(particle);
+
+            // Cleanup
+            setTimeout(() => {
+                particle.remove();
+            }, 15000); // Generous cleanup time
+        }
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            // Initial random truth
+            currentTruthIndex = Math.floor(Math.random() * truths.length);
+            textEl.innerText = truths[currentTruthIndex].text;
+            refEl.innerText = "— " + truths[currentTruthIndex].ref;
+            
+            setInterval(cycleScriptures, 15000);
+
+            // Generate particles (leaves and dust)
+            setInterval(createParticle, 1200);
+            
+            // Pre-seed a few particles immediately so it doesn't start empty
+            for(let i=0; i<8; i++) {
+                setTimeout(createParticle, i * 200);
+            }
+        });
+
+    </script>
+</body>
+</html>
