@@ -1,486 +1,324 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ambient Soundscape — FaithReflects</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=Inter:wght@300;400;500&display=swap');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer" />
+    <title>FaithReflects Worship Radio</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-text': '#4A433A', 
+                        'brand-accent': '#C87A5E', 
+                        'brand-gold': '#DDA15E',
+                        'brand-sage': '#8C9A86',
+                        'brand-bg': '#FDFBF7',
+                        'brand-card': '#F8F4FA'
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: transparent !important; }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+        /* Premium App Layout & Film Grain */
+        .radio-card {
+            background: linear-gradient(135deg, #F8F4FA, #FDF5F0, #FDFBF7, #F5EEF0);
+            background-size: 300% 300%;
+            animation: gradientMove 20s ease infinite;
+            border: 1px solid rgba(140, 154, 134, 0.2);
+            box-shadow: 0 4px 20px -5px rgba(74, 67, 58, 0.08);
+            position: relative;
+        }
 
-  body {
-    font-family: 'Inter', sans-serif;
-    background: #F5F0E8;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    overflow: hidden;
-  }
+        .radio-card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            opacity: 0.035;
+            pointer-events: none;
+            background-image: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E');
+            z-index: 1;
+            border-radius: inherit;
+        }
 
-  .widget {
-    width: 100%;
-    max-width: 800px;
-    padding: 18px 32px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-    border: 1px solid rgba(212,168,83,0.15);
-    border-radius: 12px;
-    background: linear-gradient(135deg, #F5F0E8, #FAF6EE);
-  }
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
 
-  .title-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 14px;
-  }
+        /* Glassmorphism Inner Panel */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 15px -5px rgba(139, 115, 85, 0.05);
+            position: relative;
+            z-index: 10;
+        }
 
-  .title-row .icon {
-    font-size: 14px;
-  }
+        /* Live Badge Pulse */
+        .live-dot {
+            animation: pulse-red 2s infinite;
+        }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(200, 122, 94, 0.7); transform: scale(0.95); }
+            70% { box-shadow: 0 0 0 6px rgba(200, 122, 94, 0); transform: scale(1); }
+            100% { box-shadow: 0 0 0 0 rgba(200, 122, 94, 0); transform: scale(0.95); }
+        }
 
-  .title-row .title {
-    font-family: 'Inter', sans-serif;
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: #A0937D;
-  }
+        /* Animated Audio Equalizer */
+        .eq-container {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 24px;
+        }
+        .eq-bar {
+            width: 4px;
+            background-color: #8C9A86;
+            border-radius: 4px;
+            transform-origin: bottom;
+            transition: height 0.3s ease;
+        }
+        .is-playing .eq-bar {
+            animation: eqBounce 0.8s infinite ease-in-out alternate;
+        }
+        .is-playing .eq-bar:nth-child(1) { animation-delay: 0.1s; height: 12px; }
+        .is-playing .eq-bar:nth-child(2) { animation-delay: 0.3s; height: 20px; }
+        .is-playing .eq-bar:nth-child(3) { animation-delay: 0.0s; height: 16px; }
+        .is-playing .eq-bar:nth-child(4) { animation-delay: 0.4s; height: 24px; }
+        .is-playing .eq-bar:nth-child(5) { animation-delay: 0.2s; height: 14px; }
+        
+        /* Paused state for equalizer */
+        .eq-bar:nth-child(1) { height: 4px; }
+        .eq-bar:nth-child(2) { height: 6px; }
+        .eq-bar:nth-child(3) { height: 4px; }
+        .eq-bar:nth-child(4) { height: 6px; }
+        .eq-bar:nth-child(5) { height: 4px; }
 
-  /* Sound buttons */
-  .sounds-row {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-bottom: 14px;
-  }
+        @keyframes eqBounce {
+            0% { transform: scaleY(0.3); }
+            100% { transform: scaleY(1); }
+        }
 
-  .sound-btn {
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    border: 2px solid #E0D6C4;
-    background: transparent;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    position: relative;
-  }
-
-  .sound-btn .emoji {
-    font-size: 20px;
-    line-height: 1;
-  }
-
-  .sound-btn .name {
-    font-size: 7px;
-    font-weight: 500;
-    color: #A0937D;
-    margin-top: 2px;
-    letter-spacing: 0.3px;
-  }
-
-  .sound-btn:hover {
-    border-color: #D4A853;
-    transform: scale(1.08);
-  }
-
-  .sound-btn.active {
-    border-color: #D4A853;
-    background: rgba(212,168,83,0.08);
-    box-shadow: 0 0 12px rgba(212,168,83,0.2), inset 0 0 8px rgba(212,168,83,0.08);
-  }
-
-  .sound-btn.active .name {
-    color: #D4A853;
-    font-weight: 600;
-  }
-
-  /* Animated ring for active */
-  .sound-btn.active::after {
-    content: '';
-    position: absolute;
-    top: -4px; left: -4px; right: -4px; bottom: -4px;
-    border-radius: 50%;
-    border: 1.5px solid rgba(212,168,83,0.3);
-    animation: pulseRing 2s ease-in-out infinite;
-  }
-
-  @keyframes pulseRing {
-    0%, 100% { transform: scale(1); opacity: 0.5; }
-    50% { transform: scale(1.1); opacity: 0; }
-  }
-
-  /* Volume + Now Playing row */
-  .controls-row {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    width: 100%;
-    max-width: 420px;
-  }
-
-  .mute-btn {
-    background: none;
-    border: none;
-    font-size: 16px;
-    cursor: pointer;
-    padding: 4px;
-    opacity: 0.6;
-    transition: opacity 0.2s;
-  }
-  .mute-btn:hover { opacity: 1; }
-
-  .volume-slider {
-    flex: 1;
-    -webkit-appearance: none;
-    appearance: none;
-    height: 3px;
-    border-radius: 2px;
-    background: linear-gradient(90deg, #D4A853, #E0D6C4);
-    outline: none;
-    cursor: pointer;
-  }
-
-  .volume-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: #D4A853;
-    border: 2px solid #FFFDF8;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-    cursor: pointer;
-    transition: transform 0.15s;
-  }
-
-  .volume-slider::-webkit-slider-thumb:hover {
-    transform: scale(1.2);
-  }
-
-  .volume-slider::-moz-range-thumb {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: #D4A853;
-    border: 2px solid #FFFDF8;
-    cursor: pointer;
-  }
-
-  .now-playing {
-    font-size: 10px;
-    color: #A0937D;
-    white-space: nowrap;
-    min-width: 90px;
-    text-align: right;
-  }
-
-  .now-playing .label {
-    color: #D4A853;
-    font-weight: 500;
-  }
-
-  /* Watermark */
-  .watermark {
-    position: absolute;
-    bottom: 6px;
-    right: 14px;
-    font-family: 'Playfair Display', serif;
-    font-size: 8px;
-    color: #D4C9B0;
-    letter-spacing: 1.5px;
-  }
-
-  @media (max-width: 500px) {
-    .widget { padding: 14px 16px; }
-    .sound-btn { width: 44px; height: 44px; }
-    .sound-btn .emoji { font-size: 16px; }
-    .sounds-row { gap: 8px; }
-  }
-</style>
+        /* Custom Volume Slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 10px;
+            width: 10px;
+            border-radius: 50%;
+            background: #8C9A86;
+            cursor: pointer;
+            margin-top: -3px;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #C87A5E;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: rgba(140, 154, 134, 0.2);
+            border-radius: 2px;
+        }
+        input[type=range]:focus { outline: none; }
+    </style>
 </head>
-<body>
-<div class="widget">
-  <div class="title-row">
-    <span class="icon">🎵</span>
-    <span class="title">Ambient Reading Atmosphere</span>
-  </div>
+<body class="m-0 p-4 w-screen h-screen overflow-hidden flex items-center justify-center">
 
-  <div class="sounds-row" id="soundsRow">
-    <button class="sound-btn" data-sound="rain" data-freq="200" data-label="Gentle Rain">
-      <span class="emoji">🌧️</span>
-      <span class="name">Rain</span>
-    </button>
-    <button class="sound-btn" data-sound="fire" data-freq="150" data-label="Fireplace">
-      <span class="emoji">🔥</span>
-      <span class="name">Fire</span>
-    </button>
-    <button class="sound-btn" data-sound="piano" data-freq="440" data-label="Soft Piano">
-      <span class="emoji">🎹</span>
-      <span class="name">Piano</span>
-    </button>
-    <button class="sound-btn" data-sound="ocean" data-freq="120" data-label="Ocean Waves">
-      <span class="emoji">🌊</span>
-      <span class="name">Ocean</span>
-    </button>
-    <button class="sound-btn" data-sound="birds" data-freq="800" data-label="Morning Birds">
-      <span class="emoji">🐦</span>
-      <span class="name">Birds</span>
-    </button>
-    <button class="sound-btn" data-sound="forest" data-freq="250" data-label="Forest">
-      <span class="emoji">🌿</span>
-      <span class="name">Forest</span>
-    </button>
-  </div>
+    <!-- Compact Radio Card -->
+    <div class="radio-card w-full max-w-[380px] rounded-[2rem] p-6 flex flex-col gap-5">
+        
+        <!-- Header: Badge & Status -->
+        <div class="relative z-10 flex justify-between items-center">
+            <span class="inline-flex items-center gap-1.5 font-sans text-[0.65rem] font-bold tracking-[0.2em] uppercase text-brand-sage">
+                <i class="ph-fill ph-radio text-sm"></i> Worship Station
+            </span>
+            
+            <!-- Live Badge -->
+            <div class="flex items-center gap-1.5 bg-white/60 px-2.5 py-1 rounded-full border border-brand-accent/10">
+                <div id="live-indicator" class="w-2 h-2 rounded-full bg-brand-text/30 transition-colors duration-500"></div>
+                <span class="font-sans text-[0.6rem] font-bold tracking-widest uppercase text-brand-text/60">Live</span>
+            </div>
+        </div>
 
-  <div class="controls-row">
-    <button class="mute-btn" id="muteBtn">🔊</button>
-    <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="40">
-    <div class="now-playing" id="nowPlaying">Select a sound</div>
-  </div>
+        <!-- Main Display: Equalizer & Title -->
+        <div class="glass-panel rounded-2xl p-5 flex items-center gap-5">
+            <!-- Visualizer -->
+            <div id="visualizer" class="eq-container shrink-0 w-[36px]">
+                <div class="eq-bar"></div>
+                <div class="eq-bar"></div>
+                <div class="eq-bar"></div>
+                <div class="eq-bar"></div>
+                <div class="eq-bar"></div>
+            </div>
 
-  <div class="watermark">FAITHREFLECTS</div>
-</div>
+            <!-- Track Info -->
+            <div class="flex-1 overflow-hidden">
+                <h2 class="font-serif text-xl text-brand-text leading-tight truncate">Instrumental Peace</h2>
+                <p class="font-sans text-[0.7rem] font-medium tracking-wide text-brand-text/50 uppercase mt-0.5 truncate">
+                    Atmospheric • Lo-Fi • Rest
+                </p>
+            </div>
+        </div>
 
-<script>
-  // Ambient sound generation using Web Audio API (no external files needed)
-  let audioCtx = null;
-  let currentNodes = [];
-  let currentSound = null;
-  let volume = 0.4;
-  let muted = false;
-  let masterGain = null;
+        <!-- Controls: Play & Volume -->
+        <div class="relative z-10 flex items-center justify-between gap-4">
+            
+            <!-- Play/Pause Button -->
+            <button onclick="togglePlay()" class="shrink-0 w-12 h-12 rounded-full bg-brand-sage text-white shadow-md shadow-brand-sage/20 flex items-center justify-center hover:bg-brand-accent hover:shadow-brand-accent/20 transition-all duration-300 transform hover:scale-105 group">
+                <i id="play-icon" class="ph-fill ph-play text-xl ml-1 group-hover:scale-110 transition-transform"></i>
+            </button>
 
-  function getAudioCtx() {
-    if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      masterGain = audioCtx.createGain();
-      masterGain.gain.value = volume;
-      masterGain.connect(audioCtx.destination);
-    }
-    return audioCtx;
-  }
+            <!-- Volume Slider -->
+            <div class="flex-1 flex items-center gap-2.5 bg-white/40 px-4 py-2.5 rounded-full border border-brand-text/5">
+                <button onclick="toggleMute()" class="text-brand-sage hover:text-brand-accent transition-colors">
+                    <i id="volume-icon" class="ph-fill ph-speaker-high text-lg"></i>
+                </button>
+                <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.5" oninput="setVolume(this.value)">
+            </div>
 
-  function stopAll() {
-    currentNodes.forEach(n => {
-      try { n.stop(); } catch(e) {}
-      try { n.disconnect(); } catch(e) {}
-    });
-    currentNodes = [];
-  }
+        </div>
 
-  // Generate ambient noise types
-  function createNoise(type) {
-    const ctx = getAudioCtx();
-    stopAll();
+        <!-- Brand Footer -->
+        <div class="relative z-10 text-center mt-1">
+            <a href="https://instagram.com/faithreflects" target="_blank" class="font-sans font-medium tracking-[0.25em] text-[0.6rem] uppercase text-brand-text/40 hover:text-brand-accent transition-colors cursor-pointer inline-flex items-center gap-1">
+                <i class="ph-fill ph-sparkle text-[8px] text-brand-accent/50"></i> @FAITHREFLECTS
+            </a>
+        </div>
+        
+    </div>
 
-    if (type === 'rain') {
-      // Brown noise + filter for rain
-      const bufferSize = 2 * ctx.sampleRate;
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      let last = 0;
-      for (let i = 0; i < bufferSize; i++) {
-        const white = Math.random() * 2 - 1;
-        data[i] = (last + 0.02 * white) / 1.02;
-        last = data[i];
-        data[i] *= 3.5;
-      }
-      const src = ctx.createBufferSource();
-      src.buffer = buffer;
-      src.loop = true;
-      const filter = ctx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.value = 800;
-      src.connect(filter);
-      filter.connect(masterGain);
-      src.start();
-      currentNodes.push(src);
+    <script>
+        // --- AUDIO SETUP ---
+        // Using a highly reliable, beautiful instrumental/ambient track hosted securely.
+        // It acts as an endless loop "station".
+        const audioUrl = "https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3"; 
+        
+        const audio = new Audio();
+        audio.src = audioUrl;
+        audio.loop = true; // Loops forever like a real radio station
+        audio.volume = 0.5;
+        audio.preload = 'none'; // Prevents pre-loading to respect Notion's bandwidth
 
-    } else if (type === 'fire') {
-      // Crackling: filtered noise
-      const bufferSize = 2 * ctx.sampleRate;
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = Math.random() * 2 - 1;
-        if (Math.random() > 0.97) data[i] *= 3;
-      }
-      const src = ctx.createBufferSource();
-      src.buffer = buffer;
-      src.loop = true;
-      const bp = ctx.createBiquadFilter();
-      bp.type = 'bandpass';
-      bp.frequency.value = 600;
-      bp.Q.value = 0.5;
-      const gain = ctx.createGain();
-      gain.gain.value = 0.6;
-      src.connect(bp);
-      bp.connect(gain);
-      gain.connect(masterGain);
-      src.start();
-      currentNodes.push(src);
+        let isPlaying = false;
+        let isMuted = false;
+        let previousVolume = 0.5;
 
-    } else if (type === 'piano') {
-      // Soft tones cycle
-      const notes = [261.63, 329.63, 392, 523.25, 440, 349.23, 293.66, 261.63];
-      function playNote(idx) {
-        if (currentSound !== 'piano') return;
-        const osc = ctx.createOscillator();
-        const g = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.value = notes[idx % notes.length];
-        g.gain.setValueAtTime(0, ctx.currentTime);
-        g.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 0.3);
-        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 3);
-        osc.connect(g);
-        g.connect(masterGain);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 3.5);
-        currentNodes.push(osc);
-        setTimeout(() => playNote(idx + 1), 2800);
-      }
-      playNote(0);
+        // --- DOM ELEMENTS ---
+        const playIcon = document.getElementById('play-icon');
+        const visualizer = document.getElementById('visualizer');
+        const liveIndicator = document.getElementById('live-indicator');
+        const volumeIcon = document.getElementById('volume-icon');
+        const volumeSlider = document.getElementById('volume-slider');
 
-    } else if (type === 'ocean') {
-      // Low noise with LFO for waves
-      const bufferSize = 2 * ctx.sampleRate;
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      let last = 0;
-      for (let i = 0; i < bufferSize; i++) {
-        const w = Math.random() * 2 - 1;
-        data[i] = (last + 0.01 * w) / 1.01;
-        last = data[i];
-        data[i] *= 5;
-      }
-      const src = ctx.createBufferSource();
-      src.buffer = buffer;
-      src.loop = true;
-      const lfo = ctx.createOscillator();
-      lfo.frequency.value = 0.1;
-      const lfoGain = ctx.createGain();
-      lfoGain.gain.value = 0.4;
-      lfo.connect(lfoGain);
-      const gain = ctx.createGain();
-      gain.gain.value = 0.6;
-      lfoGain.connect(gain.gain);
-      src.connect(gain);
-      gain.connect(masterGain);
-      lfo.start();
-      src.start();
-      currentNodes.push(src, lfo);
+        // --- LOGIC ---
+        function togglePlay() {
+            if (isPlaying) {
+                audio.pause();
+                setPlayState(false);
+            } else {
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        setPlayState(true);
+                    }).catch(error => {
+                        console.error("Playback blocked by browser:", error);
+                        // Fallback for strict browser sandboxes
+                        audio.src = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+                        audio.play().then(() => setPlayState(true)).catch(e => console.error("Total audio block", e));
+                    });
+                }
+            }
+        }
 
-    } else if (type === 'birds') {
-      // Chirps
-      function chirp() {
-        if (currentSound !== 'birds') return;
-        const osc = ctx.createOscillator();
-        const g = ctx.createGain();
-        osc.type = 'sine';
-        const baseFreq = 1800 + Math.random() * 1200;
-        osc.frequency.setValueAtTime(baseFreq, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.3, ctx.currentTime + 0.08);
-        osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.8, ctx.currentTime + 0.15);
-        g.gain.setValueAtTime(0, ctx.currentTime);
-        g.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
-        osc.connect(g);
-        g.connect(masterGain);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.25);
-        currentNodes.push(osc);
-        setTimeout(chirp, 800 + Math.random() * 2000);
-      }
-      chirp();
-      // Background breeze
-      const bufferSize = 2 * ctx.sampleRate;
-      const buf = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const d = buf.getChannelData(0);
-      let l = 0;
-      for (let i = 0; i < bufferSize; i++) {
-        d[i] = (l + 0.02 * (Math.random() * 2 - 1)) / 1.02;
-        l = d[i]; d[i] *= 2;
-      }
-      const s = ctx.createBufferSource();
-      s.buffer = buf; s.loop = true;
-      const f = ctx.createBiquadFilter();
-      f.type = 'highpass'; f.frequency.value = 400;
-      const gn = ctx.createGain(); gn.gain.value = 0.15;
-      s.connect(f); f.connect(gn); gn.connect(masterGain);
-      s.start();
-      currentNodes.push(s);
+        function setPlayState(playing) {
+            isPlaying = playing;
+            if (playing) {
+                // UI: Playing
+                playIcon.classList.remove('ph-play', 'ml-1');
+                playIcon.classList.add('ph-pause');
+                visualizer.classList.add('is-playing');
+                
+                // Live Badge turns Terracotta and pulses
+                liveIndicator.classList.remove('bg-brand-text/30');
+                liveIndicator.classList.add('bg-brand-accent', 'live-dot');
+            } else {
+                // UI: Paused
+                playIcon.classList.remove('ph-pause');
+                playIcon.classList.add('ph-play', 'ml-1');
+                visualizer.classList.remove('is-playing');
+                
+                // Live Badge goes dormant
+                liveIndicator.classList.add('bg-brand-text/30');
+                liveIndicator.classList.remove('bg-brand-accent', 'live-dot');
+            }
+        }
 
-    } else if (type === 'forest') {
-      // Wind + subtle rustling
-      const bufferSize = 2 * ctx.sampleRate;
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      let last = 0;
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = (last + 0.015 * (Math.random() * 2 - 1)) / 1.015;
-        last = data[i]; data[i] *= 4;
-      }
-      const src = ctx.createBufferSource();
-      src.buffer = buffer; src.loop = true;
-      const bp = ctx.createBiquadFilter();
-      bp.type = 'bandpass'; bp.frequency.value = 500; bp.Q.value = 0.3;
-      const lfo = ctx.createOscillator();
-      lfo.frequency.value = 0.15;
-      const lfoG = ctx.createGain(); lfoG.gain.value = 200;
-      lfo.connect(lfoG); lfoG.connect(bp.frequency);
-      src.connect(bp); bp.connect(masterGain);
-      lfo.start(); src.start();
-      currentNodes.push(src, lfo);
-    }
-  }
+        function setVolume(val) {
+            audio.volume = val;
+            isMuted = val == 0;
+            updateVolumeIcon(val);
+        }
 
-  // UI
-  const nowPlaying = document.getElementById('nowPlaying');
-  const muteBtn = document.getElementById('muteBtn');
-  const volSlider = document.getElementById('volumeSlider');
+        function toggleMute() {
+            if (isMuted) {
+                // Unmute
+                audio.volume = previousVolume > 0 ? previousVolume : 0.5;
+                volumeSlider.value = audio.volume;
+                isMuted = false;
+            } else {
+                // Mute
+                previousVolume = audio.volume;
+                audio.volume = 0;
+                volumeSlider.value = 0;
+                isMuted = true;
+            }
+            updateVolumeIcon(audio.volume);
+        }
 
-  document.querySelectorAll('.sound-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const sound = btn.dataset.sound;
-      const label = btn.dataset.label;
+        function updateVolumeIcon(val) {
+            volumeIcon.className = "ph-fill text-lg transition-transform ";
+            if (val == 0) {
+                volumeIcon.classList.add('ph-speaker-x', 'text-brand-text/40');
+            } else if (val < 0.5) {
+                volumeIcon.classList.add('ph-speaker-low');
+            } else {
+                volumeIcon.classList.add('ph-speaker-high');
+            }
+        }
 
-      if (currentSound === sound) {
-        // Toggle off
-        stopAll();
-        currentSound = null;
-        btn.classList.remove('active');
-        nowPlaying.innerHTML = 'Select a sound';
-        return;
-      }
+        // Initialize state
+        updateVolumeIcon(audio.volume);
 
-      document.querySelectorAll('.sound-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentSound = sound;
-      nowPlaying.innerHTML = '<span class="label">Playing:</span> ' + label;
-      createNoise(sound);
-    });
-  });
-
-  volSlider.addEventListener('input', (e) => {
-    volume = e.target.value / 100;
-    if (masterGain) masterGain.gain.value = muted ? 0 : volume;
-  });
-
-  muteBtn.addEventListener('click', () => {
-    muted = !muted;
-    muteBtn.textContent = muted ? '\ud83d\udd07' : '\ud83d\udd0a';
-    if (masterGain) masterGain.gain.value = muted ? 0 : volume;
-  });
-</script>
+    </script>
 </body>
 </html>
