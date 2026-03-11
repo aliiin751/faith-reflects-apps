@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spirit Pulse Mood Board - Premium</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Native Notion Colors */
+            --bg-color: transparent; 
+            --text-main: #37352f;
+            --text-muted: #787774;
+            --brand-warm: #d4a373;
+            --border-light: rgba(55, 53, 47, 0.09);
+            
+            /* Subtly refined mood colors for active states */
+            --color-fire: #d96c4a;
+            --color-dry: #bbaea0;
+            --color-convicted: #6b8f87;
+            --color-peaceful: #7d9079;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--bg-color);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden; /* Prevent scrollbars from particles */
+        }
+
+        .widget-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 320px;
+            padding: 20px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .prompt-text {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 30px;
+            font-weight: 500;
+        }
+
+        .mood-grid {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 35px;
+            z-index: 10;
+        }
+
+        .mood-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .mood-btn {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            border: 1px solid var(--border-light);
+            background-color: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            /* Allow particles to overflow but keep button styling */
+        }
+
+        .mood-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: color 0.3s ease;
+        }
+
+        /* Hover & Active States */
+        .mood-item:hover .mood-btn {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.03);
+            border-color: rgba(55, 53, 47, 0.15);
+        }
+
+        .mood-item.active .mood-btn {
+            transform: scale(1.1);
+            border-width: 2px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+
+        .mood-item.active[data-mood="fire"] .mood-btn { border-color: var(--color-fire); background: rgba(217, 108, 74, 0.05); }
+        .mood-item.active[data-mood="fire"] .mood-label { color: var(--color-fire); }
+
+        .mood-item.active[data-mood="dry"] .mood-btn { border-color: var(--color-dry); background: rgba(187, 174, 160, 0.05); }
+        .mood-item.active[data-mood="dry"] .mood-label { color: var(--color-dry); }
+
+        .mood-item.active[data-mood="convicted"] .mood-btn { border-color: var(--color-convicted); background: rgba(107, 143, 135, 0.05); }
+        .mood-item.active[data-mood="convicted"] .mood-label { color: var(--color-convicted); }
+
+        .mood-item.active[data-mood="peaceful"] .mood-btn { border-color: var(--color-peaceful); background: rgba(125, 144, 121, 0.05); }
+        .mood-item.active[data-mood="peaceful"] .mood-label { color: var(--color-peaceful); }
+
+        /* Scripture Display */
+        .scripture-display {
+            min-height: 90px;
+            text-align: center;
+            max-width: 320px;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .scripture-display.visible {
+            opacity: 1;
+        }
+
+        .scripture-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.15rem;
+            color: var(--text-main);
+            font-style: italic;
+            line-height: 1.5;
+            margin: 0 0 10px 0;
+        }
+
+        .scripture-ref {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .brand-tag {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.65rem;
+            color: #b5b3ad;
+            letter-spacing: 0.8px;
+            text-decoration: none;
+            transition: color 0.3s ease;
+            position: absolute;
+            bottom: 10px;
+        }
+
+        .brand-tag:hover {
+            color: var(--brand-warm);
+        }
+
+        /* Particle Base Style */
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            z-index: 20;
+            will-change: transform, opacity;
+        }
+        
+        /* Specific Leaf Shape */
+        .particle-leaf {
+            width: 10px;
+            height: 10px;
+            background-color: var(--color-peaceful);
+            border-radius: 0 50% 50% 50%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="widget-wrapper">
+        <div class="prompt-text">How is your spirit today?</div>
+
+        <div class="mood-grid" id="mood-grid">
+            <div class="mood-item" data-mood="fire">
+                <div class="mood-btn">🔥</div>
+                <div class="mood-label">On Fire</div>
+            </div>
+            <div class="mood-item" data-mood="dry">
+                <div class="mood-btn">🍂</div>
+                <div class="mood-label">Dry</div>
+            </div>
+            <div class="mood-item" data-mood="convicted">
+                <div class="mood-btn">💧</div>
+                <div class="mood-label">Convicted</div>
+            </div>
+            <div class="mood-item" data-mood="peaceful">
+                <div class="mood-btn">🕊️</div>
+                <div class="mood-label">Peaceful</div>
+            </div>
+        </div>
+
+        <div class="scripture-display" id="scripture-container">
+            <p class="scripture-text" id="s-text"></p>
+            <p class="scripture-ref" id="s-ref"></p>
+        </div>
+
+        <a href="https://www.instagram.com/faithreflects/" target="_blank" class="brand-tag">@faithreflects</a>
+    </div>
+
+    <script>
+        const moodData = {
+            fire: {
+                text: "\"Never be lacking in zeal, but keep your spiritual fervor, serving the Lord.\"",
+                ref: "Romans 12:11"
+            },
+            dry: {
+                text: "\"Come to me, all you who are weary and burdened, and I will give you rest.\"",
+                ref: "Matthew 11:28"
+            },
+            convicted: {
+                text: "\"If we confess our sins, he is faithful and just and will forgive us our sins...\"",
+                ref: "1 John 1:9"
+            },
+            peaceful: {
+                text: "\"You will keep in perfect peace those whose minds are steadfast, because they trust in you.\"",
+                ref: "Isaiah 26:3"
+            }
+        };
+
+        const items = document.querySelectorAll('.mood-item');
+        const scriptureContainer = document.getElementById('scripture-container');
+        const sText = document.getElementById('s-text');
+        const sRef = document.getElementById('s-ref');
+
+        let currentEffectInterval = null;
+
+        // Particle Engine
+        function spawnParticle(type, parentElement) {
+            const btn = parentElement.querySelector('.mood-btn');
+            const particle = document.createElement('div');
+            particle.classList.add('particle');
+            
+            // Position relative to the mood-item container
+            particle.style.left = `${(btn.offsetWidth / 2)}px`;
+            particle.style.top = `${(btn.offsetHeight / 2)}px`;
+            parentElement.appendChild(particle);
+
+            // Animation Logic
+            if (type === 'fire') {
+                particle.style.width = `${4 + Math.random() * 6}px`;
+                particle.style.height = particle.style.width;
+                particle.style.borderRadius = '50%';
+                particle.style.background = ['#ff7b00', '#ffaa00', '#ff3300'][Math.floor(Math.random() * 3)];
+                
+                const destX = (Math.random() - 0.5) * 60;
+                const destY = -(40 + Math.random() * 50);
+                
+                particle.animate([
+                    { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
+                    { transform: `translate(calc(-50% + ${destX}px), calc(-50% + ${destY}px)) scale(0)`, opacity: 0 }
+                ], { duration: 600 + Math.random() * 400, easing: 'ease-out' }).onfinish = () => particle.remove();
+            
+            } else if (type === 'dry') {
+                particle.style.width = `${3 + Math.random() * 4}px`;
+                particle.style.height = particle.style.width;
+                particle.style.borderRadius = '50%';
+                particle.style.background = ['#d6ccc2', '#e3d5ca', '#bcaca4'][Math.floor(Math.random() * 3)];
+                
+                const destX = (Math.random() - 0.5) * 80;
+                const destY = (Math.random() - 0.5) * 80;
+                
+                particle.animate([
+                    { transform: 'translate(-50%, -50%) scale(1)', opacity: 0.8 },
+                    { transform: `translate(calc(-50% + ${destX}px), calc(-50% + ${destY}px)) scale(0)`, opacity: 0 }
+                ], { duration: 800 + Math.random() * 400, easing: 'ease-out' }).onfinish = () => particle.remove();
+            
+            } else if (type === 'convicted') {
+                particle.style.width = '1.5px';
+                particle.style.height = `${10 + Math.random() * 15}px`;
+                particle.style.background = ['#84a59d', '#a8dadc', '#6b8f87'][Math.floor(Math.random() * 3)];
+                
+                // Start randomly above the button
+                const startX = (Math.random() - 0.5) * 60;
+                const startY = -40 - Math.random() * 20;
+                const dropDistance = 80 + Math.random() * 40;
+                
+                particle.animate([
+                    { transform: `translate(calc(-50% + ${startX}px), calc(-50% + ${startY}px))`, opacity: 0.8 },
+                    { transform: `translate(calc(-50% + ${startX + 10}px), calc(-50% + ${startY + dropDistance}px))`, opacity: 0 }
+                ], { duration: 300 + Math.random() * 200, easing: 'linear' }).onfinish = () => particle.remove();
+            
+            } else if (type === 'peaceful') {
+                particle.classList.add('particle-leaf');
+                
+                const startX = (Math.random() - 0.5) * 40;
+                const startY = -30;
+                const destX = (Math.random() - 0.5) * 60;
+                const destY = 40 + Math.random() * 40;
+                const rotations = 180 + Math.random() * 360;
+                
+                particle.animate([
+                    { transform: `translate(calc(-50% + ${startX}px), calc(-50% + ${startY}px)) rotate(45deg)`, opacity: 1 },
+                    { transform: `translate(calc(-50% + ${destX}px), calc(-50% + ${destY}px)) rotate(${rotations}deg)`, opacity: 0 }
+                ], { duration: 1200 + Math.random() * 800, easing: 'ease-in-out' }).onfinish = () => particle.remove();
+            }
+        }
+
+        function startContinuousEffect(type, item) {
+            // Clear previous interval if switching moods
+            if (currentEffectInterval) clearInterval(currentEffectInterval);
+            
+            // Spawn rates (milliseconds between particles)
+            const rates = { fire: 100, dry: 250, convicted: 60, peaceful: 400 };
+            const burstCounts = { fire: 8, dry: 10, convicted: 12, peaceful: 5 };
+            
+            // Initial burst so it feels responsive instantly
+            for (let i = 0; i < burstCounts[type]; i++) {
+                spawnParticle(type, item);
+            }
+
+            // Continuous stream
+            currentEffectInterval = setInterval(() => {
+                // Prevent spawning if document is hidden to save resources
+                if (!document.hidden) {
+                    spawnParticle(type, item);
+                }
+            }, rates[type]);
+        }
+
+        items.forEach(item => {
+            item.addEventListener('click', () => {
+                const isActive = item.classList.contains('active');
+                
+                // If already active, do nothing to keep the continuous effect running smoothly
+                if (isActive) return;
+                
+                items.forEach(b => b.classList.remove('active'));
+                item.classList.add('active');
+
+                const mood = item.getAttribute('data-mood');
+                
+                // Start Continuous Visual Particle Effect
+                startContinuousEffect(mood, item);
+
+                const data = moodData[mood];
+                scriptureContainer.classList.remove('visible');
+                setTimeout(() => {
+                    sText.innerText = data.text;
+                    sRef.innerText = data.ref;
+                    scriptureContainer.classList.add('visible');
+                }, 400); 
+            });
+        });
+    </script>
+</body>
+</html>

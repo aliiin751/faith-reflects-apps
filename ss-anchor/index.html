@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anchor Verse Marquee</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Native Notion Colors & FaithReflects Branding */
+            --bg-color: transparent; 
+            --text-main: #37352f;
+            --text-muted: #787774;
+            --brand-warm: #d4a373;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--bg-color);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        .widget-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 200px;
+            padding: 20px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .header-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+
+        /* Marquee Container */
+        .marquee-container {
+            width: 100%;
+            max-width: 400px; /* Constrain width so the fade effect is visible */
+            overflow: hidden;
+            position: relative;
+            /* The magic trick: Fades out the left and right edges */
+            -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+            mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+        }
+
+        /* The moving track */
+        .marquee-track {
+            display: flex;
+            width: max-content;
+            /* Slowed down significantly to account for 20 items */
+            animation: scrollText 150s linear infinite; 
+        }
+
+        /* Pause animation on hover for readability */
+        .marquee-container:hover .marquee-track {
+            animation-play-state: paused;
+        }
+
+        @keyframes scrollText {
+            0% { transform: translateX(0); }
+            /* Translate by exactly half because we duplicate the content twice */
+            100% { transform: translateX(-50%); } 
+        }
+
+        /* Individual Text Items */
+        .marquee-item {
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            white-space: nowrap;
+        }
+
+        .focus-word {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            color: var(--text-main);
+            font-weight: 400;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .focus-verse {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: var(--text-main);
+            font-style: italic;
+            margin-left: 15px;
+            opacity: 0.8;
+        }
+
+        .separator {
+            color: var(--brand-warm);
+            font-size: 1.2rem;
+            margin: 0 30px;
+            opacity: 0.6;
+        }
+
+        /* Subtle glowing background behind the text */
+        .glow-effect {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 60px;
+            background: radial-gradient(circle, rgba(212, 163, 115, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
+            filter: blur(10px);
+        }
+
+        /* Brand Tag Styling */
+        .brand-tag {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.65rem;
+            color: #b5b3ad;
+            letter-spacing: 0.8px;
+            text-decoration: none;
+            transition: color 0.3s ease;
+            position: absolute;
+            bottom: 15px;
+        }
+
+        .brand-tag:hover {
+            color: var(--brand-warm);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="widget-wrapper">
+        <div class="header-label">Anchor for the Season</div>
+        
+        <div class="glow-effect"></div>
+
+        <div class="marquee-container">
+            <div class="marquee-track" id="track">
+                <!-- Content is injected via JS to ensure perfect looping -->
+            </div>
+        </div>
+
+        <a href="https://www.instagram.com/faithreflects/" target="_blank" class="brand-tag">@faithreflects</a>
+    </div>
+
+    <script>
+        // A robust array of 20 core spiritual themes and verses
+        const anchorThemes = [
+            { word: "STEWARDSHIP", verse: "His master replied, 'Well done, good and faithful servant!'" },
+            { word: "ABIDE", verse: "I am the vine; you are the branches. He who abides in Me bears much fruit." },
+            { word: "SURRENDER", verse: "Not my will, but yours be done." },
+            { word: "GRACE", verse: "For it is by grace you have been saved, through faith." },
+            { word: "REST", verse: "Come to me, all you who are weary and burdened, and I will give you rest." },
+            { word: "PEACE", verse: "Peace I leave with you; my peace I give you." },
+            { word: "HOPE", verse: "But those who hope in the Lord will renew their strength." },
+            { word: "FAITH", verse: "Now faith is confidence in what we hope for and assurance about what we do not see." },
+            { word: "LOVE", verse: "Let all that you do be done in love." },
+            { word: "JOY", verse: "The joy of the Lord is your strength." },
+            { word: "COURAGE", verse: "Be strong and courageous. Do not be afraid." },
+            { word: "LIGHT", verse: "Let your light shine before others." },
+            { word: "TRUST", verse: "Trust in the Lord with all your heart." },
+            { word: "TRUTH", verse: "Then you will know the truth, and the truth will set you free." },
+            { word: "PATIENCE", verse: "Be completely humble and gentle; be patient, bearing with one another in love." },
+            { word: "PURPOSE", verse: "For I know the plans I have for you, declares the Lord." },
+            { word: "WISDOM", verse: "If any of you lacks wisdom, you should ask God." },
+            { word: "PRAISE", verse: "Let everything that has breath praise the Lord." },
+            { word: "HEALING", verse: "He heals the brokenhearted and binds up their wounds." },
+            { word: "REDEMPTION", verse: "In him we have redemption through his blood." }
+        ];
+        
+        const separatorIcon = "✦";
+
+        function buildMarqueeItem(data) {
+            return `
+                <div class="marquee-item">
+                    <span class="focus-word">${data.word}</span>
+                    <span class="focus-verse">"${data.verse}"</span>
+                    <span class="separator">${separatorIcon}</span>
+                </div>
+            `;
+        }
+
+        function initMarquee() {
+            const track = document.getElementById('track');
+            
+            // Build the HTML for all 20 themes
+            let singleSet = '';
+            anchorThemes.forEach(theme => {
+                singleSet += buildMarqueeItem(theme);
+            });
+            
+            // We duplicate the entire set of 20 exactly twice so the CSS animation 
+            // can translate -50% and snap back to 0% without a visible jump.
+            track.innerHTML = singleSet + singleSet;
+        }
+
+        document.addEventListener('DOMContentLoaded', initMarquee);
+    </script>
+</body>
+</html>

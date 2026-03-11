@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guided Examen - Evening Reflection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Native Notion Colors & FaithReflects Branding */
+            --bg-color: transparent; 
+            --text-main: #37352f;
+            --text-muted: #787774;
+            --brand-warm: #d4a373;
+            --btn-hover: #c49666;
+            
+            /* Evening Twilight Theme for inner card */
+            --card-bg: linear-gradient(135deg, rgba(235, 237, 240, 0.7), rgba(248, 245, 240, 0.5));
+            --card-border: rgba(55, 53, 47, 0.06);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--bg-color);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        .widget-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 340px;
+            padding: 20px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .examen-card {
+            position: relative;
+            width: 280px;
+            height: 220px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            backdrop-filter: blur(8px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 25px 20px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        /* Progress Dots */
+        .progress-indicator {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 15px;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: rgba(55, 53, 47, 0.15);
+            transition: all 0.4s ease;
+        }
+
+        .dot.active {
+            background-color: var(--brand-warm);
+            transform: scale(1.3);
+        }
+
+        /* Text Content Area */
+        .content-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0; /* Started hidden for fade-in effect */
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            transform: translateY(5px);
+            width: 100%;
+        }
+
+        .content-area.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .step-title {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .step-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.25rem;
+            color: var(--text-main);
+            line-height: 1.4;
+            margin: 0;
+            font-weight: 400;
+        }
+
+        .step-text.italic {
+            font-style: italic;
+        }
+
+        /* Navigation Button */
+        .nav-btn {
+            background: transparent;
+            border: 1px solid rgba(55, 53, 47, 0.15);
+            border-radius: 20px;
+            padding: 8px 24px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+
+        .nav-btn:hover {
+            background: var(--brand-warm);
+            border-color: var(--brand-warm);
+            color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(212, 163, 115, 0.2);
+        }
+
+        /* Brand Tag Styling */
+        .brand-tag {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.65rem;
+            color: #b5b3ad;
+            letter-spacing: 0.8px;
+            text-decoration: none;
+            transition: color 0.3s ease;
+            position: absolute;
+            bottom: 15px;
+        }
+
+        .brand-tag:hover {
+            color: var(--brand-warm);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="widget-wrapper">
+        <div class="examen-card">
+            <div class="progress-indicator" id="dots-container">
+                <!-- Dots generated by JS -->
+            </div>
+
+            <div class="content-area" id="content-box">
+                <div class="step-title" id="step-title">Evening Examen</div>
+                <p class="step-text" id="step-text">Loading...</p>
+            </div>
+
+            <button class="nav-btn" id="next-btn">Begin</button>
+        </div>
+
+        <a href="https://www.instagram.com/faithreflects/" target="_blank" class="brand-tag">@faithreflects</a>
+    </div>
+
+    <script>
+        const steps = [
+            { title: "Evening Examen", text: "Take a deep breath. Let's review the day with God.", btn: "Begin", isItalic: false },
+            { title: "Presence", text: "Where did I see God working in my life today?", btn: "Next", isItalic: true },
+            { title: "Application", text: "Did I actively step into my Sunday application?", btn: "Next", isItalic: true },
+            { title: "Surrender", text: "What burdens do I need to leave in His hands tonight?", btn: "Finish", isItalic: true },
+            { title: "Rest", text: "Rest well. His mercies are new every morning.", btn: "Restart", isItalic: false }
+        ];
+
+        let currentIndex = 0;
+        const contentBox = document.getElementById('content-box');
+        const stepTitle = document.getElementById('step-title');
+        const stepText = document.getElementById('step-text');
+        const nextBtn = document.getElementById('next-btn');
+        const dotsContainer = document.getElementById('dots-container');
+
+        // Initialize progress dots
+        function initDots() {
+            dotsContainer.innerHTML = '';
+            steps.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.classList.add('dot');
+                if (index === 0) dot.classList.add('active');
+                dotsContainer.appendChild(dot);
+            });
+        }
+
+        function updateDots(index) {
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, i) => {
+                if (i === index) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        function renderStep(index) {
+            const currentStep = steps[index];
+
+            // 1. Fade out current content
+            contentBox.classList.remove('visible');
+
+            // 2. Wait for fade out, update content, fade back in
+            setTimeout(() => {
+                stepTitle.innerText = currentStep.title;
+                stepText.innerText = currentStep.text;
+                nextBtn.innerText = currentStep.btn;
+
+                if (currentStep.isItalic) {
+                    stepText.classList.add('italic');
+                } else {
+                    stepText.classList.remove('italic');
+                }
+
+                updateDots(index);
+                contentBox.classList.add('visible');
+            }, 400); // 400ms matches the CSS transition time
+        }
+
+        // Handle button clicks
+        nextBtn.addEventListener('click', () => {
+            currentIndex++;
+            
+            // Loop back to start if at the end
+            if (currentIndex >= steps.length) {
+                currentIndex = 0;
+            }
+
+            renderStep(currentIndex);
+        });
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            initDots();
+            renderStep(currentIndex);
+        });
+    </script>
+</body>
+</html>

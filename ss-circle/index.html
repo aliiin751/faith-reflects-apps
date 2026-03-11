@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breath Prayer Pacer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Notion Light Theme Native Colors */
+            --bg-color: transparent; 
+            --text-main: #37352f; /* Native Notion primary text */
+            --text-muted: #787774; /* Native Notion secondary text */
+            --brand-warm: #d4a373; /* FaithReflects Warm Tone */
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--bg-color);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        .widget-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 350px; /* Slightly taller for larger circle */
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .pacer-container {
+            position: relative;
+            width: 250px; /* Increased to give text and circle more room */
+            height: 250px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 10px 0 20px 0;
+        }
+
+        /* The Breathing Circle */
+        .breathing-circle {
+            position: absolute;
+            width: 150px; /* Increased base size */
+            height: 150px;
+            border-radius: 50%;
+            /* Soft, blurred warm glow */
+            background: radial-gradient(circle, rgba(212,163,115,0.25) 0%, rgba(212,163,115,0) 70%);
+            box-shadow: 0 0 50px rgba(212, 163, 115, 0.15);
+            transition: transform 4s ease-in-out;
+            transform: scale(1);
+        }
+
+        /* Active classes toggled by JS */
+        .breathing-circle.inhale {
+            transform: scale(1.6); /* Scales beautifully without overflowing */
+            transition-duration: 4s; /* 4 second inhale */
+        }
+
+        .breathing-circle.exhale {
+            transform: scale(1);
+            transition-duration: 5s; /* 5 second exhale */
+        }
+
+        /* Prayer Text */
+        .prayer-content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            transition: opacity 1s ease-in-out;
+            opacity: 0; /* Starts hidden, fades in */
+        }
+
+        .prayer-content.visible {
+            opacity: 1;
+        }
+
+        .instruction {
+            font-size: 0.75rem;
+            color: var(--brand-warm);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            display: block;
+            font-weight: 600;
+        }
+
+        .prayer-phrase {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.35rem; /* Slightly larger text */
+            color: var(--text-main);
+            margin: 0;
+            font-weight: 400;
+            font-style: italic;
+            line-height: 1.4;
+            max-width: 220px; /* Allows text to wrap beautifully */
+            text-align: center;
+        }
+
+        .brand-tag {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.65rem;
+            color: #b5b3ad;
+            letter-spacing: 0.8px;
+            text-decoration: none;
+            transition: color 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        .brand-tag:hover {
+            color: var(--brand-warm);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="widget-wrapper">
+        <div class="pacer-container">
+            <div class="breathing-circle" id="circle"></div>
+            <div class="prayer-content" id="text-container">
+                <span class="instruction" id="instruction">Breathe</span>
+                <h2 class="prayer-phrase" id="phrase">Prepare your heart</h2>
+            </div>
+        </div>
+
+        <a href="https://www.instagram.com/faithreflects/" target="_blank" class="brand-tag">@faithreflects</a>
+    </div>
+
+    <script>
+        // Curated Breath Prayers
+        const prayers = [
+            { inhale: "Lord Jesus Christ", exhale: "Have mercy on me" },
+            { inhale: "Speak, Lord", exhale: "Your servant is listening" },
+            { inhale: "When I am afraid", exhale: "I will trust in You" },
+            { inhale: "Not my will", exhale: "But Yours be done" },
+            { inhale: "Prince of Peace", exhale: "Quiet my anxious heart" }
+        ];
+
+        let prayerIndex = 0;
+        const circle = document.getElementById('circle');
+        const textContainer = document.getElementById('text-container');
+        const instruction = document.getElementById('instruction');
+        const phrase = document.getElementById('phrase');
+
+        function startBreathCycle() {
+            const currentPrayer = prayers[prayerIndex];
+
+            // 1. Fade out old text
+            textContainer.classList.remove('visible');
+
+            setTimeout(() => {
+                // INHALE PHASE (4 Seconds)
+                instruction.textContent = "Inhale";
+                phrase.textContent = currentPrayer.inhale;
+                
+                // Fade text in and expand circle
+                textContainer.classList.add('visible');
+                circle.classList.remove('exhale');
+                circle.classList.add('inhale');
+
+                setTimeout(() => {
+                    // 2. Fade out text before Exhale
+                    textContainer.classList.remove('visible');
+
+                    setTimeout(() => {
+                        // EXHALE PHASE (5 Seconds)
+                        instruction.textContent = "Exhale";
+                        phrase.textContent = currentPrayer.exhale;
+                        
+                        // Fade text in and shrink circle
+                        textContainer.classList.add('visible');
+                        circle.classList.remove('inhale');
+                        circle.classList.add('exhale');
+
+                        // Move to next prayer for the next cycle
+                        prayerIndex = (prayerIndex + 1) % prayers.length;
+
+                        // Loop the whole process after the exhale finishes
+                        setTimeout(startBreathCycle, 5000); 
+
+                    }, 1000); // Wait 1s for text to fade out before switching to exhale
+                }, 4000); // 4 seconds for inhale
+
+            }, 1000); // Initial delay to allow fade out to complete
+        }
+
+        // Start the widget sequence slightly after load for a smooth entry
+        document.addEventListener('DOMContentLoaded', () => {
+            textContainer.classList.add('visible'); // Show intro text first
+            setTimeout(startBreathCycle, 2500); // Start breathing after 2.5s
+        });
+    </script>
+</body>
+</html>

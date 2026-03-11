@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seasons of Faith Visualizer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Native Notion Colors & FaithReflects Branding */
+            --bg-color: transparent; 
+            --text-main: #37352f;
+            --text-muted: #787774;
+            --brand-warm: #d4a373;
+            
+            /* Dynamic Season Colors - set by JS */
+            --season-primary: #d4a373; 
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--bg-color);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        .widget-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 320px;
+            padding: 20px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .season-container {
+            position: relative;
+            width: 280px;
+            height: 200px;
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 25px;
+            box-sizing: border-box;
+            background: linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,255,255,0.1));
+            border: 1px solid rgba(55, 53, 47, 0.08);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            transition: background 2s ease;
+        }
+
+        /* Glassmorphism layer for text readability */
+        .content-layer {
+            position: relative;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.4);
+            padding: 15px;
+            border-radius: 12px;
+            backdrop-filter: blur(4px);
+            width: 100%;
+        }
+
+        .season-title {
+            font-size: 0.65rem;
+            color: var(--season-primary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            transition: color 1s ease;
+        }
+
+        .season-scripture {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            color: var(--text-main);
+            line-height: 1.4;
+            font-style: italic;
+            margin: 0 0 10px 0;
+        }
+
+        .season-ref {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        /* Particle Canvas */
+        .particle-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            opacity: 0;
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+        }
+
+        /* Spring Animations */
+        @keyframes floatUp {
+            0% { transform: translateY(220px) rotate(0deg) scale(0.5); opacity: 0; }
+            20% { opacity: 0.8; }
+            80% { opacity: 0.8; }
+            100% { transform: translateY(-20px) rotate(180deg) scale(1); opacity: 0; }
+        }
+
+        /* Summer Animations */
+        @keyframes floatWander {
+            0% { transform: translate(0, 200px) scale(0.8); opacity: 0; }
+            25% { transform: translate(20px, 150px) scale(1.2); opacity: 0.6; }
+            50% { transform: translate(-10px, 100px) scale(0.8); opacity: 0.3; }
+            75% { transform: translate(15px, 50px) scale(1.1); opacity: 0.6; }
+            100% { transform: translate(0, -20px) scale(1); opacity: 0; }
+        }
+
+        /* Autumn Animations */
+        @keyframes fallSway {
+            0% { transform: translate(0, -20px) rotate(0deg); opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translate(40px, 220px) rotate(360deg); opacity: 0; }
+        }
+
+        /* Winter Animations */
+        @keyframes fallStraight {
+            0% { transform: translateY(-20px) scale(0.8); opacity: 0; }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.8; }
+            100% { transform: translateY(220px) scale(1.2); opacity: 0; }
+        }
+
+        /* Brand Tag Styling */
+        .brand-tag {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.65rem;
+            color: #b5b3ad;
+            letter-spacing: 0.8px;
+            text-decoration: none;
+            transition: color 0.3s ease;
+            position: absolute;
+            bottom: 15px;
+        }
+
+        .brand-tag:hover {
+            color: var(--brand-warm);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="widget-wrapper">
+        <div class="season-container" id="season-box">
+            <div class="particle-layer" id="particles"></div>
+            
+            <div class="content-layer">
+                <div class="season-title" id="s-title">Loading Season...</div>
+                <p class="season-scripture" id="s-text"></p>
+                <p class="season-ref" id="s-ref"></p>
+            </div>
+        </div>
+
+        <a href="https://www.instagram.com/faithreflects/" target="_blank" class="brand-tag">@faithreflects</a>
+    </div>
+
+    <script>
+        const seasonData = {
+            spring: {
+                title: "Season of Planting",
+                text: "\"Let us not become weary in doing good, for at the proper time we will reap a harvest.\"",
+                ref: "Galatians 6:9",
+                color: "#84a98c",
+                bgGrad: "linear-gradient(135deg, rgba(235, 245, 237, 0.8), rgba(255, 255, 255, 0.3))",
+                pCount: 15,
+                pCreate: (p) => {
+                    p.style.width = Math.random() * 4 + 4 + 'px';
+                    p.style.height = p.style.width;
+                    p.style.background = ['#e8f0e8', '#b7d5b8', '#ffd8d8'][Math.floor(Math.random()*3)];
+                    p.style.borderRadius = '50% 0 50% 50%'; // Petal shape
+                    p.style.left = Math.random() * 100 + '%';
+                    p.style.animationName = 'floatUp';
+                    p.style.animationDuration = Math.random() * 6 + 4 + 's';
+                    p.style.animationDelay = Math.random() * 5 + 's';
+                }
+            },
+            summer: {
+                title: "Season of Growth",
+                text: "\"He is like a tree planted by streams of water, which yields its fruit in season.\"",
+                ref: "Psalm 1:3",
+                color: "#e09f3e",
+                bgGrad: "linear-gradient(135deg, rgba(255, 248, 235, 0.8), rgba(255, 255, 255, 0.3))",
+                pCount: 20,
+                pCreate: (p) => {
+                    p.style.width = Math.random() * 3 + 2 + 'px';
+                    p.style.height = p.style.width;
+                    p.style.background = '#ffdca8';
+                    p.style.borderRadius = '50%';
+                    p.style.boxShadow = '0 0 8px #ffdca8'; // Glowing dust
+                    p.style.left = Math.random() * 100 + '%';
+                    p.style.animationName = 'floatWander';
+                    p.style.animationDuration = Math.random() * 8 + 6 + 's';
+                    p.style.animationDelay = Math.random() * 5 + 's';
+                }
+            },
+            autumn: {
+                title: "Season of Harvest",
+                text: "\"There is a time for everything, and a season for every activity under the heavens.\"",
+                ref: "Ecclesiastes 3:1",
+                color: "#c77d4f",
+                bgGrad: "linear-gradient(135deg, rgba(24cf9, 239, 232, 0.8), rgba(255, 255, 255, 0.3))",
+                pCount: 12,
+                pCreate: (p) => {
+                    p.style.width = Math.random() * 6 + 6 + 'px';
+                    p.style.height = Math.random() * 4 + 4 + 'px';
+                    p.style.background = ['#d4a373', '#e29578', '#b5836a'][Math.floor(Math.random()*3)];
+                    p.style.borderRadius = '0 50% 50% 50%'; // Leaf shape
+                    p.style.left = Math.random() * 80 + '%';
+                    p.style.animationName = 'fallSway';
+                    p.style.animationDuration = Math.random() * 5 + 5 + 's';
+                    p.style.animationDelay = Math.random() * 5 + 's';
+                }
+            },
+            winter: {
+                title: "Season of Rest",
+                text: "\"Be still, and know that I am God...\"",
+                ref: "Psalm 46:10",
+                color: "#7a9099",
+                bgGrad: "linear-gradient(135deg, rgba(235, 243, 248, 0.8), rgba(255, 255, 255, 0.3))",
+                pCount: 25,
+                pCreate: (p) => {
+                    p.style.width = Math.random() * 4 + 2 + 'px';
+                    p.style.height = p.style.width;
+                    p.style.background = '#ffffff';
+                    p.style.borderRadius = '50%';
+                    p.style.boxShadow = '0 0 3px rgba(255,255,255,0.8)'; // Snow
+                    p.style.left = Math.random() * 100 + '%';
+                    p.style.animationName = 'fallStraight';
+                    p.style.animationDuration = Math.random() * 4 + 3 + 's';
+                    p.style.animationDelay = Math.random() * 5 + 's';
+                }
+            }
+        };
+
+        function getSeason() {
+            const month = new Date().getMonth() + 1; // 1-12
+            // Simple Northern Hemisphere grouping
+            if (month >= 3 && month <= 5) return 'spring';
+            if (month >= 6 && month <= 8) return 'summer';
+            if (month >= 9 && month <= 11) return 'autumn';
+            return 'winter'; // Dec, Jan, Feb
+        }
+
+        function initWidget() {
+            const currentSeason = getSeason();
+            const data = seasonData[currentSeason];
+
+            // Set UI elements
+            document.documentElement.style.setProperty('--season-primary', data.color);
+            document.getElementById('season-box').style.background = data.bgGrad;
+            document.getElementById('s-title').innerText = data.title;
+            document.getElementById('s-text').innerText = data.text;
+            document.getElementById('s-ref').innerText = data.ref;
+
+            // Generate Ambient Particles
+            const pLayer = document.getElementById('particles');
+            for(let i=0; i < data.pCount; i++) {
+                const p = document.createElement('div');
+                p.classList.add('particle');
+                data.pCreate(p);
+                pLayer.appendChild(p);
+            }
+        }
+
+        // To test different seasons manually, you could change getSeason() above!
+        document.addEventListener('DOMContentLoaded', initWidget);
+    </script>
+</body>
+</html>
