@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sermon Seed Sprout Line</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Native Notion Colors & FaithReflects Branding */
+            --bg-color: transparent; 
+            --text-main: #37352f;
+            --text-muted: #787774;
+            --brand-warm: #d4a373;
+            --brand-sage: #8a9a86;
+            --timeline-bg: rgba(55, 53, 47, 0.09);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--bg-color);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        .header-banner {
+            width: 100%;
+            max-width: 800px;
+            height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            padding: 0 40px;
+            box-sizing: border-box;
+        }
+
+        .header-text {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem;
+            color: var(--text-main);
+            margin: 0 0 4px 0;
+            font-weight: 500;
+        }
+
+        .subtitle {
+            font-size: 0.65rem;
+            color: var(--brand-sage);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        /* --- TIMELINE --- */
+        .timeline-container {
+            width: 100%;
+            position: relative;
+            height: 40px;
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .timeline-track {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--timeline-bg);
+            border-radius: 2px;
+        }
+
+        .timeline-fill {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            height: 2px;
+            background-color: var(--brand-sage);
+            border-radius: 2px;
+            width: 0%; /* Set by JS */
+            transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        /* --- DAYS --- */
+        .days-row {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+        }
+
+        .day-marker {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            width: 20px;
+            transform: translateX(-50%); /* Center over their point */
+        }
+        
+        /* Fix first and last marker centering */
+        .day-marker:first-child { transform: translateX(0); align-items: flex-start; }
+        .day-marker:last-child { transform: translateX(0); align-items: flex-end; }
+
+        .day-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-top: 8px;
+            transition: color 0.5s ease;
+        }
+
+        .day-dot {
+            width: 6px;
+            height: 6px;
+            background-color: var(--timeline-bg);
+            border-radius: 50%;
+            margin-bottom: 4px;
+            transition: background-color 0.5s ease, transform 0.5s ease;
+            position: absolute;
+            bottom: 18px; /* Align perfectly with the 2px track */
+        }
+
+        .day-marker.passed .day-dot {
+            background-color: var(--brand-sage);
+        }
+
+        .day-marker.active .day-label {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        /* --- THE SPROUT (Dynamic SVG) --- */
+        .sprout-container {
+            position: absolute;
+            bottom: 22px; /* Sits right on top of the line */
+            left: 0%; /* Set by JS */
+            transform: translateX(-50%);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            transition: left 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+            z-index: 10;
+        }
+
+        .sprout-svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+            transform-origin: bottom center;
+            transform: scale(0);
+            animation: springUp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            animation-delay: 1.2s; /* Wait for line to draw */
+        }
+
+        @keyframes springUp {
+            0% { transform: scale(0) rotate(-10deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        /* Subtle idle breathing animation for the plant */
+        .breathing-plant {
+            animation: plantBreathe 4s ease-in-out infinite alternate;
+            animation-delay: 2s;
+        }
+
+        @keyframes plantBreathe {
+            0% { transform: scale(1) rotate(0deg); }
+            100% { transform: scale(1.02) rotate(2deg); }
+        }
+
+        .sprout-path {
+            fill: none;
+            stroke: var(--brand-sage);
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .seed-path {
+            fill: var(--brand-warm);
+        }
+
+        /* Brand Tag Styling */
+        .brand-tag {
+            position: absolute;
+            right: 0px;
+            top: 0px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.55rem;
+            color: rgba(55, 53, 47, 0.3);
+            letter-spacing: 0.8px;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .brand-tag:hover { color: var(--text-main); }
+    </style>
+</head>
+<body>
+
+    <div class="header-banner">
+        <a href="https://www.instagram.com/faithreflects/" target="_blank" class="brand-tag">@faithreflects</a>
+
+        <div class="header-text">
+            <h3 class="title">The Word Taking Root</h3>
+            <p class="subtitle" id="daily-prompt">Loading...</p>
+        </div>
+
+        <div class="timeline-container">
+            <div class="timeline-track"></div>
+            <div class="timeline-fill" id="progress-fill"></div>
+
+            <!-- The growing plant container -->
+            <div class="sprout-container" id="sprout-box">
+                <!-- SVG injected via JS depending on the day -->
+            </div>
+
+            <div class="days-row" id="days-row">
+                <!-- Days injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const daysOfWeek = [
+            { label: "Sun", prompt: "The seed is planted. Listen well." },
+            { label: "Mon", prompt: "Water the word. Review your notes." },
+            { label: "Tue", prompt: "Taking root. Live out your application." },
+            { label: "Wed", prompt: "Growing steady. Keep pressing in." },
+            { label: "Thu", prompt: "Spreading branches. Share it with someone." },
+            { label: "Fri", prompt: "Bearing fruit. Finish the week strong." },
+            { label: "Sat", prompt: "Flourishing. Rest and prepare for tomorrow." }
+        ];
+
+        // SVGs for the 7 stages of growth
+        // Designed cleanly with CSS strokes for a premium look
+        const plantStages = [
+            // 0: Sunday (Just a seed)
+            `<svg class="sprout-svg breathing-plant" viewBox="0 0 40 40"><circle class="seed-path" cx="20" cy="38" r="3"/></svg>`,
+            // 1: Monday (Tiny shoot)
+            `<svg class="sprout-svg breathing-plant" viewBox="0 0 40 40"><path class="sprout-path" d="M20,38 Q22,30 20,25" /><circle class="seed-path" cx="20" cy="38" r="2"/></svg>`,
+            // 2: Tuesday (Small sprout, one leaf)
+            `<svg class="sprout-svg breathing-plant" viewBox="0 0 40 40"><path class="sprout-path" d="M20,38 Q22,25 20,18" /><path class="sprout-path" d="M20,25 Q28,22 26,16 Q20,18 20,25" fill="rgba(138, 154, 134, 0.2)"/></svg>`,
+            // 3: Wednesday (Taller, two leaves)
+            `<svg class="sprout-svg breathing-plant" viewBox="0 0 40 40"><path class="sprout-path" d="M20,38 Q18,20 20,10" /><path class="sprout-path" d="M19,25 Q10,22 12,14 Q19,16 19,25" fill="rgba(138, 154, 134, 0.2)"/><path class="sprout-path" d="M20,18 Q28,15 27,8 Q20,10 20,18" fill="rgba(138, 154, 134, 0.2)"/></svg>`,
+            // 4: Thursday (Taller, three leaves)
+            `<svg class="sprout-svg breathing-plant" viewBox="0 0 40 40"><path class="sprout-path" d="M20,38 Q22,20 20,5" /><path class="sprout-path" d="M21,28 Q30,25 29,17 Q21,19 21,28" fill="rgba(138, 154, 134, 0.2)"/><path class="sprout-path" d="M19,18 Q10,15 12,7 Q19,9 19,18" fill="rgba(138, 154, 134, 0.2)"/><path class="sprout-path" d="M20,10 Q26,6 25,1 Q20,3 20,10" fill="rgba(138, 154, 134, 0.2)"/></svg>`,
+            // 5: Friday (Small plant, 4 leaves)
+            `<svg class="sprout-svg breathing-plant" viewBox="0 0 40 40"><path class="sprout-path" d="M20,38 Q18,20 20,2" /><path class="sprout-path" d="M19,30 Q10,27 12,19 Q19,21 19,30" fill="rgba(138, 154, 134, 0.2)"/><path class="sprout-path" d="M21,22 Q30,19 29,11 Q21,13 21,22" fill="rgba(138, 154, 134, 0.2)"/><path class="sprout-path" d="M19,13 Q12,9 14,2 Q19,4 19,13" fill="rgba(138, 154, 134, 0.2)"/><path class="sprout-path" d="M20,6 Q25,2 26,-2 Q20,0 20,6" fill="rgba(138, 154, 134, 0.2)"/></svg>`,
+            // 6: Saturday (Flourishing plant)
+            `<svg class="sprout-svg breathing-plant" viewBox="0 0 40 40"><path class="sprout-path" d="M20,38 Q22,20 20,2" /><path class="sprout-path" d="M21,30 Q30,27 29,19 Q21,21 21,30" fill="rgba(138, 154, 134, 0.2)"/><path class="sprout-path" d="M19,22 Q10,19 12,11 Q19,13 19,22" fill="rgba(138, 154, 134, 0.2)"/><path class="sprout-path" d="M21,13 Q28,9 26,2 Q21,4 21,13" fill="rgba(138, 154, 134, 0.2)"/><path class="sprout-path" d="M19,6 Q14,2 13,-2 Q19,0 19,6" fill="rgba(138, 154, 134, 0.2)"/><circle cx="20" cy="0" r="2.5" fill="var(--brand-warm)"/></svg>`
+        ];
+
+        function initWidget() {
+            const todayIndex = new Date().getDay(); // 0 is Sunday, 6 is Saturday
+            const daysRow = document.getElementById('days-row');
+            
+            // Build the Day Markers
+            daysOfWeek.forEach((day, index) => {
+                const isPassed = index <= todayIndex;
+                const isActive = index === todayIndex;
+                
+                const marker = document.createElement('div');
+                marker.className = `day-marker ${isPassed ? 'passed' : ''} ${isActive ? 'active' : ''}`;
+                marker.innerHTML = `
+                    <div class="day-dot"></div>
+                    <span class="day-label">${day.label}</span>
+                `;
+                daysRow.appendChild(marker);
+            });
+
+            // Update Text Prompt
+            document.getElementById('daily-prompt').innerText = daysOfWeek[todayIndex].prompt;
+
+            // Animate Timeline and Plant
+            setTimeout(() => {
+                // Calculate percentage based on 6 intervals (0 to 100%)
+                const percentage = (todayIndex / 6) * 100;
+                
+                document.getElementById('progress-fill').style.width = `${percentage}%`;
+                
+                const sproutBox = document.getElementById('sprout-box');
+                sproutBox.style.left = `${percentage}%`;
+                
+                // Set the correct SVG stage
+                sproutBox.innerHTML = plantStages[todayIndex];
+
+            }, 100); // Small delay to trigger CSS transitions after load
+        }
+
+        document.addEventListener('DOMContentLoaded', initWidget);
+    </script>
+</body>
+</html>
