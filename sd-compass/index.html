@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examen Compass</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: transparent; user-select: none; }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* Widget Theme Transitions */
+        .widget-container {
+            transition: background-color 1.5s ease, border-color 1.5s ease, box-shadow 1.5s ease;
+            background-color: #ffffff;
+            border-color: #e9e9e7;
+        }
+        
+        /* Consolation Theme (Warm/Morning) */
+        .widget-container.theme-consolation {
+            background-color: #fcfbf5;
+            border-color: #FCD34D;
+            box-shadow: 0 0 30px rgba(252, 211, 77, 0.15);
+        }
+        .widget-container.theme-consolation .text-main { color: #5a4a20; }
+        .widget-container.theme-consolation .text-sub { color: #8a7746; }
+
+        /* Desolation Theme (Cool/Night) */
+        .widget-container.theme-desolation {
+            background-color: #1a1e24;
+            border-color: #3b4252;
+            box-shadow: 0 0 30px rgba(59, 66, 82, 0.3);
+        }
+        .widget-container.theme-desolation .text-main { color: #eceff4; }
+        .widget-container.theme-desolation .text-sub { color: #a3b8ac; }
+        
+        /* Default Theme colors */
+        .text-main { color: #37352f; transition: color 1.5s ease; }
+        .text-sub { color: #9ca3af; transition: color 1.5s ease; }
+
+        /* Compass Animations */
+        #compass-needle {
+            transform-origin: 100px 100px;
+            transition: transform 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .nav-btn {
+            transition: all 0.3s ease;
+        }
+        .nav-btn:hover { transform: translateY(-2px); }
+        .nav-btn:active { transform: translateY(1px); }
+
+        /* Prompt Reveal */
+        .prompt-text {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.8s ease;
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            pointer-events: none;
+        }
+        .prompt-text.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div id="widgetBox" class="widget-container relative w-full max-w-sm rounded-3xl p-8 border shadow-sm flex flex-col items-center min-h-[480px]">
+        
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-6">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-sub">@faithreflects</span>
+            <div class="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider text-sub border border-current opacity-50">
+                Weekly Examen
+            </div>
+        </div>
+
+        <h2 class="serif text-2xl text-main mb-1">Spiritual Compass</h2>
+        <p class="text-xs text-sub italic mb-8">"Search me, God, and know my heart."</p>
+
+        <!-- Interactive Compass SVG -->
+        <div class="relative w-48 h-48 mb-8 flex items-center justify-center">
+            <svg viewBox="0 0 200 200" class="w-full h-full overflow-visible">
+                <!-- Outer Ring -->
+                <circle cx="100" cy="100" r="90" fill="none" stroke="currentColor" stroke-width="1" class="text-sub opacity-30" stroke-dasharray="2 4"/>
+                <circle cx="100" cy="100" r="80" fill="none" stroke="currentColor" stroke-width="2" class="text-sub opacity-20"/>
+                
+                <!-- Compass Points -->
+                <path d="M100 10 L105 25 L95 25 Z" fill="currentColor" class="text-sub opacity-50"/>
+                <path d="M100 190 L105 175 L95 175 Z" fill="currentColor" class="text-sub opacity-50"/>
+                <path d="M10 100 L25 95 L25 105 Z" fill="currentColor" class="text-sub opacity-50"/>
+                <path d="M190 100 L175 95 L175 105 Z" fill="currentColor" class="text-sub opacity-50"/>
+
+                <!-- Needle Group -->
+                <g id="compass-needle">
+                    <!-- North/Consolation Pointer (Gold) -->
+                    <path d="M100 20 L110 100 L90 100 Z" fill="#FCD34D" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.1))"/>
+                    <!-- South/Desolation Pointer (Dark) -->
+                    <path d="M100 180 L110 100 L90 100 Z" fill="#6B7280" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.1))"/>
+                    <!-- Center Pin -->
+                    <circle cx="100" cy="100" r="6" fill="#ffffff" stroke="#37352f" stroke-width="2"/>
+                    <circle cx="100" cy="100" r="2" fill="#37352f"/>
+                </g>
+            </svg>
+        </div>
+
+        <!-- Controls -->
+        <div class="flex space-x-4 w-full mb-8 relative z-10">
+            <button onclick="setTheme('desolation')" class="nav-btn flex-1 py-3 rounded-2xl border border-sub text-sub hover:bg-black/5 flex flex-col items-center justify-center transition-colors">
+                <span class="text-xs font-bold tracking-widest uppercase mb-1">Desolation</span>
+                <span class="text-[9px] opacity-70">Where I felt distant</span>
+            </button>
+            <button onclick="setTheme('consolation')" class="nav-btn flex-1 py-3 rounded-2xl border border-[#FCD34D] text-[#D4AF37] hover:bg-[#FCD34D]/10 flex flex-col items-center justify-center transition-colors">
+                <span class="text-xs font-bold tracking-widest uppercase mb-1">Consolation</span>
+                <span class="text-[9px] opacity-70">Where I felt close</span>
+            </button>
+        </div>
+
+        <!-- Prompts Display -->
+        <div class="relative w-full h-24 flex items-start justify-center">
+            
+            <div id="prompt-default" class="prompt-text active">
+                <p class="serif italic text-[15px] text-main opacity-80 leading-relaxed">
+                    Select a direction above to navigate your reflections for the week.
+                </p>
+            </div>
+
+            <div id="prompt-consolation" class="prompt-text">
+            <span class="text-[9px] font-bold tracking-widest uppercase text-[#D4AF37] block mb-2">Reflect</span>
+            <p id="consolation-text" class="serif italic text-[14px] text-main leading-relaxed">
+                "When did I feel most alive this week? When did I feel the presence of God most clearly? Give thanks for those moments."
+            </p>
+        </div>
+
+        <div id="prompt-desolation" class="prompt-text">
+            <span class="text-[9px] font-bold tracking-widest uppercase text-[#a3b8ac] block mb-2">Reflect</span>
+            <p id="desolation-text" class="serif italic text-[14px] text-main leading-relaxed">
+                "When did I feel most drained this week? When did I resist God's pull? Bring these moments into His forgiving light."
+            </p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const widgetBox = document.getElementById('widgetBox');
+        const needle = document.getElementById('compass-needle');
+        
+        const prompts = {
+        default: document.getElementById('prompt-default'),
+        consolation: document.getElementById('prompt-consolation'),
+        desolation: document.getElementById('prompt-desolation')
+    };
+
+    const consolationPromptsList = [
+        "When did I feel most alive this week? When did I feel the presence of God most clearly? Give thanks for those moments.",
+        "What was the most life-giving conversation I had this week? How did I see God in that person?",
+        "Reflect on a moment of unexpected joy or peace in the last few days. How can I hold onto that feeling?",
+        "When did I feel most aligned with God's purpose for me? What was I doing?",
+        "What scripture or worship song brought me unexpected comfort this week?"
+    ];
+
+    const desolationPromptsList = [
+        "When did I feel most drained this week? When did I resist God's pull? Bring these moments into His forgiving light.",
+        "Was there a moment this week where I let fear or anxiety dictate my actions instead of faith?",
+        "When did I feel a sense of isolation or distance from community? Ask God to bridge that gap.",
+        "Reflect on a time this week when my patience wore thin. What triggered it, and how can I invite grace into that space?",
+        "When did I seek comfort in something other than God? Release that gently back to Him."
+    ];
+
+    // Persistent tracking of how many times they've interacted
+    let interactCount = parseInt(localStorage.getItem('faithreflects_examen_count')) || 0;
+
+    function setTheme(theme) {
+        // Update UI Theme
+        widgetBox.className = 'widget-container relative w-full max-w-sm rounded-3xl p-8 border shadow-sm flex flex-col items-center min-h-[480px]';
+        widgetBox.classList.add(`theme-${theme}`);
+
+        // Rotate Needle and update random prompt text
+        if(theme === 'consolation') {
+            needle.style.transform = 'rotate(45deg)';
+            const randomPrompt = consolationPromptsList[Math.floor(Math.random() * consolationPromptsList.length)];
+            document.getElementById('consolation-text').innerText = `"${randomPrompt}"`;
+        } else if (theme === 'desolation') {
+            needle.style.transform = 'rotate(-45deg)';
+            const randomPrompt = desolationPromptsList[Math.floor(Math.random() * desolationPromptsList.length)];
+            document.getElementById('desolation-text').innerText = `"${randomPrompt}"`;
+        }
+
+        // Reveal correct prompt
+            Object.values(prompts).forEach(p => p.classList.remove('active'));
+            setTimeout(() => {
+                prompts[theme].classList.add('active');
+            }, 300);
+
+            // Increment and save
+            interactCount++;
+            localStorage.setItem('faithreflects_examen_count', interactCount);
+        }
+    </script>
+</body>
+</html>

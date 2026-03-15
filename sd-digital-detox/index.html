@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Detox Hourglass</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: transparent; color: #37352f; user-select: none; }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* Hourglass Animations */
+        .hourglass-container {
+            transition: transform 1s cubic-bezier(0.65, 0, 0.35, 1);
+        }
+        .flipped {
+            transform: rotate(180deg);
+        }
+
+        /* Sand Animations */
+        #top-sand {
+            transform-origin: top center;
+            transition: transform 1s linear;
+        }
+        #bottom-sand {
+            transform-origin: top center;
+            transition: transform 1s linear;
+        }
+        .sand-stream {
+            stroke-dasharray: 4 4;
+            animation: flowing-sand 0.4s linear infinite;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        .is-running .sand-stream {
+            opacity: 1;
+        }
+
+        @keyframes flowing-sand {
+            from { stroke-dashoffset: 0; }
+            to { stroke-dashoffset: -8; }
+        }
+
+        /* Memorial Stones */
+        .stone {
+            animation: dropStone 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05));
+        }
+        @keyframes dropStone {
+            0% { transform: translateY(-20px) scale(0); opacity: 0; }
+            100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        /* Ambient Glow */
+        .timer-glow {
+            transition: all 1s ease;
+        }
+        .is-running .timer-glow {
+            filter: drop-shadow(0 0 15px rgba(210, 180, 140, 0.4));
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div class="relative w-full max-w-sm bg-white rounded-3xl p-8 border border-[#e9e9e7] shadow-[0_8px_30px_rgb(0,0,0,0.03)] flex flex-col items-center">
+        
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-6">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#a3b8ac]">@faithreflects</span>
+            <div class="px-3 py-1 bg-[#f7f6f3] rounded-full text-[10px] font-semibold tracking-wider text-gray-500 uppercase flex items-center space-x-1">
+                <span>Total:</span>
+                <span id="stoneCount" class="text-[#37352f]">0</span>
+                <span>Hrs</span>
+            </div>
+        </div>
+
+        <h2 class="serif text-2xl text-[#37352f] mb-1">Digital Detox</h2>
+        <p class="text-xs text-gray-400 italic mb-8" id="statusText">"Unplug to reconnect."</p>
+
+        <!-- Interactive SVG Hourglass -->
+        <div class="relative w-32 h-48 mb-8 timer-glow flex items-center justify-center" id="hourglassWrapper">
+            <div class="hourglass-container w-full h-full relative" id="hourglass">
+                <svg viewBox="0 0 100 150" class="w-full h-full overflow-visible">
+                    
+                    <!-- Top Glass -->
+                    <path d="M20 20 C20 50, 45 70, 50 75 C55 70, 80 50, 80 20 Z" fill="rgba(255,255,255,0.5)" stroke="#e9e5dc" stroke-width="2"/>
+                    
+                    <!-- Bottom Glass -->
+                    <path d="M50 75 C45 80, 20 100, 20 130 L80 130 C80 100, 55 80, 50 75 Z" fill="rgba(255,255,255,0.5)" stroke="#e9e5dc" stroke-width="2"/>
+                    
+                    <!-- Sand Clipping Paths -->
+                    <clipPath id="topGlassClip">
+                        <path d="M20 20 C20 50, 45 70, 50 75 C55 70, 80 50, 80 20 Z" />
+                    </clipPath>
+                    <clipPath id="bottomGlassClip">
+                        <path d="M50 75 C45 80, 20 100, 20 130 L80 130 C80 100, 55 80, 50 75 Z" />
+                    </clipPath>
+
+                    <!-- Top Sand -->
+                    <g clip-path="url(#topGlassClip)">
+                        <rect id="top-sand" x="10" y="20" width="80" height="60" fill="#D2B48C" transform="scale(1, 0)"/>
+                    </g>
+
+                    <!-- Bottom Sand -->
+                    <g clip-path="url(#bottomGlassClip)">
+                        <rect id="bottom-sand" x="10" y="75" width="80" height="60" fill="#D2B48C" transform="scale(1, 1)"/>
+                    </g>
+
+                    <!-- Falling Sand Stream -->
+                    <line x1="50" y1="75" x2="50" y2="20" stroke="#C19A6B" stroke-width="2" class="sand-stream" />
+
+                    <!-- Wooden Base & Top -->
+                    <rect x="10" y="10" width="80" height="10" rx="3" fill="#A06B44"/>
+                    <rect x="10" y="130" width="80" height="10" rx="3" fill="#A06B44"/>
+                    
+                    <!-- Glass Highlights -->
+                    <path d="M25 25 C25 45, 40 60, 45 65" stroke="#ffffff" stroke-width="2" fill="none" opacity="0.6" stroke-linecap="round"/>
+                    <path d="M25 125 C25 105, 40 90, 45 85" stroke="#ffffff" stroke-width="2" fill="none" opacity="0.6" stroke-linecap="round"/>
+                </svg>
+            </div>
+            
+            <!-- Timer Display Overlay (Hidden while flipped) -->
+            <div id="timeDisplay" class="absolute inset-0 flex items-center justify-center font-serif text-3xl text-white drop-shadow-md z-10 transition-opacity duration-500 opacity-0 pointer-events-none mix-blend-difference">
+                60:00
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="flex space-x-3 w-full">
+            <button id="startBtn" class="flex-1 bg-[#37352f] text-white py-3 rounded-xl text-xs font-semibold uppercase tracking-wider hover:bg-black transition-colors shadow-md">
+                Begin Detox
+            </button>
+            <button id="cancelBtn" class="hidden flex-1 bg-[#f7f6f3] text-[#37352f] border border-[#e9e9e7] py-3 rounded-xl text-xs font-semibold uppercase tracking-wider hover:bg-gray-50 transition-colors">
+                Abort
+            </button>
+        </div>
+
+        <!-- Memorial Altar (Stones appear here) -->
+        <div class="w-full mt-8 pt-6 border-t border-gray-100 flex flex-col items-center">
+            <span class="text-[9px] font-bold tracking-widest uppercase text-gray-400 mb-3">Memorial Altar</span>
+            <div class="flex flex-wrap justify-center gap-2 min-h-[40px] px-4" id="stoneAltar">
+                <!-- Stones generated by JS -->
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // 60 minutes in seconds. (Change to 5 for quick testing!)
+        const TOTAL_TIME = 60 * 60; 
+        
+        let timeLeft = TOTAL_TIME;
+        let timerId = null;
+        let isRunning = false;
+        
+        // State for lifetime successful detoxes
+        let stonesCount = parseInt(localStorage.getItem('faithreflects_detox_stones')) || 0;
+
+        const hourglass = document.getElementById('hourglass');
+        const wrapper = document.getElementById('hourglassWrapper');
+        const topSand = document.getElementById('top-sand');
+        const bottomSand = document.getElementById('bottom-sand');
+        const startBtn = document.getElementById('startBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const statusText = document.getElementById('statusText');
+        const stoneAltar = document.getElementById('stoneAltar');
+        const stoneCountDisplay = document.getElementById('stoneCount');
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function updateVisuals() {
+            timeDisplay.innerText = formatTime(timeLeft);
+            
+            // Calculate sand scale based on time
+            const progress = 1 - (timeLeft / TOTAL_TIME);
+            
+            // If running, sand top goes down, bottom goes up
+            if (isRunning) {
+                bottomSand.style.transform = `scale(1, ${1 - progress})`;
+                topSand.style.transform = `scale(1, ${progress})`;
+            }
+        }
+
+        function renderStones() {
+            stoneCountDisplay.innerText = stonesCount;
+            stoneAltar.innerHTML = '';
+            
+            // Render up to 14 stones to prevent overflow, just showing recent history visually
+            const displayCount = Math.min(stonesCount, 14);
+            
+            for(let i = 0; i < displayCount; i++) {
+                // Generate a random-looking smooth stone shape using SVG
+                const randomRotation = Math.floor(Math.random() * 360);
+                const isGold = i % 5 === 4; // Every 5th stone is gold
+                const color = isGold ? '#D4AF37' : '#C4C2BC';
+                
+                const stoneHtml = `
+                    <div class="stone" style="animation-delay: ${i * 0.05}s">
+                        <svg width="24" height="20" viewBox="0 0 24 20" transform="rotate(${randomRotation})">
+                            <path d="M12 2 C18 2, 22 6, 22 10 C22 16, 17 18, 12 18 C6 18, 2 15, 2 10 C2 5, 6 2, 12 2 Z" fill="${color}" stroke="rgba(0,0,0,0.05)" stroke-width="1"/>
+                            <path d="M10 5 C14 4, 18 6, 19 9" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                `;
+                stoneAltar.innerHTML += stoneHtml;
+            }
+            
+            if(stonesCount > 14) {
+                stoneAltar.innerHTML += `<span class="text-xs text-gray-400 font-medium self-center ml-2">+${stonesCount - 14}</span>`;
+            }
+        }
+
+        function addStone() {
+            stonesCount++;
+            localStorage.setItem('faithreflects_detox_stones', stonesCount);
+            renderStones();
+        }
+
+        function completeDetox() {
+            clearInterval(timerId);
+            isRunning = false;
+            wrapper.classList.remove('is-running');
+            
+            statusText.innerText = "Restored. Well done.";
+            startBtn.innerText = "Reset";
+            startBtn.classList.remove('hidden');
+            cancelBtn.classList.add('hidden');
+            
+            // Fade in timer text to show 00:00
+            timeDisplay.style.opacity = '1';
+            
+            addStone();
+        }
+
+        startBtn.addEventListener('click', () => {
+            if (startBtn.innerText === "Reset") {
+                // Reset state
+                timeLeft = TOTAL_TIME;
+                updateVisuals();
+                hourglass.classList.remove('flipped');
+                timeDisplay.style.opacity = '0';
+                statusText.innerText = '"Unplug to reconnect."';
+                startBtn.innerText = "Begin Detox";
+                return;
+            }
+
+            // Start flow
+            isRunning = true;
+            hourglass.classList.add('flipped');
+            wrapper.classList.add('is-running');
+            
+            startBtn.classList.add('hidden');
+            cancelBtn.classList.remove('hidden');
+            statusText.innerText = "Breathe. You are untethered.";
+            timeDisplay.style.opacity = '1';
+
+            // Wait for flip animation before starting timer and sand visuals
+            setTimeout(() => {
+                if(!isRunning) return; // In case they cancelled immediately
+                
+                timerId = setInterval(() => {
+                    timeLeft--;
+                    updateVisuals();
+                    
+                    if (timeLeft <= 0) {
+                        completeDetox();
+                    }
+                }, 1000);
+            }, 1000);
+        });
+
+        cancelBtn.addEventListener('click', () => {
+            clearInterval(timerId);
+            isRunning = false;
+            wrapper.classList.remove('is-running');
+            
+            // Undo flip
+            hourglass.classList.remove('flipped');
+            timeDisplay.style.opacity = '0';
+            
+            // Instantly reset sand visually
+            topSand.style.transform = `scale(1, 0)`;
+            bottomSand.style.transform = `scale(1, 1)`;
+            timeLeft = TOTAL_TIME;
+            
+            statusText.innerText = '"Unplug to reconnect."';
+            startBtn.classList.remove('hidden');
+            cancelBtn.classList.add('hidden');
+        });
+
+        // Initialize
+        renderStones();
+        updateVisuals();
+    </script>
+</body>
+</html>

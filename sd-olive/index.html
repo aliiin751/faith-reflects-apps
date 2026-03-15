@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spiritual Health Olive Tree</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: transparent; color: #37352f; user-select: none; }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* SVG Tree Animations */
+        .tree-part {
+            transition: transform 1s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 1s ease, fill 1s ease;
+        }
+
+        #tree-trunk { transform-origin: 100px 180px; }
+        #tree-canopy { transform-origin: 100px 100px; }
+        #tree-roots { transform-origin: 100px 180px; }
+        
+        .olive {
+            opacity: 0;
+            transform: scale(0);
+            transform-origin: center;
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .olive.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Custom Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 2px solid #a3b8ac;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.1s;
+        }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); border-color: #8A9D92; }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #e9e9e7;
+            border-radius: 2px;
+        }
+        input[type=range]:focus { outline: none; }
+
+        /* Ambient Glow */
+        .glow-bg {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(163, 184, 172, 0.15) 0%, transparent 70%);
+            z-index: 0;
+            transition: transform 1s ease;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div class="relative w-full max-w-sm bg-white rounded-3xl p-8 border border-[#e9e9e7] shadow-[0_8px_30px_rgb(0,0,0,0.03)] flex flex-col items-center min-h-[550px]">
+        
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-4">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#a3b8ac]">@faithreflects</span>
+            <div class="px-3 py-1 bg-[#f7f6f3] rounded-full text-[10px] font-semibold tracking-wider text-gray-500 uppercase flex items-center space-x-1">
+                <span>Vitality:</span>
+                <span id="vitalityScore" class="text-[#37352f]">50%</span>
+            </div>
+        </div>
+
+        <h2 class="serif text-2xl text-[#37352f] mb-1">Spiritual Health</h2>
+        <p class="text-xs text-gray-400 italic mb-6 text-center">"Like an olive tree flourishing."</p>
+
+        <!-- SVG Olive Tree Container -->
+        <div class="relative w-full h-48 mb-6 flex justify-center items-end" id="treeContainer">
+            <div class="glow-bg" id="treeGlow"></div>
+            
+            <svg viewBox="0 0 200 200" class="w-full h-full overflow-visible z-10 relative">
+                
+                <!-- Ground -->
+                <ellipse cx="100" cy="180" rx="60" ry="8" fill="#f4f1eb"/>
+                <path d="M60 180 Q100 195 140 180" stroke="#e9e5dc" stroke-width="2" fill="none"/>
+
+                <!-- Roots (Grows with Word/Prayer) -->
+                <g id="tree-roots" class="tree-part">
+                    <path d="M95 180 Q80 195 70 190" stroke="#A06B44" stroke-width="3" fill="none" stroke-linecap="round"/>
+                    <path d="M100 180 Q100 200 110 205" stroke="#A06B44" stroke-width="4" fill="none" stroke-linecap="round"/>
+                    <path d="M105 180 Q125 190 135 185" stroke="#A06B44" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                </g>
+
+                <!-- Trunk -->
+                <g id="tree-trunk" class="tree-part">
+                    <path d="M95 180 Q90 130 100 100 Q110 130 105 180 Z" fill="#8B5A2B"/>
+                    <path d="M98 175 Q93 140 100 110" stroke="#704420" stroke-width="1.5" fill="none"/>
+                    <!-- Branches -->
+                    <path d="M100 120 Q80 100 65 95" stroke="#8B5A2B" stroke-width="5" fill="none" stroke-linecap="round"/>
+                    <path d="M100 115 Q125 90 140 85" stroke="#8B5A2B" stroke-width="4" fill="none" stroke-linecap="round"/>
+                    <path d="M100 100 Q110 70 105 60" stroke="#8B5A2B" stroke-width="4" fill="none" stroke-linecap="round"/>
+                </g>
+
+                <!-- Canopy (Grows with Community/Service) -->
+                <g id="tree-canopy" class="tree-part">
+                    <!-- Back leaves -->
+                    <circle cx="75" cy="85" r="25" fill="#C5D5CB" opacity="0.8"/>
+                    <circle cx="125" cy="75" r="22" fill="#C5D5CB" opacity="0.8"/>
+                    <circle cx="100" cy="55" r="28" fill="#C5D5CB" opacity="0.8"/>
+                    
+                    <!-- Front leaves -->
+                    <circle cx="65" cy="95" r="20" fill="#A3B8AC"/>
+                    <circle cx="90" cy="80" r="25" fill="#8A9D92"/>
+                    <circle cx="115" cy="85" r="22" fill="#A3B8AC"/>
+                    <circle cx="135" cy="80" r="18" fill="#8A9D92"/>
+                    <circle cx="105" cy="50" r="24" fill="#A3B8AC"/>
+                    <circle cx="85" cy="60" r="20" fill="#8A9D92"/>
+                    
+                    <!-- Highlight leaves -->
+                    <path d="M60 90 Q70 85 75 95 Q65 100 60 90 Z" fill="#D4DFD2"/>
+                    <path d="M100 45 Q115 40 110 55 Q95 60 100 45 Z" fill="#D4DFD2"/>
+                    <path d="M125 75 Q140 70 135 85 Q120 90 125 75 Z" fill="#D4DFD2"/>
+                </g>
+
+                <!-- Olives (Appears with Worship/Rest) -->
+                <g id="tree-olives" class="tree-part">
+                    <!-- Generated via JS for exact positioning -->
+                </g>
+            </svg>
+        </div>
+
+        <!-- Sliders -->
+        <div class="w-full space-y-4" id="slidersContainer">
+            <!-- Injected by JS -->
+        </div>
+
+    </div>
+
+    <script>
+        const categories = [
+            { id: 'word', label: 'The Word', type: 'root' },
+            { id: 'prayer', label: 'Prayer', type: 'root' },
+            { id: 'community', label: 'Community', type: 'canopy' },
+            { id: 'service', label: 'Service', type: 'canopy' },
+            { id: 'worship', label: 'Worship', type: 'fruit' },
+            { id: 'rest', label: 'Sabbath Rest', type: 'fruit' }
+        ];
+
+        let state = JSON.parse(localStorage.getItem('faithreflects_olive_tree')) || {
+            word: 5, prayer: 5, community: 5, service: 5, worship: 5, rest: 5
+        };
+
+        const container = document.getElementById('slidersContainer');
+        const trunk = document.getElementById('tree-trunk');
+        const roots = document.getElementById('tree-roots');
+        const canopy = document.getElementById('tree-canopy');
+        const olivesGroup = document.getElementById('tree-olives');
+        const vitalityScore = document.getElementById('vitalityScore');
+        const treeGlow = document.getElementById('treeGlow');
+
+        // Setup Olives in SVG
+        const olivePositions = [
+            {cx: 70, cy: 95}, {cx: 90, cy: 75}, {cx: 110, cy: 85}, 
+            {cx: 130, cy: 75}, {cx: 105, cy: 55}, {cx: 80, cy: 65},
+            {cx: 120, cy: 60}, {cx: 65, cy: 80}, {cx: 95, cy: 50}, {cx: 135, cy: 85}
+        ];
+        
+        olivePositions.forEach((pos, i) => {
+            const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            g.setAttribute("class", "olive");
+            g.setAttribute("id", `olive-${i}`);
+            g.style.transformOrigin = `${pos.cx}px ${pos.cy}px`;
+            
+            // Olive body
+            const ellipse = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
+            ellipse.setAttribute("cx", pos.cx);
+            ellipse.setAttribute("cy", pos.cy);
+            ellipse.setAttribute("rx", 3);
+            ellipse.setAttribute("ry", 4);
+            ellipse.setAttribute("fill", "#2C3E2D"); // Dark olive green
+            ellipse.setAttribute("transform", `rotate(15 ${pos.cx} ${pos.cy})`);
+            
+            // Olive highlight
+            const highlight = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
+            highlight.setAttribute("cx", pos.cx - 1);
+            highlight.setAttribute("cy", pos.cy - 1);
+            highlight.setAttribute("rx", 1);
+            highlight.setAttribute("ry", 1.5);
+            highlight.setAttribute("fill", "#546E56");
+            highlight.setAttribute("transform", `rotate(15 ${pos.cx} ${pos.cy})`);
+
+            g.appendChild(ellipse);
+            g.appendChild(highlight);
+            olivesGroup.appendChild(g);
+        });
+
+        function renderSliders() {
+            container.innerHTML = categories.map(cat => `
+                <div>
+                    <div class="flex justify-between items-end mb-1">
+                        <span class="text-[10px] font-bold tracking-widest uppercase text-gray-500">${cat.label}</span>
+                        <span class="text-[9px] text-gray-400 font-medium" id="val-${cat.id}">${state[cat.id]}/10</span>
+                    </div>
+                    <input type="range" min="1" max="10" value="${state[cat.id]}" id="slider-${cat.id}" 
+                           oninput="updateState('${cat.id}', this.value)">
+                </div>
+            `).join('');
+        }
+
+        function updateState(id, value) {
+            state[id] = parseInt(value);
+            document.getElementById(`val-${id}`).innerText = `${value}/10`;
+            localStorage.setItem('faithreflects_olive_tree', JSON.stringify(state));
+            updateTreeVisuals();
+        }
+
+        function updateTreeVisuals() {
+            // Calculate groupings
+            const rootAvg = (state.word + state.prayer) / 20; // 0.1 to 1.0
+            const canopyAvg = (state.community + state.service) / 20; 
+            const fruitAvg = (state.worship + state.rest) / 20;
+            
+            const totalAvg = Object.values(state).reduce((a, b) => a + b) / 60;
+
+            // Apply transforms based on health
+            // Minimum scale is 0.5 (sapling), max is 1.1 (flourishing)
+            const rootScale = 0.6 + (rootAvg * 0.4);
+            const trunkScale = 0.7 + (totalAvg * 0.3);
+            const canopyScale = 0.5 + (canopyAvg * 0.6);
+
+            roots.style.transform = `scale(${rootScale})`;
+            trunk.style.transform = `scale(${trunkScale}, ${trunkScale})`;
+            canopy.style.transform = `scale(${canopyScale})`;
+            
+            // Glow effect
+            treeGlow.style.transform = `translate(-50%, -50%) scale(${0.5 + totalAvg})`;
+            treeGlow.style.opacity = totalAvg;
+
+            // Olives (Fruit)
+            const numOlivesToShow = Math.floor(fruitAvg * 10);
+            for(let i=0; i<10; i++) {
+                const olive = document.getElementById(`olive-${i}`);
+                if (i < numOlivesToShow) {
+                    olive.classList.add('visible');
+                    olive.style.transitionDelay = `${i * 0.05}s`;
+                } else {
+                    olive.classList.remove('visible');
+                    olive.style.transitionDelay = '0s';
+                }
+            }
+
+            // Overall Score text
+            vitalityScore.innerText = `${Math.round(totalAvg * 100)}%`;
+            if(totalAvg > 0.8) vitalityScore.className = 'text-[#D4AF37] font-bold';
+            else vitalityScore.className = 'text-[#37352f]';
+        }
+
+        // Init
+        renderSliders();
+        setTimeout(updateTreeVisuals, 100); // Allow DOM to parse SVG before scaling
+    </script>
+</body>
+</html>

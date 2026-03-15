@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Grace Pool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: transparent; color: #37352f; user-select: none; }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* The Pool Base with Flowing Water Animation */
+        .pool-container {
+            position: relative;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #eef3f1 0%, #dce4e0 50%, #eef3f1 100%);
+            background-size: 200% 200%;
+            animation: waterFlow 8s ease infinite;
+            box-shadow: 
+                inset 0 10px 20px rgba(0,0,0,0.03),
+                inset 0 -10px 20px rgba(255,255,255,0.8),
+                0 15px 35px rgba(0,0,0,0.04);
+            border: 4px solid #fcfbf9;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes waterFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Animated Water Ripples */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid rgba(163, 184, 172, 0.6);
+            animation: ripple-expand 3s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+            pointer-events: none;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+        }
+
+        @keyframes ripple-expand {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 1; border-width: 3px; }
+            100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; border-width: 0px; }
+        }
+
+        /* Lily Bloom Animation */
+        .lily {
+            position: absolute;
+            animation: bloom 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            opacity: 0;
+            transform-origin: center;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.06));
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .lily.fade-out {
+            opacity: 0 !important;
+            transform: scale(0) rotate(-20deg) !important;
+        }
+
+        @keyframes bloom {
+            0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); opacity: 0.95; }
+        }
+
+        /* Button hover effect */
+        .grace-btn {
+            transition: all 0.3s ease;
+        }
+        .grace-btn:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div class="relative w-full max-w-sm bg-white rounded-3xl p-8 border border-[#e9e9e7] shadow-[0_8px_30px_rgb(0,0,0,0.03)] flex flex-col items-center">
+        
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#a3b8ac]">@faithreflects</span>
+            <button id="resetBtn" class="p-1.5 text-gray-300 hover:text-gray-500 transition-colors rounded-full hover:bg-gray-50" title="Reset Pool (New Month)">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            </button>
+        </div>
+
+        <h2 class="serif text-2xl text-[#37352f] mb-1">Grace Pool</h2>
+        <p class="text-xs text-gray-400 italic mb-8 max-w-[220px] text-center">"Rest without guilt. Out of grace grows life."</p>
+
+        <!-- The Interactive Pool -->
+        <div class="pool-container mb-8 relative" id="pool">
+            
+            <!-- Bottom shadow to give depth -->
+            <div class="absolute bottom-0 w-full h-1/3 bg-gradient-to-t from-[rgba(163,184,172,0.2)] to-transparent pointer-events-none z-10"></div>
+            
+            <!-- Ripples injected here -->
+            <div id="rippleContainer" class="absolute inset-0 pointer-events-none overflow-visible z-20"></div>
+            
+            <!-- Lilies injected here -->
+            <div id="lilyContainer" class="absolute inset-0 w-full h-full pointer-events-none z-30"></div>
+
+        </div>
+
+        <div class="flex items-center space-x-6 w-full px-4">
+            <div class="flex flex-col items-center justify-center flex-1">
+                <span class="text-3xl font-light text-[#37352f] font-serif transition-all duration-300" id="graceCount">0</span>
+                <span class="text-[9px] font-bold tracking-widest uppercase text-gray-400 mt-1">Lilies</span>
+            </div>
+            
+            <button id="addGraceBtn" class="grace-btn flex-[2] bg-[#f7f6f3] text-[#37352f] border border-[#e9e9e7] py-3.5 rounded-2xl text-xs font-semibold uppercase tracking-wider hover:bg-[#efede8] hover:border-gray-300 shadow-sm flex items-center justify-center space-x-2">
+                <span>🤍</span>
+                <span>Receive Grace</span>
+            </button>
+        </div>
+
+        <!-- Custom Reset Confirmation Modal -->
+        <div id="resetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/60 backdrop-blur-sm transition-opacity">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-[260px] border border-[#e9e9e7] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#37352f]">Start New Month?</h3>
+                <p class="text-xs text-gray-400 mb-6">This will gently clear all lilies from the pool.</p>
+                <div class="flex space-x-3">
+                    <button id="cancelResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-colors">Cancel</button>
+                    <button id="confirmResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#37352f] text-white hover:bg-black transition-colors">Clear Pool</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // State
+        let lilyCount = parseInt(localStorage.getItem('faithreflects_grace_count')) || 0;
+        const pool = document.getElementById('pool');
+        const rippleContainer = document.getElementById('rippleContainer');
+        const lilyContainer = document.getElementById('lilyContainer');
+        const countDisplay = document.getElementById('graceCount');
+        const btn = document.getElementById('addGraceBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        
+        // Modal Elements
+        const resetModal = document.getElementById('resetModal');
+        const confirmResetBtn = document.getElementById('confirmResetBtn');
+        const cancelResetBtn = document.getElementById('cancelResetBtn');
+
+        // Deterministic positions so they appear in the same spot on reload
+        // Grid-based random-looking distribution
+        const getLilyPosition = (index) => {
+            const positions = [
+                { top: '30%', left: '30%', rot: 15, scale: 0.9 },
+                { top: '65%', left: '70%', rot: -20, scale: 1 },
+                { top: '50%', left: '20%', rot: 45, scale: 0.8 },
+                { top: '25%', left: '60%', rot: -10, scale: 0.95 },
+                { top: '75%', left: '40%', rot: 30, scale: 0.85 },
+                { top: '40%', left: '80%', rot: -45, scale: 0.9 },
+                { top: '80%', left: '25%', rot: 10, scale: 0.75 },
+                { top: '20%', left: '80%', rot: -30, scale: 0.8 },
+                { top: '60%', left: '50%', rot: 60, scale: 1.1 },
+                { top: '45%', left: '45%', rot: 0, scale: 0.7 }
+            ];
+            
+            // Loop back around with slight offsets if they exceed 10
+            const pos = positions[index % positions.length];
+            const offsetCycle = Math.floor(index / positions.length);
+            
+            // Add slight randomness based on cycle so they don't perfectly stack
+            const offsetTop = (offsetCycle * 5) % 15;
+            const offsetLeft = (offsetCycle * -3) % 15;
+
+            return {
+                top: `calc(${pos.top} + ${offsetTop}px)`,
+                left: `calc(${pos.left} + ${offsetLeft}px)`,
+                rot: pos.rot + (offsetCycle * 15),
+                scale: pos.scale
+            };
+        };
+
+        const createLilySvg = (delay = 0) => {
+            return `
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="animation-delay: ${delay}s">
+                <!-- Lily Pad -->
+                <path d="M20 35C28.2843 35 35 28.2843 35 20C35 11.7157 28.2843 5 20 5C11.7157 5 5 11.7157 5 20C5 23.5188 6.21206 26.754 8.23232 29.288L20 20L10.712 31.7677C13.246 33.7879 16.4812 35 20 35Z" fill="#A3B8AC" stroke="#8A9D92" stroke-width="1"/>
+                
+                <!-- Flower Petals Outer -->
+                <g transform="translate(20, 20)">
+                    <path d="M0 0 Q-5 -10 0 -15 Q5 -10 0 0" fill="#FFFFFF" stroke="#F0ECE1" stroke-width="0.5"/>
+                    <path d="M0 0 Q-10 -5 -15 0 Q-10 5 0 0" fill="#FFFFFF" stroke="#F0ECE1" stroke-width="0.5"/>
+                    <path d="M0 0 Q10 -5 15 0 Q10 5 0 0" fill="#FFFFFF" stroke="#F0ECE1" stroke-width="0.5"/>
+                    <path d="M0 0 Q-5 10 0 15 Q5 10 0 0" fill="#FFFFFF" stroke="#F0ECE1" stroke-width="0.5"/>
+                    
+                    <!-- Flower Petals Inner -->
+                    <path d="M0 0 Q-8 -8 -10 -10 Q-5 -2 0 0" fill="#FCFBF9" stroke="#E9E9E7" stroke-width="0.5"/>
+                    <path d="M0 0 Q8 -8 10 -10 Q5 -2 0 0" fill="#FCFBF9" stroke="#E9E9E7" stroke-width="0.5"/>
+                    <path d="M0 0 Q-8 8 -10 10 Q-5 2 0 0" fill="#FCFBF9" stroke="#E9E9E7" stroke-width="0.5"/>
+                    <path d="M0 0 Q8 8 10 10 Q5 2 0 0" fill="#FCFBF9" stroke="#E9E9E7" stroke-width="0.5"/>
+                    
+                    <!-- Yellow Center -->
+                    <circle cx="0" cy="0" r="2.5" fill="#FCD34D"/>
+                </g>
+            </svg>`;
+        };
+
+        function renderLilies(animateLast = false) {
+            countDisplay.innerText = lilyCount;
+            lilyContainer.innerHTML = '';
+            
+            for(let i = 0; i < lilyCount; i++) {
+                const isLast = i === lilyCount - 1;
+                const shouldAnimate = isLast && animateLast;
+                const pos = getLilyPosition(i);
+                
+                const lilyEl = document.createElement('div');
+                lilyEl.className = 'lily';
+                
+                // If we aren't animating, skip the bloom delay and set opacity immediately
+                if(!shouldAnimate) {
+                    lilyEl.style.animation = 'none';
+                    lilyEl.style.opacity = '0.95';
+                    lilyEl.style.transform = `scale(${pos.scale}) rotate(${pos.rot}deg)`;
+                } else {
+                    lilyEl.style.transform = `scale(${pos.scale}) rotate(${pos.rot}deg)`; // Final state set by keyframes
+                }
+
+                lilyEl.style.top = pos.top;
+                lilyEl.style.left = pos.left;
+                lilyEl.style.marginLeft = '-20px'; // center offset
+                lilyEl.style.marginTop = '-20px';
+                
+                lilyEl.innerHTML = createLilySvg(shouldAnimate ? 0.6 : 0); // Delay bloom slightly if animating
+                
+                lilyContainer.appendChild(lilyEl);
+            }
+        }
+
+        function createRipple() {
+            // Create 3 concentric ripples
+            for(let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    const ripple = document.createElement('div');
+                    ripple.className = 'ripple';
+                    ripple.style.width = '100px';
+                    ripple.style.height = '100px';
+                    rippleContainer.appendChild(ripple);
+                    
+                    // Clean up DOM after animation
+                    setTimeout(() => {
+                        if (rippleContainer.contains(ripple)) {
+                            ripple.remove();
+                        }
+                    }, 3000);
+                }, i * 300); // Stagger them
+            }
+        }
+
+        btn.addEventListener('click', () => {
+            // 1. Create Ripple
+            createRipple();
+            
+            // 2. Update State
+            lilyCount++;
+            localStorage.setItem('faithreflects_grace_count', lilyCount);
+            
+            // 3. Update counter immediately
+            countDisplay.innerText = lilyCount;
+            countDisplay.style.transform = 'scale(1.2)';
+            setTimeout(() => countDisplay.style.transform = 'scale(1)', 200);
+
+            // 4. Render new lily with animation
+            renderLilies(true);
+        });
+
+        // Show custom modal instead of native confirm()
+        resetBtn.addEventListener('click', () => {
+            resetModal.classList.remove('hidden');
+        });
+
+        // Hide modal on cancel
+        cancelResetBtn.addEventListener('click', () => {
+            resetModal.classList.add('hidden');
+        });
+
+        // Execute reset on confirm
+        confirmResetBtn.addEventListener('click', () => {
+            resetModal.classList.add('hidden');
+            const allLilies = document.querySelectorAll('.lily');
+            allLilies.forEach(lily => lily.classList.add('fade-out'));
+            
+            setTimeout(() => {
+                lilyCount = 0;
+                localStorage.setItem('faithreflects_grace_count', 0);
+                countDisplay.innerText = 0;
+                renderLilies();
+            }, 500); // Wait for fade out
+        });
+
+        // Initial Render
+        renderLilies(false);
+    </script>
+</body>
+</html>
