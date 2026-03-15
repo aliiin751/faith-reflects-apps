@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scripture Scroll</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: transparent; color: #37352f; user-select: none; }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* SVG Animations */
+        #closed-scroll {
+            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: center;
+        }
+        
+        #open-scroll {
+            transform-origin: center;
+            transform: scaleX(0);
+            opacity: 0;
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .is-open #open-scroll {
+            transform: scaleX(1);
+            opacity: 1;
+        }
+        .is-open #closed-scroll {
+            transform: scale(0.8);
+            opacity: 0;
+        }
+
+        /* Ink Drawing Animation */
+        .ink-line {
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .has-written .ink-line {
+            stroke-dashoffset: 0;
+        }
+
+        /* Wax Seal Animation */
+        #wax-seal {
+            transform-origin: 140px 100px;
+            transform: scale(0);
+            opacity: 0;
+            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .has-recited #wax-seal {
+            transform: scale(1);
+            opacity: 1;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
+        }
+
+        /* Ambient Holy Glow */
+        #holy-glow {
+            transition: opacity 2s ease;
+        }
+        .has-meditated #holy-glow {
+            opacity: 1;
+        }
+
+        /* Interactive Inputs */
+        .verse-input {
+            transition: all 0.3s ease;
+            background: transparent;
+        }
+        .verse-input:focus {
+            outline: none;
+            background: #fdfdfc;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        }
+
+        /* Custom Checkbox Styling */
+        .task-row {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .task-row:hover { transform: translateX(4px); }
+        .task-row.active {
+            background-color: #fcfbf9;
+            border-color: #d4dfd2;
+        }
+        .check-circle {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .task-row.active .check-circle {
+            background-color: #d4dfd2;
+            border-color: #a3b8ac;
+        }
+        .check-mark {
+            stroke-dasharray: 20;
+            stroke-dashoffset: 20;
+            transition: stroke-dashoffset 0.4s ease-in-out 0.1s;
+        }
+        .task-row.active .check-mark { stroke-dashoffset: 0; }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div class="relative w-full max-w-sm bg-white rounded-3xl p-8 border border-[#e9e9e7] shadow-[0_8px_30px_rgb(0,0,0,0.03)] flex flex-col min-h-[600px]">
+        
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-6">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#a3b8ac]">@faithreflects</span>
+            <button id="resetTriggerBtn" class="text-[10px] tracking-widest text-gray-400 uppercase hover:text-gray-700 transition-colors">
+                New Week
+            </button>
+        </div>
+
+        <h2 class="serif text-2xl text-[#37352f] mb-4">Scripture of the Week</h2>
+
+        <!-- Editable Verse Section -->
+        <div class="mb-6 relative">
+            <div class="absolute left-0 top-0 bottom-0 w-1 bg-[#D4AF37] rounded-full"></div>
+            <div class="pl-4">
+                <textarea id="verseText" rows="3" placeholder='"Type or paste your memory verse here..."' class="verse-input w-full resize-none serif italic text-lg text-[#5a5852] leading-relaxed placeholder-gray-300"></textarea>
+                <div class="flex items-center mt-1">
+                    <span class="text-gray-400 mr-2">—</span>
+                    <input type="text" id="verseRef" placeholder="e.g. Psalm 46:10" class="verse-input w-full text-sm font-medium text-gray-500 placeholder-gray-300">
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Artifact (The Scroll) -->
+        <div class="relative w-full h-40 mb-8 flex items-center justify-center" id="artifactContainer">
+            
+            <svg viewBox="0 0 200 140" class="w-full h-full overflow-visible">
+                <!-- Holy Glow (Meditate) -->
+                <circle id="holy-glow" cx="100" cy="70" r="70" fill="url(#glowGrad)" opacity="0"/>
+                
+                <!-- Open Scroll Group -->
+                <g id="open-scroll">
+                    <!-- Parchment Base -->
+                    <path d="M35 20 C80 25, 120 15, 165 20 L165 120 C120 115, 80 125, 35 120 Z" fill="#Fdfbf7" stroke="#e9e5dc" stroke-width="2"/>
+                    <!-- Wooden Rollers -->
+                    <rect x="25" y="10" width="10" height="120" rx="3" fill="#A06B44"/>
+                    <rect x="165" y="10" width="10" height="120" rx="3" fill="#A06B44"/>
+                    <!-- Roller knobs -->
+                    <circle cx="30" cy="10" r="3" fill="#8B5A2B"/>
+                    <circle cx="30" cy="130" r="3" fill="#8B5A2B"/>
+                    <circle cx="170" cy="10" r="3" fill="#8B5A2B"/>
+                    <circle cx="170" cy="130" r="3" fill="#8B5A2B"/>
+
+                    <!-- Ink Text (Write) -->
+                    <g stroke="#5a5852" stroke-width="1.5" stroke-linecap="round">
+                        <line class="ink-line" x1="50" y1="45" x2="140" y2="45" style="transition-delay: 0s;"/>
+                        <line class="ink-line" x1="50" y1="65" x2="150" y2="65" style="transition-delay: 0.2s;"/>
+                        <line class="ink-line" x1="50" y1="85" x2="130" y2="85" style="transition-delay: 0.4s;"/>
+                        <line class="ink-line" x1="50" y1="105" x2="100" y2="105" style="transition-delay: 0.6s;"/>
+                    </g>
+
+                    <!-- Golden Wax Seal (Recite) -->
+                    <g id="wax-seal">
+                        <circle cx="140" cy="100" r="14" fill="#D4AF37"/>
+                        <circle cx="140" cy="100" r="11" fill="none" stroke="#C2831E" stroke-width="1.5"/>
+                        <!-- Cross imprint -->
+                        <path d="M140 92 L140 108 M134 98 L146 98" stroke="#FDFBF7" stroke-width="2" stroke-linecap="round"/>
+                    </g>
+                </g>
+
+                <!-- Closed Scroll Group -->
+                <g id="closed-scroll">
+                    <!-- Rolled Parchment -->
+                    <rect x="85" y="15" width="30" height="110" rx="8" fill="#Fdfbf7" stroke="#e9e5dc" stroke-width="2"/>
+                    <!-- Inner shadow/depth -->
+                    <path d="M110 15 L110 125" stroke="#e9e5dc" stroke-width="1"/>
+                    <!-- Center Ribbon -->
+                    <rect x="83" y="60" width="34" height="20" fill="#D4AF37" rx="2"/>
+                    <path d="M83 62 L117 62 M83 78 L117 78" stroke="#C2831E" stroke-width="1" opacity="0.5"/>
+                    <!-- Top/Bottom Rollers sticking out -->
+                    <rect x="90" y="5" width="20" height="10" rx="2" fill="#A06B44"/>
+                    <rect x="90" y="125" width="20" height="10" rx="2" fill="#A06B44"/>
+                </g>
+
+                <defs>
+                    <radialGradient id="glowGrad" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="rgba(212, 175, 55, 0.25)"/>
+                        <stop offset="100%" stop-color="rgba(212, 175, 55, 0)"/>
+                    </radialGradient>
+                </defs>
+            </svg>
+        </div>
+
+        <!-- The 4 Gamified Checklists -->
+        <h3 class="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-3">Memorization Progress</h3>
+        <div class="space-y-2 flex-1" id="tasksContainer">
+            <!-- Rendered by JS -->
+        </div>
+
+        <!-- Custom Reset Modal -->
+        <div id="resetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg bg-white/60 transition-opacity">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-[260px] border border-[#e9e9e7] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#37352f]">Start New Week?</h3>
+                <p class="text-xs text-gray-400 mb-6">This will clear your current verse and progress.</p>
+                <div class="flex space-x-3">
+                    <button id="cancelResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-colors">Cancel</button>
+                    <button id="confirmResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#37352f] text-white hover:bg-black transition-colors">Confirm</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const tasksData = [
+            { id: 'read', label: 'Read 3× aloud', icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' },
+            { id: 'write', label: 'Write it out by hand', icon: 'M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z' },
+            { id: 'recite', label: 'Recite from memory', icon: 'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z' },
+            { id: 'meditate', label: 'Meditate & journal on it', icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' }
+        ];
+
+        // State Management
+        let state = JSON.parse(localStorage.getItem('faithreflects_scripture')) || {
+            verseText: '',
+            verseRef: '',
+            tasks: { read: false, write: false, recite: false, meditate: false }
+        };
+
+        const verseTextEl = document.getElementById('verseText');
+        const verseRefEl = document.getElementById('verseRef');
+        const artifactContainer = document.getElementById('artifactContainer');
+        const tasksContainer = document.getElementById('tasksContainer');
+        
+        // Modal elements
+        const resetModal = document.getElementById('resetModal');
+        const resetTriggerBtn = document.getElementById('resetTriggerBtn');
+        const cancelResetBtn = document.getElementById('cancelResetBtn');
+        const confirmResetBtn = document.getElementById('confirmResetBtn');
+
+        // Init Text
+        verseTextEl.value = state.verseText;
+        verseRefEl.value = state.verseRef;
+
+        // Auto-save typing
+        verseTextEl.addEventListener('input', (e) => {
+            state.verseText = e.target.value;
+            saveState();
+        });
+        verseRefEl.addEventListener('input', (e) => {
+            state.verseRef = e.target.value;
+            saveState();
+        });
+
+        function saveState() {
+            localStorage.setItem('faithreflects_scripture', JSON.stringify(state));
+        }
+
+        function toggleTask(id) {
+            state.tasks[id] = !state.tasks[id];
+            saveState();
+            updateVisuals();
+            renderTasks();
+        }
+
+        function updateVisuals() {
+            // Unroll scroll if any task is started, OR specifically if read is true
+            const hasStarted = Object.values(state.tasks).some(val => val === true);
+            
+            if (hasStarted) artifactContainer.classList.add('is-open');
+            else artifactContainer.classList.remove('is-open');
+
+            if (state.tasks.write) artifactContainer.classList.add('has-written');
+            else artifactContainer.classList.remove('has-written');
+
+            if (state.tasks.recite) artifactContainer.classList.add('has-recited');
+            else artifactContainer.classList.remove('has-recited');
+
+            if (state.tasks.meditate) artifactContainer.classList.add('has-meditated');
+            else artifactContainer.classList.remove('has-meditated');
+        }
+
+        function renderTasks() {
+            tasksContainer.innerHTML = tasksData.map(task => {
+                const isActive = state.tasks[task.id];
+                return `
+                    <div onclick="toggleTask('${task.id}')" class="task-row flex items-center p-3 rounded-xl border ${isActive ? 'active' : 'border-[#e9e9e7] hover:border-gray-200'}">
+                        
+                        <div class="check-circle w-5 h-5 rounded-md border-2 border-[#e9e9e7] mr-3 flex items-center justify-center shrink-0">
+                            <svg class="w-3.5 h-3.5 text-white check-mark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+
+                        <div class="flex-1">
+                            <h3 class="text-sm font-medium text-[#37352f] leading-none">${task.label}</h3>
+                        </div>
+
+                        <div class="text-gray-300 ${isActive ? 'text-[#D4AF37]' : ''} opacity-60 shrink-0 ml-2 transition-colors duration-300">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${task.icon}"></path></svg>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Modal Logic
+        resetTriggerBtn.addEventListener('click', () => resetModal.classList.remove('hidden'));
+        cancelResetBtn.addEventListener('click', () => resetModal.classList.add('hidden'));
+        
+        confirmResetBtn.addEventListener('click', () => {
+            state = {
+                verseText: '', verseRef: '',
+                tasks: { read: false, write: false, recite: false, meditate: false }
+            };
+            saveState();
+            verseTextEl.value = '';
+            verseRefEl.value = '';
+            updateVisuals();
+            renderTasks();
+            resetModal.classList.add('hidden');
+        });
+
+        // Initial Load
+        renderTasks();
+        setTimeout(updateVisuals, 50); // Small delay to let CSS register state for animation
+    </script>
+</body>
+</html>

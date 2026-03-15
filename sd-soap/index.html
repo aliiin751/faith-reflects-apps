@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Living SOAP Journal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: transparent; color: #37352f; user-select: none; }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* Accordion Styles */
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+            opacity: 0;
+        }
+        .accordion-item.open .accordion-content {
+            max-height: 250px;
+            opacity: 1;
+        }
+        .accordion-header {
+            transition: background-color 0.3s ease;
+        }
+        .accordion-item.open .accordion-header {
+            background-color: #fcfbf9;
+            border-bottom-color: transparent;
+        }
+        .chevron {
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .accordion-item.open .chevron {
+            transform: rotate(180deg);
+        }
+
+        /* Textarea styling */
+        textarea {
+            resize: none;
+            transition: all 0.3s ease;
+        }
+        textarea:focus {
+            outline: none;
+            background-color: #ffffff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        }
+
+        /* Custom Checkbox */
+        .check-circle {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .is-complete .check-circle {
+            background-color: #d4dfd2;
+            border-color: #a3b8ac;
+        }
+        .check-mark {
+            stroke-dasharray: 20;
+            stroke-dashoffset: 20;
+            transition: stroke-dashoffset 0.4s ease-in-out 0.1s;
+        }
+        .is-complete .check-mark { stroke-dashoffset: 0; }
+
+        /* Plant Growth Animations */
+        .plant-part {
+            transition: all 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        /* State 1: Seedling (Scripture) */
+        #stem {
+            stroke-dasharray: 150;
+            stroke-dashoffset: 150;
+        }
+        .state-1 #stem, .state-2 #stem, .state-3 #stem, .state-4 #stem {
+            stroke-dashoffset: 100; /* Grows partially */
+        }
+        
+        /* State 2: Leaves (Observation) */
+        .leaf {
+            transform: scale(0);
+            transform-origin: center bottom;
+            opacity: 0;
+        }
+        .state-2 #stem, .state-3 #stem, .state-4 #stem { stroke-dashoffset: 60; }
+        .state-2 .leaf.lower, .state-3 .leaf.lower, .state-4 .leaf.lower {
+            transform: scale(1); opacity: 1;
+        }
+
+        /* State 3: Taller & Upper Leaves (Application) */
+        .state-3 #stem, .state-4 #stem { stroke-dashoffset: 0; }
+        .state-3 .leaf.upper, .state-4 .leaf.upper {
+            transform: scale(1); opacity: 1;
+            transition-delay: 0.3s;
+        }
+
+        /* State 4: Flowers & Glow (Prayer) */
+        .flower {
+            transform: scale(0) rotate(-20deg);
+            transform-origin: center;
+            opacity: 0;
+        }
+        .state-4 .flower {
+            transform: scale(1) rotate(0deg); opacity: 1;
+            transition-delay: 0.6s;
+        }
+        #plant-glow {
+            opacity: 0;
+            transition: opacity 2s ease 1s;
+        }
+        .state-4 #plant-glow { opacity: 1; }
+
+        /* Weather Animations (Triggered dynamically) */
+        .raindrop {
+            opacity: 0;
+            transform: translateY(-20px) scale(0);
+        }
+        .animate-rain {
+            animation: rainDrop 1.5s ease-in forwards;
+        }
+        @keyframes rainDrop {
+            0% { opacity: 0; transform: translateY(-30px) scale(0.8); }
+            50% { opacity: 1; transform: translateY(20px) scale(1); }
+            100% { opacity: 0; transform: translateY(40px) scale(0); }
+        }
+
+        #sun-rays {
+            opacity: 0;
+            transform-origin: 140px 30px;
+            transform: rotate(0deg);
+            transition: opacity 1s ease;
+        }
+        .animate-sun {
+            opacity: 0.8 !important;
+            animation: sunSpin 4s linear infinite;
+        }
+        @keyframes sunSpin {
+            100% { transform: rotate(36deg); }
+        }
+
+        .sparkle {
+            opacity: 0;
+            transform-origin: center;
+        }
+        .animate-sparkle {
+            animation: sparklePop 1.5s ease-out forwards;
+        }
+        @keyframes sparklePop {
+            0% { opacity: 0; transform: scale(0) translateY(10px); }
+            50% { opacity: 1; transform: scale(1) translateY(0); filter: drop-shadow(0 0 4px #D4AF37); }
+            100% { opacity: 0; transform: scale(0) translateY(-10px); }
+        }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-2 overflow-hidden">
+
+    <div class="relative w-full max-w-lg bg-white rounded-2xl p-4 md:p-5 border border-[#e9e9e7] shadow-[0_8px_30px_rgb(0,0,0,0.03)] flex flex-col h-fit">
+        
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-4">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#a3b8ac]">@faithreflects</span>
+            <button id="clearTriggerBtn" class="text-[10px] tracking-widest text-gray-400 uppercase hover:text-gray-700 transition-colors bg-[#f7f6f3] px-3 py-1.5 rounded-full">
+                New Entry
+            </button>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-5 mb-2">
+            <!-- Left Side: Titles & Plant -->
+            <div class="flex-shrink-0 flex flex-col items-center md:items-start w-full md:w-1/3">
+                <h2 class="serif text-3xl text-[#37352f] mb-1">SOAP Journal</h2>
+                <p class="text-[11px] text-gray-400 italic mb-4 text-center md:text-left">"Fruitful & Blooming."</p>
+                
+                <!-- Gamified Garden SVG -->
+                <div class="relative w-36 h-44 mx-auto md:mx-0 flex justify-center items-end" id="gardenContainer">
+                    
+                    <!-- Ambient Glow -->
+                    <div id="plant-glow" class="absolute inset-0 bg-amber-400/20 rounded-full blur-xl transform scale-75 translate-y-4"></div>
+
+                    <svg viewBox="0 0 160 180" class="w-full h-full overflow-visible z-10">
+                        
+                        <!-- Dynamic Weather Effects -->
+                        <!-- Sun -->
+                        <g id="sun-rays" stroke="#FCD34D" stroke-width="2" stroke-linecap="round">
+                            <line x1="140" y1="15" x2="140" y2="5"/>
+                            <line x1="140" y1="45" x2="140" y2="55"/>
+                            <line x1="125" y1="30" x2="115" y2="30"/>
+                            <line x1="155" y1="30" x2="165" y2="30"/>
+                            <line x1="129" y1="19" x2="122" y2="12"/>
+                            <line x1="151" y1="41" x2="158" y2="48"/>
+                            <line x1="151" y1="19" x2="158" y2="12"/>
+                            <line x1="129" y1="41" x2="122" y2="48"/>
+                        </g>
+                        <circle cx="140" cy="30" r="8" fill="#FCD34D" opacity="0.8"/>
+                        
+                        <!-- Rain -->
+                        <path id="drop1" class="raindrop" d="M60 20 Q65 30 60 35 Q55 30 60 20 Z" fill="#93C5FD"/>
+                        <path id="drop2" class="raindrop" d="M80 10 Q85 20 80 25 Q75 20 80 10 Z" fill="#93C5FD" style="animation-delay: 0.3s"/>
+                        
+                        <!-- Sparkles -->
+                        <path id="sparkle1" class="sparkle" d="M50 120 L55 110 L60 120 L55 130 Z" fill="#D4AF37"/>
+                        <path id="sparkle2" class="sparkle" d="M100 130 L103 123 L106 130 L103 137 Z" fill="#D4AF37" style="animation-delay: 0.2s"/>
+
+                        <!-- Plant Base / Pot -->
+                        <path d="M50 160 L58 180 L102 180 L110 160 Z" fill="#C19A6B"/>
+                        <rect x="46" y="152" width="68" height="8" rx="2" fill="#A06B44"/>
+                        <ellipse cx="80" cy="152" rx="34" ry="4" fill="#8B5A2B"/> <!-- Soil -->
+
+                        <!-- The Plant -->
+                        <!-- Stem -->
+                        <path id="stem" class="plant-part" d="M80 152 Q70 110 80 80 Q90 50 80 30" stroke="#8A9D92" stroke-width="4" fill="none" stroke-linecap="round"/>
+                        
+                        <!-- Leaves (Lower) -->
+                        <path class="plant-part leaf lower" style="transform-origin: 80px 130px;" d="M80 130 Q100 140 105 125 Q90 115 80 130" fill="#A3B8AC"/>
+                        <path class="plant-part leaf lower" style="transform-origin: 78px 110px;" d="M78 110 Q50 120 45 105 Q60 95 78 110" fill="#8A9D92"/>
+                        
+                        <!-- Leaves (Upper) -->
+                        <path class="plant-part leaf upper" style="transform-origin: 82px 85px;" d="M82 85 Q105 85 110 70 Q95 65 82 85" fill="#C5D5CB"/>
+                        <path class="plant-part leaf upper" style="transform-origin: 79px 65px;" d="M79 65 Q55 60 55 45 Q70 45 79 65" fill="#A3B8AC"/>
+
+                        <!-- Flowers -->
+                        <g class="plant-part flower" style="transform-origin: 80px 30px;">
+                            <circle cx="80" cy="20" r="6" fill="#fcfbf9" stroke="#e9e9e7" stroke-width="1"/>
+                            <circle cx="90" cy="30" r="6" fill="#fcfbf9" stroke="#e9e9e7" stroke-width="1"/>
+                            <circle cx="80" cy="40" r="6" fill="#fcfbf9" stroke="#e9e9e7" stroke-width="1"/>
+                            <circle cx="70" cy="30" r="6" fill="#fcfbf9" stroke="#e9e9e7" stroke-width="1"/>
+                            <circle cx="80" cy="30" r="4" fill="#FCD34D"/> <!-- Center -->
+                        </g>
+
+                        <g class="plant-part flower" style="transform-origin: 105px 70px; transform: scale(0); transition-delay: 0.8s;">
+                            <circle cx="105" cy="64" r="4" fill="#fcfbf9" stroke="#e9e9e7" stroke-width="1"/>
+                            <circle cx="111" cy="70" r="4" fill="#fcfbf9" stroke="#e9e9e7" stroke-width="1"/>
+                            <circle cx="105" cy="76" r="4" fill="#fcfbf9" stroke="#e9e9e7" stroke-width="1"/>
+                            <circle cx="99" cy="70" r="4" fill="#fcfbf9" stroke="#e9e9e7" stroke-width="1"/>
+                            <circle cx="105" cy="70" r="2.5" fill="#FCD34D"/>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Right Side: The Interactive Accordion -->
+            <div class="flex-1 w-full flex flex-col space-y-3" id="accordionContainer">
+                <!-- S - Scripture -->
+                <div class="accordion-item border border-[#e9e9e7] rounded-2xl overflow-hidden bg-white shadow-sm transition-all" id="item-s">
+                    <button class="accordion-header w-full px-5 py-3 flex items-center justify-between hover:bg-gray-50 text-left" onclick="toggleAccordion('s')">
+                        <div class="flex items-center space-x-4">
+                            <div class="check-circle w-5 h-5 rounded border-2 border-[#e9e9e7] flex items-center justify-center shrink-0">
+                                <svg class="w-3.5 h-3.5 text-white check-mark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <div>
+                                <h3 class="font-serif text-[#37352f] font-medium leading-tight"><span class="font-bold text-[#D4AF37]">S</span> — Scripture</h3>
+                                <p class="text-[10px] uppercase tracking-widest text-gray-400 mt-0.5">Water the seed</p>
+                            </div>
+                        </div>
+                        <svg class="chevron w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content bg-[#fcfbf9]">
+                        <div class="px-5 pb-5 pt-2">
+                            <textarea id="text-s" placeholder="Write out the verse that stood out to you..." class="w-full bg-transparent text-sm text-[#5a5852] placeholder-gray-300 border border-gray-200 rounded-xl p-3 focus:border-[#D4AF37]" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- O - Observation -->
+                <div class="accordion-item border border-[#e9e9e7] rounded-2xl overflow-hidden bg-white shadow-sm transition-all" id="item-o">
+                    <button class="accordion-header w-full px-5 py-3 flex items-center justify-between hover:bg-gray-50 text-left" onclick="toggleAccordion('o')">
+                        <div class="flex items-center space-x-4">
+                            <div class="check-circle w-5 h-5 rounded border-2 border-[#e9e9e7] flex items-center justify-center shrink-0">
+                                <svg class="w-3.5 h-3.5 text-white check-mark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <div>
+                                <h3 class="font-serif text-[#37352f] font-medium leading-tight"><span class="font-bold text-[#D4AF37]">O</span> — Observation</h3>
+                                <p class="text-[10px] uppercase tracking-widest text-gray-400 mt-0.5">Provide sunlight</p>
+                            </div>
+                        </div>
+                        <svg class="chevron w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content bg-[#fcfbf9]">
+                        <div class="px-5 pb-5 pt-2">
+                            <textarea id="text-o" placeholder="What is God showing you in this passage? What stands out?" class="w-full bg-transparent text-sm text-[#5a5852] placeholder-gray-300 border border-gray-200 rounded-xl p-3 focus:border-[#D4AF37]" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- A - Application -->
+                <div class="accordion-item border border-[#e9e9e7] rounded-2xl overflow-hidden bg-white shadow-sm transition-all" id="item-a">
+                    <button class="accordion-header w-full px-5 py-3 flex items-center justify-between hover:bg-gray-50 text-left" onclick="toggleAccordion('a')">
+                        <div class="flex items-center space-x-4">
+                            <div class="check-circle w-5 h-5 rounded border-2 border-[#e9e9e7] flex items-center justify-center shrink-0">
+                                <svg class="w-3.5 h-3.5 text-white check-mark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <div>
+                                <h3 class="font-serif text-[#37352f] font-medium leading-tight"><span class="font-bold text-[#D4AF37]">A</span> — Application</h3>
+                                <p class="text-[10px] uppercase tracking-widest text-gray-400 mt-0.5">Tend the soil</p>
+                            </div>
+                        </div>
+                        <svg class="chevron w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content bg-[#fcfbf9]">
+                        <div class="px-5 pb-5 pt-2">
+                            <textarea id="text-a" placeholder="How will you apply this truth to your life today?" class="w-full bg-transparent text-sm text-[#5a5852] placeholder-gray-300 border border-gray-200 rounded-xl p-3 focus:border-[#D4AF37]" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- P - Prayer -->
+                <div class="accordion-item border border-[#e9e9e7] rounded-2xl overflow-hidden bg-white shadow-sm transition-all" id="item-p">
+                    <button class="accordion-header w-full px-5 py-3 flex items-center justify-between hover:bg-gray-50 text-left" onclick="toggleAccordion('p')">
+                        <div class="flex items-center space-x-4">
+                            <div class="check-circle w-5 h-5 rounded border-2 border-[#e9e9e7] flex items-center justify-center shrink-0">
+                                <svg class="w-3.5 h-3.5 text-white check-mark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <div>
+                                <h3 class="font-serif text-[#37352f] font-medium leading-tight"><span class="font-bold text-[#D4AF37]">P</span> — Prayer</h3>
+                                <p class="text-[10px] uppercase tracking-widest text-gray-400 mt-0.5">Watch it bloom</p>
+                            </div>
+                        </div>
+                        <svg class="chevron w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content bg-[#fcfbf9]">
+                        <div class="px-5 pb-5 pt-2">
+                            <textarea id="text-p" placeholder="Turn your application into a prayer to God..." class="w-full bg-transparent text-sm text-[#5a5852] placeholder-gray-300 border border-gray-200 rounded-xl p-3 focus:border-[#D4AF37]" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Clear Confirmation Modal -->
+        <div id="clearModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg bg-white/60 transition-opacity">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-[260px] border border-[#e9e9e7] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#37352f]">Clear Journal?</h3>
+                <p class="text-xs text-gray-400 mb-6">This will reset your entries to start a fresh day.</p>
+                <div class="flex space-x-3">
+                    <button id="cancelClearBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-colors">Cancel</button>
+                    <button id="confirmClearBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#37352f] text-white hover:bg-black transition-colors">Clear</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Data & Elements
+        const keys = ['s', 'o', 'a', 'p'];
+        let state = JSON.parse(localStorage.getItem('faithreflects_soap')) || { s: '', o: '', a: '', p: '' };
+        
+        const garden = document.getElementById('gardenContainer');
+        const clearModal = document.getElementById('clearModal');
+        const sunRays = document.getElementById('sun-rays');
+        const drop1 = document.getElementById('drop1');
+        const drop2 = document.getElementById('drop2');
+        const sparkle1 = document.getElementById('sparkle1');
+        const sparkle2 = document.getElementById('sparkle2');
+
+        // Initialization
+        function init() {
+            keys.forEach(k => {
+                const textarea = document.getElementById(`text-${k}`);
+                textarea.value = state[k];
+                
+                // Set up event listeners for typing
+                textarea.addEventListener('input', (e) => {
+                    const wasComplete = isComplete(k);
+                    state[k] = e.target.value;
+                    localStorage.setItem('faithreflects_soap', JSON.stringify(state));
+                    
+                    const isNowComplete = isComplete(k);
+                    
+                    // Trigger effect only when crossing the threshold to complete
+                    if (!wasComplete && isNowComplete) {
+                        triggerEffect(k);
+                    }
+                    
+                    updateUI();
+                });
+            });
+            
+            // Open the first incomplete tab, or 's' if all empty
+            const firstIncomplete = keys.find(k => !isComplete(k)) || 's';
+            toggleAccordion(firstIncomplete);
+            updateUI();
+        }
+
+        // Logic
+        function isComplete(key) {
+            return state[key].trim().length >= 5; // User typed at least 5 chars
+        }
+
+        function toggleAccordion(key) {
+            keys.forEach(k => {
+                const item = document.getElementById(`item-${k}`);
+                if (k === key) {
+                    item.classList.toggle('open');
+                } else {
+                    item.classList.remove('open');
+                }
+            });
+        }
+
+        // Visual effects triggered upon completion of a section
+        function triggerEffect(key) {
+            if (key === 's') { // Rain
+                drop1.classList.remove('animate-rain');
+                drop2.classList.remove('animate-rain');
+                void drop1.offsetWidth; // Reflow
+                drop1.classList.add('animate-rain');
+                drop2.classList.add('animate-rain');
+            } 
+            else if (key === 'o') { // Sun
+                sunRays.classList.add('animate-sun');
+                setTimeout(() => sunRays.classList.remove('animate-sun'), 4000);
+            }
+            else if (key === 'a') { // Sparkles
+                sparkle1.classList.remove('animate-sparkle');
+                sparkle2.classList.remove('animate-sparkle');
+                void sparkle1.offsetWidth;
+                sparkle1.classList.add('animate-sparkle');
+                sparkle2.classList.add('animate-sparkle');
+            }
+        }
+
+        function updateUI() {
+            let completedCount = 0;
+            
+            keys.forEach((k, index) => {
+                const item = document.getElementById(`item-${k}`);
+                if (isComplete(k)) {
+                    item.classList.add('is-complete');
+                    completedCount++;
+                } else {
+                    item.classList.remove('is-complete');
+                }
+            });
+
+            // Update Garden SVG State
+            // state-0: empty pot, state-1: seedling, state-2: leaves, etc.
+            garden.className = `relative w-40 h-48 mx-auto md:mx-0 flex justify-center items-end state-${completedCount}`;
+            
+            // Special flower bloom logic for state 4
+            if (completedCount === 4) {
+                const flowers = document.querySelectorAll('.plant-part.flower');
+                flowers.forEach(f => {
+                    // Slight scale bounce
+                    f.style.transform = 'scale(1.1) rotate(5deg)';
+                    setTimeout(() => f.style.transform = 'scale(1) rotate(0deg)', 1500);
+                });
+            }
+        }
+
+        // Modal triggers
+        document.getElementById('clearTriggerBtn').addEventListener('click', () => {
+            clearModal.classList.remove('hidden');
+        });
+        document.getElementById('cancelClearBtn').addEventListener('click', () => {
+            clearModal.classList.add('hidden');
+        });
+        document.getElementById('confirmClearBtn').addEventListener('click', () => {
+            state = { s: '', o: '', a: '', p: '' };
+            localStorage.setItem('faithreflects_soap', JSON.stringify(state));
+            
+            keys.forEach(k => {
+                document.getElementById(`text-${k}`).value = '';
+            });
+            
+            updateUI();
+            toggleAccordion('s');
+            clearModal.classList.add('hidden');
+        });
+
+        init();
+    </script>
+</body>
+</html>
