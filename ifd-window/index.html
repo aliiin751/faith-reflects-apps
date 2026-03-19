@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stained Glass Prayer Window</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: transparent; color: #37352f; user-select: none; }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* Window & Pane Styles */
+        .pane {
+            fill: #f4f1eb; /* Frosted glass look */
+            stroke: #2C3E50; /* Dark lead lines */
+            stroke-width: 2.5;
+            transition: fill 1.5s cubic-bezier(0.34, 1.56, 0.64, 1), filter 1.5s ease;
+            cursor: pointer;
+        }
+
+        .pane.filled {
+            filter: drop-shadow(0 0 4px rgba(255,255,255,0.4));
+        }
+
+        /* Hover effect to show testimony */
+        .pane:hover {
+            stroke-width: 4;
+            filter: brightness(1.1);
+        }
+
+        /* Ambient light shining through */
+        .god-light {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 250px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 100%);
+            clip-path: polygon(20% 0, 80% 0, 100% 100%, 0% 100%);
+            opacity: 0.1;
+            pointer-events: none;
+            transition: opacity 2s ease;
+        }
+        .window-active .god-light {
+            opacity: 0.35;
+        }
+
+        /* Tooltip Card */
+        .tooltip-card {
+            opacity: 0;
+            transform: translateY(10px) scale(0.95);
+            transition: all 0.2s ease;
+            pointer-events: none;
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            margin-left: -40%; /* 80% width centered */
+            width: 80%;
+            z-index: 30;
+        }
+        .tooltip-card.visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div class="relative w-full max-w-sm bg-white rounded-3xl p-8 border border-[#e9e9e7] shadow-[0_8px_30px_rgb(0,0,0,0.03)] flex flex-col items-center min-h-[550px]">
+        
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-6">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#a3b8ac]">@faithreflects</span>
+            <div class="px-3 py-1 bg-[#f7f6f3] rounded-full text-[10px] font-semibold tracking-wider text-gray-500">
+                <span id="answeredCount">0</span> ANSWERED
+            </div>
+        </div>
+
+        <h2 class="serif text-2xl text-[#37352f] mb-1">Prayer Window</h2>
+        <p class="text-xs text-gray-400 italic mb-8 text-center px-2">"A masterpiece built on His faithfulness."</p>
+
+        <!-- SVG Window Container -->
+        <div class="relative w-48 h-64 mb-6 z-10" id="windowContainer">
+            <div class="god-light"></div>
+            
+            <svg viewBox="0 0 120 180" class="w-full h-full overflow-visible">
+                <!-- Outer Arch / Frame -->
+                <path d="M10 170 L10 60 C10 20, 110 20, 110 60 L110 170 Z" fill="none" stroke="#2C3E50" stroke-width="6"/>
+                <rect x="5" y="170" width="110" height="5" fill="#2C3E50"/> <!-- Sill -->
+
+                <!-- 12 Stained Glass Panes (Drawn meticulously to interlock) -->
+                <!-- Top Arch Panes -->
+                <path id="pane-0" class="pane" d="M60 20 C40 25, 25 40, 20 60 L45 60 C48 45, 53 35, 60 20 Z" />
+                <path id="pane-1" class="pane" d="M60 20 C80 25, 95 40, 100 60 L75 60 C72 45, 67 35, 60 20 Z" />
+                <path id="pane-2" class="pane" d="M60 20 C53 35, 48 45, 45 60 L75 60 C72 45, 67 35, 60 20 Z" />
+                
+                <!-- Middle Row -->
+                <path id="pane-3" class="pane" d="M20 60 L45 60 L45 95 L20 95 Z" />
+                <path id="pane-4" class="pane" d="M45 60 L75 60 L75 95 L45 95 Z" />
+                <path id="pane-5" class="pane" d="M75 60 L100 60 L100 95 L75 95 Z" />
+                
+                <!-- Lower Middle Row -->
+                <path id="pane-6" class="pane" d="M20 95 L45 95 L45 130 L20 130 Z" />
+                <path id="pane-7" class="pane" d="M45 95 L75 95 L75 130 L45 130 Z" />
+                <path id="pane-8" class="pane" d="M75 95 L100 95 L100 130 L75 130 Z" />
+
+                <!-- Bottom Row -->
+                <path id="pane-9" class="pane" d="M20 130 L45 130 L45 170 L20 170 Z" />
+                <path id="pane-10" class="pane" d="M45 130 L75 130 L75 170 L45 170 Z" />
+                <path id="pane-11" class="pane" d="M75 130 L100 130 L100 170 L75 170 Z" />
+            </svg>
+        </div>
+
+        <!-- Hover Tooltip -->
+        <div id="tooltip" class="tooltip-card bg-[#37352f] text-white rounded-xl p-4 text-center shadow-xl">
+            <span class="text-[9px] font-bold tracking-widest uppercase text-[#D4AF37] block mb-1">Answered Prayer</span>
+            <p id="tooltipText" class="text-xs font-medium leading-relaxed">Hover over a colored pane.</p>
+        </div>
+
+        <!-- Input Area -->
+        <div class="w-full flex space-x-2 z-10 mt-auto">
+            <input type="text" id="prayerInput" placeholder="What did God answer?" class="flex-1 px-4 py-3 bg-[#fdfdfc] border border-[#e9e9e7] focus:border-[#D4AF37] rounded-xl text-sm text-[#5a5852] outline-none transition-colors">
+            <button id="addBtn" class="bg-[#37352f] text-white px-4 py-3 rounded-xl hover:bg-black transition-colors flex items-center justify-center shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            </button>
+        </div>
+        
+        <button id="resetBtn" class="mt-3 text-[9px] tracking-widest text-gray-300 uppercase hover:text-gray-500 transition-colors w-full text-center">
+            Clear Window
+        </button>
+
+        <!-- Custom Delete Single Entry Modal -->
+        <div id="deleteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/60 backdrop-blur-sm transition-opacity">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-[260px] border border-[#e9e9e7] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#37352f]">Remove Prayer?</h3>
+                <p id="deletePrayerText" class="text-xs text-gray-500 italic mb-6 leading-relaxed line-clamp-3"></p>
+                <div class="flex space-x-3">
+                    <button id="cancelDeleteBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-colors">Cancel</button>
+                    <button id="confirmDeleteBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors">Remove</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Clear All Modal -->
+        <div id="clearModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/60 backdrop-blur-sm transition-opacity">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-[260px] border border-[#e9e9e7] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#37352f]">Clear Window?</h3>
+                <p class="text-xs text-gray-400 mb-6">This will clear all panes so you can start a new masterpiece.</p>
+                <div class="flex space-x-3">
+                    <button id="cancelClearBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-colors">Cancel</button>
+                    <button id="confirmClearBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#37352f] text-white hover:bg-black transition-colors">Clear</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Curated "Stained Glass" palette (rich, translucent-looking jewel tones)
+        const colors = [
+            '#E63946', // Ruby
+            '#1D3557', // Deep Sapphire
+            '#457B9D', // Light Azure
+            '#2A9D8F', // Emerald/Teal
+            '#E9C46A', // Gold
+            '#F4A261', // Topaz
+            '#9B5DE5', // Amethyst
+            '#F15BB5', // Rose
+            '#00BBF9', // Bright Cerulean
+            '#00F5D4', // Mint
+            '#F77F00', // Amber
+            '#D90429'  // Crimson
+        ];
+
+        let state = JSON.parse(localStorage.getItem('faithreflects_window')) || [];
+        
+        const container = document.getElementById('windowContainer');
+        const input = document.getElementById('prayerInput');
+        const countDisplay = document.getElementById('answeredCount');
+        const tooltip = document.getElementById('tooltip');
+        const tooltipText = document.getElementById('tooltipText');
+        
+        // Modals
+        const deleteModal = document.getElementById('deleteModal');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const deletePrayerText = document.getElementById('deletePrayerText');
+        
+        const clearModal = document.getElementById('clearModal');
+        const cancelClearBtn = document.getElementById('cancelClearBtn');
+        const confirmClearBtn = document.getElementById('confirmClearBtn');
+        
+        let paneToDelete = -1;
+
+        function updateWindow() {
+            countDisplay.innerText = state.length;
+            
+            // Turn on the "God Light" if there's at least one pane colored
+            if (state.length > 0) {
+                container.classList.add('window-active');
+            } else {
+                container.classList.remove('window-active');
+            }
+
+            // Iterate through the 12 panes
+            for (let i = 0; i < 12; i++) {
+                const pane = document.getElementById(`pane-${i}`);
+                
+                // Clear existing listeners to prevent duplicates
+                const newPane = pane.cloneNode(true);
+                pane.parentNode.replaceChild(newPane, pane);
+                
+                if (i < state.length) {
+                    newPane.style.fill = state[i].color;
+                    newPane.classList.add('filled');
+                    
+                    // Store index securely for the listener closure
+                    const currentIndex = i;
+                    
+                    // Add hover interaction
+                    newPane.addEventListener('mouseenter', () => {
+                        tooltipText.innerText = `"${state[currentIndex].text}"\n(Click to remove)`;
+                        tooltip.classList.add('visible');
+                    });
+                    newPane.addEventListener('mouseleave', () => {
+                        tooltip.classList.remove('visible');
+                    });
+                    
+                    // Add click interaction to delete
+                    newPane.addEventListener('click', () => {
+                        paneToDelete = currentIndex;
+                        deletePrayerText.innerText = `"${state[currentIndex].text}"`;
+                        deleteModal.classList.remove('hidden');
+                        tooltip.classList.remove('visible'); // hide tooltip
+                    });
+                } else {
+                    newPane.style.fill = '#f4f1eb'; // Frosted glass
+                    newPane.classList.remove('filled');
+                }
+            }
+        }
+
+        document.getElementById('addBtn').addEventListener('click', () => {
+            const text = input.value.trim();
+            if (text && state.length < 12) {
+                // Select a color somewhat randomly but ensuring variety
+                const colorIndex = state.length % colors.length;
+                
+                state.push({ text: text, color: colors[colorIndex] });
+                localStorage.setItem('faithreflects_window', JSON.stringify(state));
+                
+                input.value = '';
+                updateWindow();
+            } else if (state.length >= 12) {
+                alert("The window is full! A beautiful testament. You can clear it to start a new masterpiece.");
+            }
+        });
+
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('addBtn').click();
+        });
+
+        // Clear All Logic
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            clearModal.classList.remove('hidden');
+        });
+        cancelClearBtn.addEventListener('click', () => clearModal.classList.add('hidden'));
+        confirmClearBtn.addEventListener('click', () => {
+            state = [];
+            localStorage.setItem('faithreflects_window', JSON.stringify(state));
+            updateWindow();
+            clearModal.classList.add('hidden');
+        });
+
+        // Delete Single Logic
+        cancelDeleteBtn.addEventListener('click', () => {
+            deleteModal.classList.add('hidden');
+            paneToDelete = -1;
+        });
+        confirmDeleteBtn.addEventListener('click', () => {
+            if (paneToDelete > -1) {
+                state.splice(paneToDelete, 1);
+                localStorage.setItem('faithreflects_window', JSON.stringify(state));
+                updateWindow();
+            }
+            deleteModal.classList.add('hidden');
+            paneToDelete = -1;
+        });
+
+        // Init
+        updateWindow();
+    </script>
+</body>
+</html>

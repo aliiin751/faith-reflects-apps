@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mama's Grace Teacup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: transparent; color: #37352f; user-select: none; }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* Liquid & Pouring Animations */
+        #pour-stream {
+            transform-origin: top;
+            transform: scaleY(0);
+            transition: transform 0.4s ease, opacity 0.4s ease;
+            opacity: 0;
+        }
+        #pour-stream.pouring {
+            transform: scaleY(1);
+            opacity: 1;
+            animation: pourFlow 0.8s infinite linear;
+        }
+        @keyframes pourFlow {
+            0% { stroke-dashoffset: 20; }
+            100% { stroke-dashoffset: 0; }
+        }
+
+        /* Tea level container will be handled by inline JS transitions */
+        #tea-level {
+            will-change: transform;
+        }
+
+        /* Steam Animations */
+        .steam-path {
+            stroke-dasharray: 60;
+            stroke-dashoffset: 60;
+            opacity: 0;
+            transition: opacity 2s ease;
+        }
+        .is-steaming .steam-path {
+            animation: rise 3s infinite ease-in-out;
+            opacity: 0.6;
+        }
+        .is-steaming .steam-1 { animation-delay: 0s; }
+        .is-steaming .steam-2 { animation-delay: 1s; }
+        .is-steaming .steam-3 { animation-delay: 2s; }
+
+        @keyframes rise {
+            0% { stroke-dashoffset: 60; opacity: 0; transform: translateY(10px) scaleX(0.9); }
+            50% { opacity: 0.7; }
+            100% { stroke-dashoffset: -60; opacity: 0; transform: translateY(-20px) scaleX(1.1); }
+        }
+
+        /* Quote Transition */
+        #quote-container {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 1s ease;
+        }
+        #quote-container.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Button Hover */
+        .refill-btn { transition: all 0.3s ease; }
+        .refill-btn:active { transform: scale(0.96); }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div class="relative w-full max-w-sm bg-white rounded-3xl p-8 border border-[#e9e9e7] shadow-[0_8px_30px_rgb(0,0,0,0.03)] flex flex-col items-center min-h-[500px]">
+        
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-4">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#a3b8ac]">@faithreflects</span>
+            <div class="px-3 py-1 bg-[#f7f6f3] rounded-full text-[10px] font-semibold tracking-wider text-gray-500 uppercase">
+                Grace
+            </div>
+        </div>
+
+        <h2 class="serif text-2xl text-[#37352f] mb-1">Encouragement</h2>
+        <p class="text-xs text-gray-400 italic mb-6">"My cup overflows." — Psalm 23:5</p>
+
+        <!-- Teacup SVG -->
+        <div class="relative w-48 h-40 mb-2 flex justify-center items-end" id="teacupContainer">
+            <svg viewBox="0 0 200 180" class="w-full h-full overflow-visible">
+                
+                <!-- Steam -->
+                <g id="steamGroup">
+                    <path class="steam-path steam-1" d="M 85 80 Q 70 60 90 40 T 80 10" fill="none" stroke="#e9e5dc" stroke-width="4" stroke-linecap="round" filter="blur(1px)"/>
+                    <path class="steam-path steam-2" d="M 115 85 Q 130 65 110 45 T 120 15" fill="none" stroke="#e9e5dc" stroke-width="3" stroke-linecap="round" filter="blur(1px)"/>
+                    <path class="steam-path steam-3" d="M 100 75 Q 90 55 105 35 T 100 5" fill="none" stroke="#e9e5dc" stroke-width="5" stroke-linecap="round" filter="blur(2px)"/>
+                </g>
+
+                <!-- Saucer -->
+                <ellipse cx="100" cy="155" rx="65" ry="18" fill="#f4f1eb" stroke="#e9e5dc" stroke-width="2"/>
+                <ellipse cx="100" cy="157" rx="45" ry="10" fill="#e9e5dc" opacity="0.5"/>
+
+                <!-- Cup Handle -->
+                <path d="M 140 110 C 180 110, 180 145, 135 140" fill="none" stroke="#fcfbf9" stroke-width="12" stroke-linecap="round" filter="drop-shadow(2px 4px 4px rgba(0,0,0,0.05))"/>
+                <path d="M 140 110 C 180 110, 180 145, 135 140" fill="none" stroke="#e9e5dc" stroke-width="2" stroke-linecap="round"/>
+
+                <!-- Cup Body (Background/Inside) -->
+                <ellipse cx="100" cy="90" rx="50" ry="15" fill="#f4f1eb" stroke="#e9e5dc" stroke-width="2"/>
+                
+                <!-- Tea Liquid Mask & Rect -->
+                <clipPath id="cupClip">
+                    <path d="M 50 90 C 50 160, 150 160, 150 90 Z"/>
+                </clipPath>
+                
+                <g clip-path="url(#cupClip)">
+                    <!-- The Liquid Level Group (Moves up and down over 3 hours) -->
+                    <g id="tea-level" style="transform: translateY(160px);">
+                        <rect x="40" y="0" width="120" height="160" fill="#D2B48C"/>
+                        <!-- Liquid surface ellipse (gives 3D depth, moves with the liquid) -->
+                        <ellipse cx="100" cy="0" rx="48" ry="13" fill="#C19A6B" opacity="0.8"/>
+                    </g>
+                </g>
+
+                <!-- Cup Body (Foreground Glass) -->
+                <path d="M 50 90 C 50 160, 150 160, 150 90" fill="none" stroke="#e9e5dc" stroke-width="3"/>
+                <path d="M 50 90 C 50 160, 150 160, 150 90" fill="rgba(252, 251, 249, 0.6)" stroke="none"/>
+                
+                <!-- Cup Highlight -->
+                <path d="M 60 100 C 60 130, 75 145, 90 150" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+
+                <!-- Pouring Stream -->
+                <line id="pour-stream" x1="100" y1="0" x2="100" y2="100" stroke="#C19A6B" stroke-width="6" stroke-linecap="round" stroke-dasharray="10 5"/>
+            </svg>
+        </div>
+
+        <!-- Quote Container -->
+        <div id="quote-container" class="flex-1 w-full flex flex-col justify-center items-center text-center px-2 mb-6">
+            <span class="text-[10px] font-bold tracking-widest uppercase text-[#D4AF37] mb-2">Mama, remember:</span>
+            <p id="quote-text" class="serif italic text-[15px] leading-relaxed text-[#5a5852]">
+                "She is clothed with strength and dignity, and she laughs without fear of the future." — Proverbs 31:25
+            </p>
+        </div>
+
+        <!-- Refill Button -->
+        <button id="refillBtn" class="refill-btn w-full bg-[#f7f6f3] text-[#37352f] border border-[#e9e9e7] py-3.5 rounded-2xl text-xs font-semibold uppercase tracking-wider hover:bg-[#efede8] hover:border-gray-300 transition-all flex items-center justify-center space-x-2 shadow-sm">
+            <span>☕ Refill My Cup</span>
+        </button>
+
+    </div>
+
+    <script>
+        const quotes = [
+            `"She is clothed with strength and dignity, and she laughs without fear of the future." — Proverbs 31:25`,
+            `"Your faithfulness in the small moments is shaping eternity. Every tearful prayer on your knees matters more than you know."`,
+            `"Come to me, all you who are weary and burdened, and I will give you rest." — Matthew 11:28`,
+            `"The steadfast love of the Lord never ceases; his mercies never come to an end; they are new every morning." — Lamentations 3:22-23`,
+            `"He tends his flock like a shepherd: He gathers the lambs in his arms and carries them close to his heart; he gently leads those that have young." — Isaiah 40:11`,
+            `"You are not behind. You are right where God has you. One faithful conversation, one bedtime prayer—it all counts."`,
+            `"Let us not become weary in doing good, for at the proper time we will reap a harvest if we do not give up." — Galatians 6:9`,
+            `"God is within her, she will not fall; God will help her at break of day." — Psalm 46:5`
+        ];
+
+        // --- Configuration ---
+        const FULL_Y = 90;   // The Y coordinate when full
+        const EMPTY_Y = 160; // The Y coordinate when empty
+        const EMPTY_MS = 3 * 60 * 60 * 1000; // 3 Hours in milliseconds
+        const STEAM_MS = 30 * 60 * 1000;     // 30 Minutes in milliseconds
+
+        // --- State ---
+        let fillTime = parseInt(localStorage.getItem('faithreflects_teacup_fillTime')) || 0;
+        let currentQuoteIndex = parseInt(localStorage.getItem('faithreflects_teacup_index')) || 0;
+        let drainInterval = null;
+
+        const teaLevel = document.getElementById('tea-level');
+        const pourStream = document.getElementById('pour-stream');
+        const steamGroup = document.getElementById('steamGroup');
+        const quoteContainer = document.getElementById('quote-container');
+        const quoteText = document.getElementById('quote-text');
+        const refillBtn = document.getElementById('refillBtn');
+
+        // Function to smoothly update the draining tea level based on time
+        function updateDrain(isInitialLoad = false) {
+            if (!fillTime) {
+                teaLevel.style.transform = `translateY(${EMPTY_Y}px)`;
+                return;
+            }
+
+            let elapsed = Date.now() - fillTime;
+            
+            if (elapsed >= EMPTY_MS) {
+                // Cup is completely empty
+                teaLevel.style.transition = 'transform 1s ease';
+                teaLevel.style.transform = `translateY(${EMPTY_Y}px)`;
+                steamGroup.classList.remove('is-steaming');
+                if (drainInterval) clearInterval(drainInterval);
+            } else {
+                // Cup is draining. Calculate exact height.
+                let ratio = elapsed / EMPTY_MS;
+                let currentY = FULL_Y + ((EMPTY_Y - FULL_Y) * ratio);
+                
+                if (isInitialLoad) {
+                    teaLevel.style.transition = 'none'; // Snap instantly on page load
+                } else {
+                    teaLevel.style.transition = 'transform 60s linear'; // Smooth micro-drop over the minute
+                }
+                
+                teaLevel.style.transform = `translateY(${currentY}px)`;
+                quoteContainer.classList.add('visible');
+                
+                // Keep steam going for the first 30 minutes
+                if (elapsed < STEAM_MS) {
+                    steamGroup.classList.add('is-steaming');
+                } else {
+                    steamGroup.classList.remove('is-steaming');
+                }
+            }
+        }
+
+        // Initialize on load
+        quoteText.innerText = quotes[currentQuoteIndex];
+        updateDrain(true);
+        // Force reflow before applying new transitions
+        void teaLevel.offsetWidth; 
+
+        if (fillTime && (Date.now() - fillTime < EMPTY_MS)) {
+            drainInterval = setInterval(() => updateDrain(false), 60000); // Check and update every 1 minute
+        } else if (fillTime) {
+            // Load quote even if empty if it was filled previously
+            quoteContainer.classList.add('visible');
+        }
+
+        function pourTea() {
+            // Check if there is still tea left
+            if (fillTime && (Date.now() - fillTime < EMPTY_MS)) {
+                // "Drink" it down rapidly first as a cool animation, then refill
+                if (drainInterval) clearInterval(drainInterval);
+                teaLevel.style.transition = 'transform 1s cubic-bezier(0.4, 0, 0.2, 1)';
+                teaLevel.style.transform = `translateY(${EMPTY_Y}px)`;
+                steamGroup.classList.remove('is-steaming');
+                quoteContainer.classList.remove('visible');
+                
+                setTimeout(executePour, 1000);
+            } else {
+                // Cup is already empty, just pour
+                quoteContainer.classList.remove('visible');
+                setTimeout(executePour, 300);
+            }
+        }
+
+        function executePour() {
+            // 1. Pick a new quote
+            currentQuoteIndex = (currentQuoteIndex + 1) % quotes.length;
+            quoteText.innerText = quotes[currentQuoteIndex];
+            localStorage.setItem('faithreflects_teacup_index', currentQuoteIndex);
+
+            // 2. Start pour stream
+            pourStream.classList.add('pouring');
+            
+            // 3. Animate the liquid filling up
+            setTimeout(() => {
+                teaLevel.style.transition = 'transform 1.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                teaLevel.style.transform = `translateY(${FULL_Y}px)`;
+            }, 300);
+
+            // 4. Stop stream, reveal quote, trigger steam & start the slow drain!
+            setTimeout(() => {
+                pourStream.classList.remove('pouring');
+                steamGroup.classList.add('is-steaming');
+                quoteContainer.classList.add('visible');
+                
+                fillTime = Date.now();
+                localStorage.setItem('faithreflects_teacup_fillTime', fillTime);
+                
+                if (drainInterval) clearInterval(drainInterval);
+                drainInterval = setInterval(() => updateDrain(false), 60000); // Start 1 minute updates
+            }, 1800);
+        }
+
+        refillBtn.addEventListener('click', () => {
+            // Button visual feedback
+            refillBtn.style.transform = 'scale(0.96)';
+            setTimeout(() => refillBtn.style.transform = 'scale(1)', 150);
+            pourTea();
+        });
+
+    </script>
+</body>
+</html>

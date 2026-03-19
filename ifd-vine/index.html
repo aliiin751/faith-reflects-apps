@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scripture Memory Vine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: transparent; color: #37352f; user-select: none; }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* Custom Task Box */
+        .task-box {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+        .task-box.checked {
+            background-color: #f7f6f3;
+            border-color: #d4dfd2;
+        }
+        .check-icon {
+            stroke-dasharray: 20;
+            stroke-dashoffset: 20;
+            transition: stroke-dashoffset 0.4s ease-in-out;
+        }
+        .task-box.checked .check-icon { stroke-dashoffset: 0; }
+
+        /* Vine Animations */
+        #vine-stem {
+            stroke-dasharray: 260;
+            stroke-dashoffset: 260;
+            transition: stroke-dashoffset 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .vine-sprout {
+            transform: scale(0);
+            opacity: 0;
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .glow-fruit {
+            filter: drop-shadow(0 0 0px rgba(245, 158, 11, 0));
+            transition: filter 1s ease;
+        }
+
+        /* Growth Stages */
+        .stage-1 #vine-stem { stroke-dashoffset: 190; }
+        .stage-1 .sprout-1 { transform: scale(1); opacity: 1; transition-delay: 0.8s; }
+        
+        .stage-2 #vine-stem { stroke-dashoffset: 120; }
+        .stage-2 .sprout-1, .stage-2 .sprout-2 { transform: scale(1); opacity: 1; }
+        .stage-2 .sprout-2 { transition-delay: 0.8s; }
+        
+        .stage-3 #vine-stem { stroke-dashoffset: 50; }
+        .stage-3 .sprout-1, .stage-3 .sprout-2, .stage-3 .sprout-3 { transform: scale(1); opacity: 1; }
+        .stage-3 .sprout-3 { transition-delay: 0.8s; }
+        
+        .stage-4 #vine-stem { stroke-dashoffset: 0; }
+        .stage-4 .sprout-1, .stage-4 .sprout-2, .stage-4 .sprout-3, .stage-4 .sprout-4 { transform: scale(1); opacity: 1; }
+        .stage-4 .sprout-4 { transition-delay: 0.8s; }
+        .stage-4 .glow-fruit { filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.6)); }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div class="relative w-full max-w-sm bg-white rounded-3xl p-8 border border-[#e9e9e7] shadow-[0_8px_30px_rgb(0,0,0,0.03)] flex flex-col items-center min-h-[580px]">
+        
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-6">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#a3b8ac]">@faithreflects</span>
+            <div class="px-3 py-1 bg-[#f7f6f3] rounded-full text-[10px] font-semibold tracking-wider text-gray-500 uppercase flex items-center space-x-1">
+                <span>Week</span>
+                <span id="weekCount" class="text-[#37352f]">0</span>
+                <span>/ 4</span>
+            </div>
+        </div>
+
+        <h2 class="serif text-2xl text-[#37352f] mb-1">Scripture Memory</h2>
+        <p class="text-xs text-gray-400 italic mb-6 text-center px-2">"I am the vine; you are the branches."</p>
+
+        <!-- Trellis & Vine SVG Container -->
+        <div class="relative w-full h-56 mb-6 flex justify-center items-center" id="gardenContainer">
+            <svg viewBox="0 0 160 200" class="w-full h-full overflow-visible">
+                
+                <!-- Wooden Trellis Background -->
+                <g id="trellis">
+                    <!-- Vertical Posts -->
+                    <rect x="40" y="10" width="8" height="180" rx="3" fill="#D2B48C"/>
+                    <rect x="76" y="10" width="8" height="180" rx="3" fill="#D2B48C"/>
+                    <rect x="112" y="10" width="8" height="180" rx="3" fill="#D2B48C"/>
+                    
+                    <!-- Horizontal Slats -->
+                    <rect x="25" y="30" width="110" height="6" rx="2" fill="#C19A6B"/>
+                    <rect x="25" y="70" width="110" height="6" rx="2" fill="#C19A6B"/>
+                    <rect x="25" y="110" width="110" height="6" rx="2" fill="#C19A6B"/>
+                    <rect x="25" y="150" width="110" height="6" rx="2" fill="#C19A6B"/>
+                </g>
+
+                <!-- The Vine Path -->
+                <!-- A smooth bezier curve winding up the trellis -->
+                <path id="vine-stem" d="M 80 190 C 30 150, 130 130, 80 90 C 30 50, 130 30, 80 10" fill="none" stroke="#8FBC8F" stroke-width="5" stroke-linecap="round"/>
+
+                <!-- Sprouts (Leaves & Fruit) -->
+                <!-- Week 1 Sprout -->
+                <g class="vine-sprout sprout-1" style="transform-origin: 65px 145px;">
+                    <path d="M 65 145 Q 45 130, 50 155 Q 60 160, 65 145 Z" fill="#A3B8AC"/>
+                    <path d="M 65 145 Q 55 125, 40 135 Q 45 150, 65 145 Z" fill="#8A9D92"/>
+                    <circle cx="50" cy="140" r="4" fill="#FCD34D" class="glow-fruit"/>
+                    <circle cx="56" cy="136" r="4" fill="#F59E0B" class="glow-fruit"/>
+                    <circle cx="55" cy="144" r="4" fill="#FCD34D" class="glow-fruit"/>
+                </g>
+
+                <!-- Week 2 Sprout -->
+                <g class="vine-sprout sprout-2" style="transform-origin: 95px 115px;">
+                    <path d="M 95 115 Q 115 100, 110 125 Q 100 130, 95 115 Z" fill="#A3B8AC"/>
+                    <path d="M 95 115 Q 105 95, 120 105 Q 115 120, 95 115 Z" fill="#8A9D92"/>
+                    <circle cx="110" cy="110" r="4" fill="#FCD34D" class="glow-fruit"/>
+                    <circle cx="104" cy="106" r="4" fill="#F59E0B" class="glow-fruit"/>
+                    <circle cx="105" cy="114" r="4" fill="#FCD34D" class="glow-fruit"/>
+                </g>
+
+                <!-- Week 3 Sprout -->
+                <g class="vine-sprout sprout-3" style="transform-origin: 65px 75px;">
+                    <path d="M 65 75 Q 45 60, 50 85 Q 60 90, 65 75 Z" fill="#A3B8AC"/>
+                    <path d="M 65 75 Q 55 55, 40 65 Q 45 80, 65 75 Z" fill="#8A9D92"/>
+                    <circle cx="50" cy="70" r="4" fill="#FCD34D" class="glow-fruit"/>
+                    <circle cx="56" cy="66" r="4" fill="#F59E0B" class="glow-fruit"/>
+                    <circle cx="55" cy="74" r="4" fill="#FCD34D" class="glow-fruit"/>
+                </g>
+
+                <!-- Week 4 Sprout -->
+                <g class="vine-sprout sprout-4" style="transform-origin: 95px 35px;">
+                    <path d="M 95 35 Q 115 20, 110 45 Q 100 50, 95 35 Z" fill="#A3B8AC"/>
+                    <path d="M 95 35 Q 105 15, 120 25 Q 115 40, 95 35 Z" fill="#8A9D92"/>
+                    <circle cx="110" cy="30" r="4" fill="#FCD34D" class="glow-fruit"/>
+                    <circle cx="104" cy="26" r="4" fill="#F59E0B" class="glow-fruit"/>
+                    <circle cx="105" cy="34" r="4" fill="#FCD34D" class="glow-fruit"/>
+                </g>
+
+            </svg>
+        </div>
+
+        <!-- Task Checklist -->
+        <div class="w-full space-y-2" id="taskList">
+            <!-- Rendered by JS -->
+        </div>
+
+        <!-- Reset Button -->
+        <button id="resetTriggerBtn" class="mt-5 text-[9px] tracking-widest text-gray-400 uppercase hover:text-gray-700 transition-colors w-full text-center">
+            Prune Vine (New Verse)
+        </button>
+
+        <!-- Custom Prune Confirmation Modal -->
+        <div id="resetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg bg-white/60 transition-opacity">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-[260px] border border-[#e9e9e7] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#37352f]">Prune the Vine?</h3>
+                <p class="text-xs text-gray-400 mb-6">This will reset your memory progress for a new scripture.</p>
+                <div class="flex space-x-3">
+                    <button id="cancelResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-colors">Cancel</button>
+                    <button id="confirmResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#37352f] text-white hover:bg-black transition-colors">Prune</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const tasksData = [
+            { id: 'week1', label: 'Week 1 Practice' },
+            { id: 'week2', label: 'Week 2 Practice' },
+            { id: 'week3', label: 'Week 3 Practice' },
+            { id: 'week4', label: 'Week 4 Practice' }
+        ];
+
+        let state = JSON.parse(localStorage.getItem('faithreflects_vine')) || {
+            week1: false, week2: false, week3: false, week4: false
+        };
+
+        const gardenContainer = document.getElementById('gardenContainer');
+        const taskList = document.getElementById('taskList');
+        const weekCount = document.getElementById('weekCount');
+        
+        // Modal elements
+        const resetModal = document.getElementById('resetModal');
+        const resetTriggerBtn = document.getElementById('resetTriggerBtn');
+        const cancelResetBtn = document.getElementById('cancelResetBtn');
+        const confirmResetBtn = document.getElementById('confirmResetBtn');
+
+        function updateVisuals() {
+            // Determine stage based on how many are checked consecutively (or total)
+            const completedCount = Object.values(state).filter(Boolean).length;
+            
+            gardenContainer.className = `relative w-full h-56 mb-6 flex justify-center items-center stage-${completedCount}`;
+            weekCount.innerText = completedCount;
+            
+            if (completedCount === 4) {
+                weekCount.classList.add('text-[#D4AF37]');
+            } else {
+                weekCount.classList.remove('text-[#D4AF37]');
+            }
+        }
+
+        function toggleTask(id) {
+            state[id] = !state[id];
+            localStorage.setItem('faithreflects_vine', JSON.stringify(state));
+            renderTasks();
+            updateVisuals();
+        }
+
+        function renderTasks() {
+            taskList.innerHTML = tasksData.map(task => {
+                const isChecked = state[task.id];
+                return `
+                    <div onclick="toggleTask('${task.id}')" class="task-box flex items-center p-3 rounded-xl border ${isChecked ? 'checked' : 'border-[#e9e9e7] hover:border-gray-200'}">
+                        
+                        <div class="w-5 h-5 rounded-md border-2 border-[#e9e9e7] mr-3 flex items-center justify-center shrink-0 transition-colors ${isChecked ? 'bg-[#d4dfd2] border-[#a3b8ac]' : ''}">
+                            <svg class="w-3.5 h-3.5 text-white check-icon ${isChecked ? 'stroke-dashoffset-0' : 'stroke-dashoffset-20'}" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="stroke-dasharray: 20; transition: stroke-dashoffset 0.4s ease-in-out;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+
+                        <div class="flex-1">
+                            <h3 class="text-sm font-medium text-[#37352f] leading-none">${task.label}</h3>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Modal Logic
+        resetTriggerBtn.addEventListener('click', () => resetModal.classList.remove('hidden'));
+        cancelResetBtn.addEventListener('click', () => resetModal.classList.add('hidden'));
+        
+        confirmResetBtn.addEventListener('click', () => {
+            state = { week1: false, week2: false, week3: false, week4: false };
+            localStorage.setItem('faithreflects_vine', JSON.stringify(state));
+            updateVisuals();
+            renderTasks();
+            resetModal.classList.add('hidden');
+        });
+
+        // Initialize
+        renderTasks();
+        setTimeout(updateVisuals, 50); // slight delay for smooth initial animation
+    </script>
+</body>
+</html>

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firefly Blessing Jar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: transparent; color: #37352f; }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* Jar Glass Styling */
+        .glass-jar {
+            position: relative;
+            width: 140px;
+            height: 180px;
+            background: linear-gradient(180deg, rgba(233, 233, 231, 0.1) 0%, rgba(163, 184, 172, 0.15) 100%);
+            border: 3px solid rgba(233, 233, 231, 0.6);
+            border-top: none;
+            border-radius: 0 0 30px 30px;
+            box-shadow: 
+                inset 0 -10px 20px rgba(0,0,0,0.03),
+                inset 10px 0 20px rgba(255,255,255,0.5);
+            backdrop-filter: blur(2px);
+        }
+
+        .jar-lip {
+            width: 150px;
+            height: 18px;
+            background: linear-gradient(90deg, #e9e9e7 0%, #ffffff 50%, #e9e9e7 100%);
+            border-radius: 8px;
+            border: 2px solid rgba(200, 200, 190, 0.4);
+            position: absolute;
+            top: -18px;
+            left: -8px;
+            z-index: 10;
+        }
+
+        /* Firefly Particle Animation */
+        .firefly {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background-color: #FEF3C7;
+            border-radius: 50%;
+            box-shadow: 0 0 10px 4px rgba(252, 211, 77, 0.8);
+            animation: wander 8s infinite ease-in-out alternate, blink 3s infinite alternate;
+            /* Confine to jar interior */
+            left: 50%;
+            bottom: 20%;
+        }
+
+        /* Unique wandering paths based on nth-child to look organic */
+        .firefly:nth-child(odd) { animation: wander-1 10s infinite ease-in-out alternate, blink 4s infinite alternate; }
+        .firefly:nth-child(even) { animation: wander-2 12s infinite ease-in-out alternate, blink 2s infinite alternate; }
+        .firefly:nth-child(3n) { animation: wander-3 9s infinite ease-in-out alternate, blink 3.5s infinite alternate; }
+
+        @keyframes blink {
+            0% { opacity: 0.4; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 15px 6px rgba(252, 211, 77, 0.9); }
+        }
+
+        @keyframes wander-1 {
+            0% { transform: translate(-40px, 0px); }
+            33% { transform: translate(20px, -60px); }
+            66% { transform: translate(40px, -20px); }
+            100% { transform: translate(-20px, -100px); }
+        }
+        @keyframes wander-2 {
+            0% { transform: translate(30px, -20px); }
+            33% { transform: translate(-30px, -80px); }
+            66% { transform: translate(-10px, -40px); }
+            100% { transform: translate(40px, -120px); }
+        }
+        @keyframes wander-3 {
+            0% { transform: translate(0px, -20px); }
+            33% { transform: translate(-20px, -5px); }
+            66% { transform: translate(15px, -45px); }
+            100% { transform: translate(-15px, -65px); }
+        }
+
+        /* Capture Animation */
+        .capturing {
+            animation: fly-in 1.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+            position: fixed;
+            z-index: 50;
+        }
+        @keyframes fly-in {
+            0% { transform: translate(0, 0) scale(2); opacity: 1; }
+            100% { transform: translate(var(--target-x), var(--target-y)) scale(0.5); opacity: 0; }
+        }
+
+        /* Input styling */
+        input:focus {
+            box-shadow: 0 4px 15px rgba(252, 211, 77, 0.1);
+            border-color: #FCD34D;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div class="relative w-full max-w-sm bg-white rounded-3xl p-8 border border-[#e9e9e7] shadow-[0_8px_30px_rgb(0,0,0,0.03)] flex flex-col items-center min-h-[500px]">
+        
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-4 z-10">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#a3b8ac]">@faithreflects</span>
+            <div class="px-3 py-1 bg-[#f7f6f3] rounded-full text-[10px] font-semibold tracking-wider text-gray-500 uppercase flex items-center space-x-1">
+                <span id="fireflyCount" class="text-[#37352f]">0</span>
+                <span>Prayers</span>
+            </div>
+        </div>
+
+        <h2 class="serif text-2xl text-[#37352f] mb-1 z-10">Blessing Jar</h2>
+        <p class="text-[11px] text-gray-400 italic mb-8 z-10 text-center px-4">"Whispered prayers create light for their future."</p>
+
+        <!-- The Jar Container -->
+        <div class="relative mt-4 mb-8 z-10">
+            <div class="jar-lip"></div>
+            <!-- String around jar -->
+            <div class="absolute -top-[5px] -left-[10px] w-[154px] h-[4px] border-b-2 border-dashed border-[#A06B44] rounded-[50%] z-20 opacity-60"></div>
+            
+            <div class="glass-jar relative overflow-hidden" id="jarInterior">
+                <!-- Fireflies injected here -->
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="w-full flex flex-col z-10 mt-auto relative" id="inputArea">
+            <input type="text" id="blessingInput" placeholder="A short prayer over them tonight..." class="w-full px-4 py-3 bg-[#fdfdfc] border border-[#e9e9e7] rounded-xl text-sm text-[#5a5852] outline-none transition-all mb-3">
+            
+            <div class="flex space-x-2">
+                <button id="catchBtn" class="flex-1 bg-[#37352f] text-white py-3 rounded-xl text-xs font-semibold uppercase tracking-wider hover:bg-black transition-colors shadow-sm flex items-center justify-center space-x-2">
+                    <span>✨ Catch it</span>
+                </button>
+                <button id="readBtn" class="px-4 bg-[#f7f6f3] text-gray-500 py-3 rounded-xl hover:bg-gray-100 transition-colors" title="Read past blessings">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Read Modal (Hidden by default) -->
+        <div id="readModal" class="hidden absolute inset-0 z-40 bg-white/95 backdrop-blur-md rounded-3xl p-6 flex flex-col">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
+                <h3 class="font-serif text-lg text-[#37352f]">Captured Blessings</h3>
+                <button id="closeReadBtn" class="text-gray-400 hover:text-gray-700 p-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="blessingsList" class="flex-1 overflow-y-auto space-y-3 pr-2">
+                <!-- Text renders here -->
+            </div>
+            <button id="clearBtn" class="mt-4 w-full py-2.5 rounded-xl text-xs font-semibold text-red-400 hover:bg-red-50 border border-transparent hover:border-red-100 transition-colors">Empty Jar (New Month)</button>
+        </div>
+
+        <!-- Custom Reset Modal -->
+        <div id="clearModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/60 backdrop-blur-sm transition-opacity">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-[260px] border border-[#e9e9e7] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#37352f]">Empty the Jar?</h3>
+                <p class="text-xs text-gray-400 mb-6">This will release all fireflies to start a new month.</p>
+                <div class="flex space-x-3">
+                    <button id="cancelClearBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-colors">Cancel</button>
+                    <button id="confirmClearBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#37352f] text-white hover:bg-black transition-colors">Empty</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let blessings = JSON.parse(localStorage.getItem('faithreflects_fireflies')) || [];
+        const jar = document.getElementById('jarInterior');
+        const input = document.getElementById('blessingInput');
+        const countDisplay = document.getElementById('fireflyCount');
+        const inputArea = document.getElementById('inputArea');
+        
+        // Modal elements
+        const readModal = document.getElementById('readModal');
+        const closeReadBtn = document.getElementById('closeReadBtn');
+        const readBtn = document.getElementById('readBtn');
+        const blessingsList = document.getElementById('blessingsList');
+        const clearBtn = document.getElementById('clearBtn');
+        
+        // Custom Modal elements
+        const clearModal = document.getElementById('clearModal');
+        const cancelClearBtn = document.getElementById('cancelClearBtn');
+        const confirmClearBtn = document.getElementById('confirmClearBtn');
+
+        function renderFireflies() {
+            jar.innerHTML = '';
+            countDisplay.innerText = blessings.length;
+            
+            // Limit visual fireflies to 20 to prevent overcrowding/lag
+            const displayCount = Math.min(blessings.length, 20);
+            
+            for(let i=0; i<displayCount; i++) {
+                const fly = document.createElement('div');
+                fly.className = 'firefly';
+                
+                // Scatter them randomly throughout the jar
+                const leftPos = Math.random() * 70 + 15; // Between 15% and 85% width
+                const bottomPos = Math.random() * 60 + 5; // Between 5% and 65% height
+                fly.style.left = `${leftPos}%`;
+                fly.style.bottom = `${bottomPos}%`;
+                
+                // Randomize animation delays so they don't move in sync
+                fly.style.animationDelay = `-${Math.random() * 10}s, -${Math.random() * 3}s`;
+                jar.appendChild(fly);
+            }
+        }
+
+        function createCaptureAnimation() {
+            const tempFly = document.createElement('div');
+            tempFly.className = 'firefly capturing';
+            
+            // Start at input box
+            const inputRect = input.getBoundingClientRect();
+            tempFly.style.left = `${inputRect.left + (inputRect.width / 2)}px`;
+            tempFly.style.top = `${inputRect.top}px`;
+            
+            // Target the jar center
+            const jarRect = jar.getBoundingClientRect();
+            const targetX = (jarRect.left + (jarRect.width / 2)) - (inputRect.left + (inputRect.width / 2));
+            const targetY = (jarRect.top + (jarRect.height / 2)) - inputRect.top;
+            
+            tempFly.style.setProperty('--target-x', `${targetX}px`);
+            tempFly.style.setProperty('--target-y', `${targetY}px`);
+            
+            document.body.appendChild(tempFly);
+            
+            setTimeout(() => {
+                tempFly.remove();
+                renderFireflies(); // Add the permanent one
+            }, 1400);
+        }
+
+        document.getElementById('catchBtn').addEventListener('click', () => {
+            const text = input.value.trim();
+            if (text) {
+                // Animate physical catch
+                createCaptureAnimation();
+                
+                // Save data
+                blessings.push({
+                    text: text,
+                    date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                });
+                localStorage.setItem('faithreflects_fireflies', JSON.stringify(blessings));
+                
+                input.value = '';
+            }
+        });
+
+        // Enter key support
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('catchBtn').click();
+        });
+
+        // Read Modal Logic
+        readBtn.addEventListener('click', () => {
+            blessingsList.innerHTML = '';
+            if (blessings.length === 0) {
+                blessingsList.innerHTML = '<p class="text-xs text-gray-400 italic text-center mt-4">The jar is empty. Catch your first prayer.</p>';
+            } else {
+                blessings.slice().reverse().forEach(b => {
+                    blessingsList.innerHTML += `
+                        <div class="p-3 bg-[#fcfbf9] rounded-xl border border-gray-100">
+                            <span class="text-[9px] font-bold tracking-widest uppercase text-[#D4AF37] block mb-1">${b.date}</span>
+                            <p class="text-sm text-[#5a5852] leading-relaxed">"${b.text}"</p>
+                        </div>
+                    `;
+                });
+            }
+            readModal.classList.remove('hidden');
+        });
+
+        closeReadBtn.addEventListener('click', () => readModal.classList.add('hidden'));
+
+        clearBtn.addEventListener('click', () => {
+            clearModal.classList.remove('hidden');
+        });
+
+        cancelClearBtn.addEventListener('click', () => {
+            clearModal.classList.add('hidden');
+        });
+
+        confirmClearBtn.addEventListener('click', () => {
+            blessings = [];
+            localStorage.setItem('faithreflects_fireflies', JSON.stringify([]));
+            renderFireflies();
+            readModal.classList.add('hidden');
+            clearModal.classList.add('hidden');
+        });
+
+        // Init
+        renderFireflies();
+    </script>
+</body>
+</html>
