@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-[#191919]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antique Reading Lamp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        /* Notion Dark Mode Base - Forced completely */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #191919 !important; 
+            color: #D4D4D4; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        .widget-box {
+            background-color: #191919; 
+            border: 1px solid #2d2d2d;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            transition: all 1.5s ease;
+        }
+
+        /* Light Beam & Glow Effects */
+        .light-beam {
+            opacity: 0;
+            transition: opacity 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: top center;
+            pointer-events: none;
+        }
+        .is-lit .light-beam {
+            opacity: 1;
+        }
+
+        .ambient-glow {
+            position: absolute;
+            top: 50%;
+            left: 30%;
+            transform: translate(-50%, -50%);
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(217, 119, 6, 0.15) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 2s ease;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .is-lit .ambient-glow { opacity: 1; }
+
+        /* Book Highlight */
+        .book-highlight {
+            fill: #372A1D; /* Dark leather by default */
+            transition: fill 1.5s ease, filter 1.5s ease;
+        }
+        .is-lit .book-highlight {
+            fill: #5C452A; /* Warm leather under light */
+            filter: drop-shadow(0 4px 10px rgba(217, 119, 6, 0.3));
+        }
+        .pages-highlight {
+            fill: #8C8070;
+            transition: fill 1.5s ease;
+        }
+        .is-lit .pages-highlight {
+            fill: #FDE68A;
+        }
+
+        /* Pull Chain Animation */
+        .pull-chain {
+            transform-origin: top center;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .pull-chain:hover {
+            stroke: #FCD34D;
+        }
+        .pull-chain.pulled {
+            animation: pullSwing 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes pullSwing {
+            0% { transform: translateY(0); }
+            30% { transform: translateY(15px); }
+            50% { transform: translateY(5px) rotate(5deg); }
+            75% { transform: translateY(0) rotate(-3deg); }
+            100% { transform: translateY(0) rotate(0); }
+        }
+
+        /* Button Styling */
+        .action-btn {
+            background-color: #262626;
+            color: #A3A3A3;
+            border: 1px solid #333333;
+            transition: all 0.4s ease;
+        }
+        .action-btn:hover { 
+            background-color: #2D2416; 
+            color: #FCD34D; 
+            border-color: #5C451A; 
+            box-shadow: 0 0 15px rgba(217, 119, 6, 0.15);
+        }
+        .action-btn:active { transform: scale(0.96); }
+
+        .is-lit .action-btn {
+            background-color: #2D2416;
+            color: #FCD34D;
+            border-color: #5C451A;
+            box-shadow: inset 0 0 10px rgba(217, 119, 6, 0.1);
+        }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(0,0,0,0.6); }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden bg-[#191919]">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-sm rounded-3xl p-8 flex flex-col items-center min-h-[520px] overflow-hidden">
+        
+        <div class="ambient-glow"></div>
+
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-6 z-10 shrink-0">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#737373]">@faithreflects</span>
+            <div class="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider text-[#A3A3A3] border border-[#333] bg-[#1a1a1a] flex items-center space-x-1">
+                <span id="streakCount" class="text-[#D4AF37]">0</span>
+                <span>Day Streak</span>
+            </div>
+        </div>
+
+        <h2 class="serif text-2xl text-[#EDEDED] mb-1 z-10">Daily Reading</h2>
+        <p class="text-xs text-[#8B8B8B] italic mb-8 z-10 text-center">"Your word is a lamp to my feet."</p>
+
+        <!-- Interactive SVG Area -->
+        <div class="relative w-full h-56 mb-8 z-10 flex justify-center items-center shrink-0">
+            <svg viewBox="0 0 240 200" class="w-full h-full overflow-visible">
+                
+                <!-- Desk Surface -->
+                <path d="M 20 180 L 220 180" stroke="#2d2d2d" stroke-width="2" stroke-linecap="round"/>
+                
+                <!-- Light Beam (Hidden until lit) -->
+                <polygon class="light-beam" points="80,80 20,180 150,180" fill="url(#beamGrad)"/>
+
+                <!-- The Book -->
+                <g transform="translate(45, 160)">
+                    <!-- Pages -->
+                    <path d="M 5 15 L 65 15 L 75 0 L 15 0 Z" class="pages-highlight"/>
+                    <path d="M 5 15 L 15 0 L 15 5 L 5 20 Z" fill="#736A5A"/>
+                    <!-- Leather Cover -->
+                    <path d="M 0 20 L 60 20 L 75 5 L 75 0 L 15 15 Z" class="book-highlight"/>
+                    <path d="M 0 20 L 15 5 L 15 0 L 0 15 Z" fill="#2A2015"/>
+                    <path d="M 60 20 L 75 5" stroke="#1F170F" stroke-width="1"/>
+                    <!-- Bookmark Ribbon -->
+                    <path d="M 30 15 L 35 30 L 25 30 Z" fill="#9A3412"/>
+                </g>
+
+                <!-- Antique Brass Lamp -->
+                <g id="lamp">
+                    <!-- Base -->
+                    <ellipse cx="180" cy="175" rx="25" ry="5" fill="#B48025"/>
+                    <path d="M 160 175 C 160 160, 175 155, 180 155 C 185 155, 200 160, 200 175 Z" fill="#D4AF37"/>
+                    <rect x="175" y="145" width="10" height="10" fill="#8B6508"/>
+                    
+                    <!-- Curved Arm -->
+                    <path d="M 180 145 C 180 50, 100 40, 80 50" fill="none" stroke="#D4AF37" stroke-width="6" stroke-linecap="round"/>
+                    <path d="M 180 145 C 180 50, 100 40, 80 50" fill="none" stroke="#B48025" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 2"/>
+                    
+                    <!-- Lamp Shade Swivel -->
+                    <circle cx="80" cy="50" r="5" fill="#8B6508"/>
+                    
+                    <!-- Shade -->
+                    <path d="M 80 45 C 95 45, 110 65, 115 80 L 45 80 C 50 65, 65 45, 80 45 Z" fill="#222222" stroke="#D4AF37" stroke-width="2"/>
+                    <!-- Inner glow rim -->
+                    <ellipse cx="80" cy="80" rx="35" ry="6" fill="#111111" stroke="#D4AF37" stroke-width="1.5"/>
+                    
+                    <!-- The Bulb (Visible when lit) -->
+                    <circle cx="80" cy="78" r="6" fill="#FEF3C7" class="light-beam" filter="drop-shadow(0 0 4px #F59E0B)"/>
+                </g>
+
+                <!-- Pull Chain (Interactive) -->
+                <g id="pullChain" class="pull-chain" transform="translate(100, 85)">
+                    <!-- Chain links -->
+                    <line x1="0" y1="0" x2="0" y2="35" stroke="#A3A3A3" stroke-width="1.5" stroke-dasharray="1 2"/>
+                    <!-- Golden pull bead -->
+                    <circle cx="0" cy="35" r="3" fill="#D4AF37"/>
+                    <circle cx="0" cy="38" r="4" fill="#B48025"/>
+                    
+                    <!-- Invisible wider hit area for easier clicking -->
+                    <rect x="-10" y="0" width="20" height="45" fill="transparent"/>
+                </g>
+
+                <defs>
+                    <linearGradient id="beamGrad" x1="80" y1="80" x2="85" y2="180" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="rgba(252, 211, 77, 0.7)"/>
+                        <stop offset="60%" stop-color="rgba(245, 158, 11, 0.2)"/>
+                        <stop offset="100%" stop-color="rgba(217, 119, 6, 0)"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+        </div>
+
+        <!-- Controls -->
+        <div class="w-full mt-auto z-10 shrink-0">
+            <button id="toggleBtn" class="action-btn w-full py-3.5 rounded-2xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center space-x-2 shadow-lg">
+                <span id="btnIcon">📖</span>
+                <span id="btnText">Mark Reading Complete</span>
+            </button>
+            
+            <button id="resetTriggerBtn" class="mt-4 w-full text-center text-[10px] tracking-widest text-[#525252] uppercase hover:text-[#A3A3A3] transition-colors pb-1">
+                Reset Streak
+            </button>
+        </div>
+
+        <!-- Custom Reset Modal -->
+        <div id="resetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#191919] rounded-2xl p-6 w-full max-w-[260px] border border-[#2d2d2d] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#EDEDED]">Reset Streak?</h3>
+                <p class="text-xs text-[#8B8B8B] mb-6">This will reset your consecutive reading days to zero.</p>
+                <div class="flex space-x-3">
+                    <button id="cancelResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-[#A3A3A3] hover:bg-[#262626] border border-transparent transition-colors">Cancel</button>
+                    <button id="confirmResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#262626] text-[#EDEDED] border border-[#333] hover:bg-[#333] transition-colors">Reset</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // State Management
+        let state = JSON.parse(localStorage.getItem('faithreflects_reading_lamp')) || {
+            streak: 0,
+            lastReadDate: null
+        };
+
+        const today = new Date().toDateString();
+        
+        // Elements
+        const container = document.getElementById('widgetContainer');
+        const pullChain = document.getElementById('pullChain');
+        const toggleBtn = document.getElementById('toggleBtn');
+        const btnText = document.getElementById('btnText');
+        const btnIcon = document.getElementById('btnIcon');
+        const streakCount = document.getElementById('streakCount');
+        
+        // Modal Elements
+        const resetModal = document.getElementById('resetModal');
+        const resetTriggerBtn = document.getElementById('resetTriggerBtn');
+        const cancelResetBtn = document.getElementById('cancelResetBtn');
+        const confirmResetBtn = document.getElementById('confirmResetBtn');
+
+        function updateStreakLogic() {
+            if (!state.lastReadDate) {
+                // First time ever
+                state.streak = 1;
+            } else if (state.lastReadDate !== today) {
+                const lastDate = new Date(state.lastReadDate);
+                const currentDate = new Date(today);
+                const diffTime = Math.abs(currentDate - lastDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+
+                if (diffDays === 1) {
+                    // Consecutive day
+                    state.streak += 1;
+                } else {
+                    // Missed a day
+                    state.streak = 1;
+                }
+            }
+            
+            state.lastReadDate = today;
+            localStorage.setItem('faithreflects_reading_lamp', JSON.stringify(state));
+            streakCount.innerText = state.streak;
+        }
+
+        function turnOnLamp(animateChain = true) {
+            if (animateChain) {
+                pullChain.classList.remove('pulled');
+                void pullChain.offsetWidth; // Trigger reflow to restart animation
+                pullChain.classList.add('pulled');
+            }
+
+            setTimeout(() => {
+                container.classList.add('is-lit');
+                btnText.innerText = "Reading Complete";
+                btnIcon.innerText = "💡";
+                
+                if (state.lastReadDate !== today) {
+                    updateStreakLogic();
+                }
+            }, animateChain ? 300 : 0); // Delay light turning on until chain is pulled down
+        }
+
+        // Initialize UI on load
+        if (state.lastReadDate === today) {
+            // Already read today, load instantly lit
+            turnOnLamp(false);
+            streakCount.innerText = state.streak;
+        } else {
+            // New day
+            streakCount.innerText = state.streak;
+        }
+
+        // Event Listeners
+        const handleLightAction = () => {
+            if (state.lastReadDate !== today) {
+                turnOnLamp(true);
+            }
+        };
+
+        pullChain.addEventListener('click', handleLightAction);
+        toggleBtn.addEventListener('click', () => {
+            if (state.lastReadDate !== today) {
+                toggleBtn.style.transform = 'scale(0.96)';
+                setTimeout(() => toggleBtn.style.transform = 'scale(1)', 150);
+                handleLightAction();
+            }
+        });
+
+        // Modal Logic
+        resetTriggerBtn.addEventListener('click', () => resetModal.classList.remove('hidden'));
+        cancelResetBtn.addEventListener('click', () => resetModal.classList.add('hidden'));
+        
+        confirmResetBtn.addEventListener('click', () => {
+            state = { streak: 0, lastReadDate: null };
+            localStorage.setItem('faithreflects_reading_lamp', JSON.stringify(state));
+            
+            // Reset Visuals
+            container.classList.remove('is-lit');
+            btnText.innerText = "Mark Reading Complete";
+            btnIcon.innerText = "📖";
+            streakCount.innerText = "0";
+            
+            resetModal.classList.add('hidden');
+        });
+
+    </script>
+</body>
+</html>

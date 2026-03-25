@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-[#191919]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Emotional Barometer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+    <style>
+        /* Notion Dark Mode Base - Forced completely */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #191919 !important; 
+            color: #D4D4D4; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        .widget-box {
+            background-color: #191919; 
+            border: 1px solid #2d2d2d;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            transition: all 1.5s ease;
+        }
+
+        /* Ambient Weather Backgrounds */
+        .weather-bg {
+            position: absolute;
+            inset: 0;
+            border-radius: 1.5rem;
+            opacity: 0;
+            transition: opacity 1.5s ease;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        
+        .theme-struggling .bg-rain { opacity: 1; }
+        .theme-surviving .bg-fog { opacity: 1; }
+        .theme-thriving .bg-sun { opacity: 1; }
+
+        /* Rain Animation */
+        .bg-rain { background: radial-gradient(circle at top, rgba(30, 58, 138, 0.15) 0%, transparent 80%); }
+        .drop {
+            position: absolute;
+            width: 2px;
+            height: 15px;
+            background: linear-gradient(to bottom, rgba(96, 165, 250, 0), rgba(96, 165, 250, 0.5));
+            animation: rainfall linear infinite;
+        }
+        @keyframes rainfall {
+            0% { transform: translateY(-20px); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(200px); opacity: 0; }
+        }
+
+        /* Fog Animation */
+        .bg-fog { background: radial-gradient(circle at top, rgba(156, 163, 175, 0.1) 0%, transparent 80%); }
+        .fog-cloud {
+            position: absolute;
+            width: 200px;
+            height: 50px;
+            background: rgba(156, 163, 175, 0.1);
+            filter: blur(20px);
+            border-radius: 50%;
+            animation: drift 15s linear infinite alternate;
+        }
+        @keyframes drift {
+            0% { transform: translateX(-50px); }
+            100% { transform: translateX(100px); }
+        }
+
+        /* Sun Animation */
+        .bg-sun { background: radial-gradient(circle at center, rgba(245, 158, 11, 0.15) 0%, transparent 70%); }
+        .sun-ray {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 200px; height: 20px;
+            background: linear-gradient(90deg, rgba(252, 211, 77, 0.2), transparent);
+            transform-origin: left center;
+            animation: spinRay 20s linear infinite;
+        }
+        @keyframes spinRay {
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Brass Barometer SVG Animations */
+        #needle {
+            transform-origin: 100px 130px;
+            transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform: rotate(-50deg); /* Default pointing left */
+        }
+        
+        .theme-struggling #needle { transform: rotate(-55deg); }
+        .theme-surviving #needle { transform: rotate(0deg); }
+        .theme-thriving #needle { transform: rotate(55deg); }
+
+        .gauge-zone {
+            transition: stroke-width 0.3s ease, filter 0.3s ease;
+        }
+        .theme-struggling .zone-red { stroke-width: 6; filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.5)); stroke: #EF4444; }
+        .theme-surviving .zone-gray { stroke-width: 6; filter: drop-shadow(0 0 6px rgba(156, 163, 175, 0.5)); stroke: #9CA3AF; }
+        .theme-thriving .zone-green { stroke-width: 6; filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.5)); stroke: #10B981; }
+
+        /* Emotion Selection Buttons */
+        .emotion-btn {
+            background-color: #222222;
+            border: 1px solid #333333;
+            transition: all 0.3s ease;
+            opacity: 0.6;
+        }
+        .emotion-btn:hover { opacity: 0.9; transform: translateY(-2px); }
+        
+        .theme-struggling .btn-struggling { opacity: 1; border-color: #EF4444; background-color: rgba(239, 68, 68, 0.1); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15); }
+        .theme-surviving .btn-surviving { opacity: 1; border-color: #9CA3AF; background-color: rgba(156, 163, 175, 0.1); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(156, 163, 175, 0.15); }
+        .theme-thriving .btn-thriving { opacity: 1; border-color: #10B981; background-color: rgba(16, 185, 129, 0.1); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15); }
+
+        /* Dynamic Text Fade */
+        .info-panel {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.5s ease;
+            position: absolute;
+            width: 100%;
+            pointer-events: none;
+        }
+        .info-panel.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        /* Input styling */
+        textarea {
+            background-color: #111111;
+            border: 1px solid #333333;
+            color: #E5E5E5;
+            transition: all 0.3s ease;
+            resize: none;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #D4AF37;
+            background-color: #1a1a1a;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
+        }
+        textarea::placeholder { color: #525252; font-style: italic; }
+        
+        .log-item { animation: slideDown 0.4s ease forwards; }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden bg-[#191919]">
+
+    <div id="widgetContainer" class="widget-box theme-surviving relative w-full max-w-sm rounded-3xl p-6 md:p-8 flex flex-col items-center h-[620px] overflow-hidden">
+        
+        <!-- Ambient Backgrounds -->
+        <div class="weather-bg bg-rain" id="bgRain">
+            <!-- Raindrops injected by JS -->
+        </div>
+        <div class="weather-bg bg-fog">
+            <div class="fog-cloud" style="top: 10%; left: 10%;"></div>
+            <div class="fog-cloud" style="top: 40%; left: -20%; animation-delay: -5s; animation-duration: 20s;"></div>
+        </div>
+        <div class="weather-bg bg-sun" id="bgSun">
+            <!-- Sun rays injected by JS -->
+        </div>
+
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-4 z-10 shrink-0">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#737373]">@faithreflects</span>
+            <div class="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider text-[#A3A3A3] border border-[#333] bg-[#1a1a1a]">
+                Emotional Check-In
+            </div>
+        </div>
+
+        <h2 class="serif text-2xl text-[#EDEDED] mb-1 z-10">Name it to tame it.</h2>
+        <p class="text-xs text-[#8B8B8B] italic mb-6 z-10 text-center">"Bring it all to God."</p>
+
+        <!-- Antique Brass Gauge SVG -->
+        <div class="relative w-48 h-32 mb-4 z-10 shrink-0 flex justify-center items-end">
+            <svg viewBox="0 0 200 140" class="w-full h-full overflow-visible">
+                
+                <!-- Background Plate -->
+                <path d="M 20 130 A 80 80 0 0 1 180 130 L 180 140 L 20 140 Z" fill="#111111" stroke="#2d2d2d" stroke-width="2"/>
+                <path d="M 30 130 A 70 70 0 0 1 170 130" fill="none" stroke="#222" stroke-width="20"/>
+
+                <!-- Gauge Zones (Struggling, Surviving, Thriving) -->
+                <!-- Left (Red) -->
+                <path class="gauge-zone zone-red" d="M 30 130 A 70 70 0 0 1 50 80" fill="none" stroke="#7f1d1d" stroke-width="4" stroke-linecap="round"/>
+                <!-- Center (Gray) -->
+                <path class="gauge-zone zone-gray" d="M 55 75 A 70 70 0 0 1 145 75" fill="none" stroke="#4b5563" stroke-width="4" stroke-linecap="round"/>
+                <!-- Right (Green) -->
+                <path class="gauge-zone zone-green" d="M 150 80 A 70 70 0 0 1 170 130" fill="none" stroke="#065f46" stroke-width="4" stroke-linecap="round"/>
+
+                <!-- Tick Marks -->
+                <g stroke="#525252" stroke-width="2" stroke-linecap="round">
+                    <line x1="45" y1="95" x2="38" y2="88"/>
+                    <line x1="75" y1="70" x2="70" y2="60"/>
+                    <line x1="100" y1="60" x2="100" y2="50"/>
+                    <line x1="125" y1="70" x2="130" y2="60"/>
+                    <line x1="155" y1="95" x2="162" y2="88"/>
+                </g>
+
+                <!-- Needle Pivot -->
+                <path d="M 85 140 L 100 120 L 115 140 Z" fill="#1a1a1a"/>
+                <circle cx="100" cy="130" r="14" fill="#D4AF37"/>
+                <circle cx="100" cy="130" r="10" fill="#B48025"/>
+                <circle cx="100" cy="130" r="4" fill="#8B6508"/>
+
+                <!-- The Needle -->
+                <g id="needle">
+                    <path d="M 97 130 L 100 45 L 103 130 Z" fill="#FCD34D" filter="drop-shadow(2px 0 4px rgba(0,0,0,0.5))"/>
+                    <polygon points="98,130 100,45 100,130" fill="#D4AF37"/> <!-- Shading for 3D effect -->
+                </g>
+
+            </svg>
+        </div>
+
+        <!-- Emotion Selection Buttons -->
+        <div class="flex space-x-2 w-full mb-6 z-10 shrink-0">
+            <button onclick="setEmotion('struggling')" class="emotion-btn btn-struggling flex-1 py-2 rounded-xl flex flex-col items-center justify-center">
+                <span class="text-lg mb-1">😞</span>
+                <span class="text-[9px] font-bold uppercase tracking-widest text-[#EDEDED]">Struggling</span>
+            </button>
+            <button onclick="setEmotion('surviving')" class="emotion-btn btn-surviving flex-1 py-2 rounded-xl flex flex-col items-center justify-center">
+                <span class="text-lg mb-1">😐</span>
+                <span class="text-[9px] font-bold uppercase tracking-widest text-[#EDEDED]">Surviving</span>
+            </button>
+            <button onclick="setEmotion('thriving')" class="emotion-btn btn-thriving flex-1 py-2 rounded-xl flex flex-col items-center justify-center">
+                <span class="text-lg mb-1">🤩</span>
+                <span class="text-[9px] font-bold uppercase tracking-widest text-[#EDEDED]">Thriving</span>
+            </button>
+        </div>
+
+        <!-- Dynamic Info Panels -->
+        <div class="relative w-full h-24 z-10 shrink-0 mb-2">
+            
+            <div id="info-struggling" class="info-panel text-center px-2">
+                <p class="text-xs text-[#8B8B8B] mb-2 leading-relaxed">Anxious, angry, lonely, ashamed, overwhelmed, far from God.</p>
+                <p class="serif italic text-[14px] text-[#EF4444] font-medium leading-relaxed">God is closest here. Tell Him everything.</p>
+            </div>
+            
+            <div id="info-surviving" class="info-panel active text-center px-2">
+                <p class="text-xs text-[#8B8B8B] mb-2 leading-relaxed">Tired, distracted, numb, restless, going through the motions.</p>
+                <p class="serif italic text-[14px] text-[#A3A3A3] font-medium leading-relaxed">It's okay to just be. Ask God to refresh your soul.</p>
+            </div>
+            
+            <div id="info-thriving" class="info-panel text-center px-2">
+                <p class="text-xs text-[#8B8B8B] mb-2 leading-relaxed">Joyful, peaceful, connected, grateful, hopeful, content.</p>
+                <p class="serif italic text-[14px] text-[#10B981] font-medium leading-relaxed">Thank God for this beautiful season of light.</p>
+            </div>
+
+        </div>
+
+        <!-- Input Area for the Log -->
+        <div class="w-full flex-1 flex flex-col z-10 min-h-0">
+            <div class="flex space-x-2 mb-3 shrink-0">
+                <input type="text" id="journalInput" placeholder="Today I am..." class="flex-1 px-4 py-2.5 bg-[#111111] border border-[#333333] focus:border-[#D4AF37] rounded-xl text-sm text-[#D4D4D4] outline-none transition-colors">
+                <button id="saveBtn" class="bg-[#262626] text-[#A3A3A3] border border-[#333] hover:bg-[#2D2416] hover:text-[#FCD34D] hover:border-[#5C451A] px-4 py-2.5 rounded-xl transition-all shadow-sm">
+                    Save
+                </button>
+            </div>
+            
+            <!-- Mini Log -->
+            <div class="w-full flex-1 flex flex-col space-y-2 overflow-y-auto pr-1" id="logList" style="scrollbar-width: thin; scrollbar-color: #333 transparent;">
+                <!-- JS Injects here -->
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const widgetContainer = document.getElementById('widgetContainer');
+        const journalInput = document.getElementById('journalInput');
+        const saveBtn = document.getElementById('saveBtn');
+        const logList = document.getElementById('logList');
+        
+        // Background Effects
+        const bgRain = document.getElementById('bgRain');
+        const bgSun = document.getElementById('bgSun');
+        
+        let currentEmotion = 'surviving';
+        const emojis = { struggling: '😞', surviving: '😐', thriving: '🤩' };
+        let logs = JSON.parse(localStorage.getItem('faithreflects_emotion_log')) || [];
+
+        // Generate Raindrops
+        for(let i=0; i<20; i++) {
+            const drop = document.createElement('div');
+            drop.className = 'drop';
+            drop.style.left = `${Math.random() * 100}%`;
+            drop.style.animationDelay = `${Math.random() * 2}s`;
+            drop.style.animationDuration = `${0.5 + Math.random() * 0.5}s`;
+            bgRain.appendChild(drop);
+        }
+
+        // Generate Sun Rays
+        for(let i=0; i<8; i++) {
+            const ray = document.createElement('div');
+            ray.className = 'sun-ray';
+            ray.style.transform = `rotate(${i * 45}deg)`;
+            ray.style.animationDelay = `-${i}s`;
+            bgSun.appendChild(ray);
+        }
+
+        function setEmotion(emotion) {
+            currentEmotion = emotion;
+            
+            // Update Theme Class
+            widgetContainer.className = 'widget-box relative w-full max-w-sm rounded-3xl p-6 md:p-8 flex flex-col items-center h-[620px] overflow-hidden';
+            widgetContainer.classList.add(`theme-${emotion}`);
+
+            // Update Info Panels
+            document.querySelectorAll('.info-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(`info-${emotion}`).classList.add('active');
+        }
+
+        window.removeLog = function(id) {
+            logs = logs.filter(log => log.id !== id);
+            localStorage.setItem('faithreflects_emotion_log', JSON.stringify(logs));
+            renderLogs();
+        };
+
+        function renderLogs() {
+            logList.innerHTML = '';
+            
+            if (logs.length === 0) {
+                logList.innerHTML = '<p class="text-xs text-[#525252] text-center italic mt-2">Your recent check-ins will appear here.</p>';
+                return;
+            }
+
+            // Show last 3 logs
+            logs.slice().reverse().slice(0, 3).forEach((log, index) => {
+                const item = document.createElement('div');
+                item.className = 'log-item bg-[#222222] border border-[#2d2d2d] p-3 rounded-xl flex items-center justify-between group';
+                item.style.animationDelay = `${index * 0.1}s`;
+                
+                item.innerHTML = `
+                    <div class="flex items-center space-x-3 min-w-0">
+                        <span class="text-xl shrink-0">${log.emoji}</span>
+                        <div class="min-w-0">
+                            <p class="text-[9px] font-bold tracking-widest uppercase text-[#737373] mb-0.5">${log.date}</p>
+                            <p class="text-xs text-[#D4D4D4] truncate w-[180px]">${log.text}</p>
+                        </div>
+                    </div>
+                    <button onclick="removeLog(${log.id})" class="opacity-0 group-hover:opacity-100 text-[#525252] hover:text-[#EF4444] transition-all p-1 shrink-0">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                `;
+                logList.appendChild(item);
+            });
+        }
+
+        saveBtn.addEventListener('click', () => {
+            const text = journalInput.value.trim();
+            if (text) {
+                logs.push({
+                    id: Date.now(),
+                    emotion: currentEmotion,
+                    emoji: emojis[currentEmotion],
+                    text: text,
+                    date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                });
+                
+                localStorage.setItem('faithreflects_emotion_log', JSON.stringify(logs));
+                journalInput.value = '';
+                renderLogs();
+                
+                // Button feedback
+                saveBtn.style.transform = 'scale(0.95)';
+                setTimeout(() => saveBtn.style.transform = 'scale(1)', 150);
+            }
+        });
+
+        journalInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') saveBtn.click();
+        });
+
+        // Initialize
+        renderLogs();
+    </script>
+</body>
+</html>

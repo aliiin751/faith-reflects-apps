@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-[#191919]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breath Prayer Sync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        /* Notion Dark Mode Base - Forced completely */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #191919 !important; 
+            color: #D4D4D4; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        .widget-box {
+            background-color: #191919; 
+            border: 1px solid #2d2d2d;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            transition: all 1.5s ease;
+        }
+
+        /* Ambient Background Glow */
+        .ambient-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(217, 119, 6, 0.08) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 2s ease;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .is-praying .ambient-glow {
+            opacity: 1;
+        }
+
+        /* View Transitions */
+        .view-section {
+            position: absolute;
+            top: 0; left: 0; w-full; h-full;
+            width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), visibility 0.8s;
+        }
+        
+        #setupView {
+            opacity: 1;
+            transform: scale(1);
+            visibility: visible;
+            z-index: 20;
+        }
+        #setupView.hidden-view {
+            opacity: 0;
+            transform: scale(0.95);
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        #activeView {
+            opacity: 0;
+            transform: scale(1.05);
+            visibility: hidden;
+            z-index: 10;
+        }
+        #activeView.visible-view {
+            opacity: 1;
+            transform: scale(1);
+            visibility: visible;
+            z-index: 30;
+        }
+
+        /* Inputs & Presets */
+        input[type="text"] {
+            background-color: #111111;
+            border: 1px solid #333333;
+            color: #E5E5E5;
+            transition: all 0.3s ease;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #D4AF37;
+            background-color: #151515;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
+        }
+        input[type="text"]::placeholder { color: #525252; font-style: italic; }
+
+        .preset-chip {
+            background-color: #222222;
+            border: 1px solid #333333;
+            color: #8B8B8B;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .preset-chip:hover {
+            background-color: #2D2416;
+            border-color: #5C451A;
+            color: #FCD34D;
+        }
+
+        /* Buttons */
+        .action-btn {
+            background-color: #2D2416;
+            color: #FCD34D;
+            border: 1px solid #5C451A;
+            transition: all 0.4s ease;
+        }
+        .action-btn:hover { 
+            background-color: #3d311d; 
+            box-shadow: 0 0 15px rgba(217, 119, 6, 0.2);
+        }
+        .action-btn:active { transform: scale(0.96); }
+
+        .stop-btn {
+            background-color: transparent;
+            color: #737373;
+            border: 1px solid #333333;
+            transition: all 0.3s ease;
+        }
+        .stop-btn:hover { background-color: #262626; color: #E5E5E5; border-color: #525252; }
+
+        /* The Breathing Ring Animation */
+        .breathe-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid rgba(252, 211, 77, 0.3); /* Gold/Amber */
+            transform: translate(-50%, -50%) scale(1);
+            transition: transform 4s cubic-bezier(0.4, 0, 0.2, 1), 
+                        border-width 4s ease, 
+                        box-shadow 4s ease, 
+                        opacity 4s ease;
+            box-shadow: 0 0 0px rgba(245, 158, 11, 0);
+            opacity: 0.4;
+        }
+
+        .is-inhaling .breathe-ring {
+            transform: translate(-50%, -50%) scale(4);
+            border-width: 1px;
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.2), inset 0 0 20px rgba(245, 158, 11, 0.1);
+            opacity: 1;
+            border-color: rgba(252, 211, 77, 0.8);
+        }
+
+        /* Synced Text Animation */
+        .prayer-text {
+            opacity: 0;
+            transform: translateY(5px);
+            transition: opacity 1.5s ease-in-out, transform 1.5s ease-in-out;
+        }
+        .prayer-text.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden bg-[#191919]">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-sm rounded-3xl p-6 md:p-8 flex flex-col h-[560px] overflow-hidden">
+        
+        <div class="ambient-glow"></div>
+
+        <!-- Absolute wrapper for view states -->
+        <div class="relative w-full h-full">
+
+            <!-- ================= VIEW 1: SETUP ================= -->
+            <div id="setupView" class="view-section">
+                <!-- Header -->
+                <div class="w-full flex justify-between items-center mb-6 shrink-0">
+                    <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#737373]">@faithreflects</span>
+                    <div class="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider text-[#A3A3A3] border border-[#333] bg-[#1a1a1a]">
+                        Prayer Models
+                    </div>
+                </div>
+
+                <h2 class="serif text-2xl text-[#EDEDED] mb-1">Breath Prayer</h2>
+                <p class="text-xs text-[#8B8B8B] italic mb-6">"Let your breathing become a prayer."</p>
+
+                <!-- Input Area -->
+                <div class="flex-1 flex flex-col space-y-4 min-h-0">
+                    
+                    <!-- Presets -->
+                    <div class="mb-2">
+                        <span class="text-[9px] font-bold tracking-widest uppercase text-[#525252] block mb-2">Suggested Rhythms</span>
+                        <div class="flex flex-col space-y-2">
+                            <button class="preset-chip text-left px-4 py-2 rounded-xl text-xs flex justify-between items-center group" onclick="setPreset('Lord Jesus Christ', 'Have mercy on me')">
+                                <span class="truncate pr-2">"Lord Jesus Christ..."</span>
+                                <span class="text-[#525252] group-hover:text-[#D4AF37]">+</span>
+                            </button>
+                            <button class="preset-chip text-left px-4 py-2 rounded-xl text-xs flex justify-between items-center group" onclick="setPreset('You are enough', 'I release my anxiety')">
+                                <span class="truncate pr-2">"You are enough..."</span>
+                                <span class="text-[#525252] group-hover:text-[#D4AF37]">+</span>
+                            </button>
+                            <button class="preset-chip text-left px-4 py-2 rounded-xl text-xs flex justify-between items-center group" onclick="setPreset('Fill me, Lord', 'Empty me of self')">
+                                <span class="truncate pr-2">"Fill me, Lord..."</span>
+                                <span class="text-[#525252] group-hover:text-[#D4AF37]">+</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Custom Inputs -->
+                    <div class="flex flex-col space-y-3 mt-2">
+                        <span class="text-[9px] font-bold tracking-widest uppercase text-[#525252] block">Or write your own</span>
+                        <input type="text" id="inhaleInput" placeholder="Inhale (e.g. Lord Jesus Christ)" class="w-full rounded-xl px-4 py-3 text-sm font-light" autocomplete="off">
+                        <input type="text" id="exhaleInput" placeholder="Exhale (e.g. Have mercy on me)" class="w-full rounded-xl px-4 py-3 text-sm font-light" autocomplete="off">
+                    </div>
+                </div>
+
+                <!-- Action -->
+                <button id="startBtn" class="action-btn w-full mt-6 py-3.5 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center space-x-2 shadow-lg shrink-0">
+                    <span class="text-base">🌬️</span>
+                    <span>Begin Rhythm</span>
+                </button>
+            </div>
+
+
+            <!-- ================= VIEW 2: ACTIVE PRAYER ================= -->
+            <div id="activeView" class="view-section">
+                <!-- Header (Minimal) -->
+                <div class="w-full flex justify-between items-center mb-4 shrink-0">
+                    <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#737373]">@faithreflects</span>
+                    <span class="text-[10px] tracking-widest uppercase text-[#D4AF37] font-semibold" id="timerText">00:00</span>
+                </div>
+
+                <!-- Breathing Visualizer Area -->
+                <div class="flex-1 w-full relative flex flex-col items-center justify-center min-h-0 py-10" id="visualizerArea">
+                    
+                    <!-- The expanding ring -->
+                    <div class="breathe-ring"></div>
+
+                    <!-- The synced text -->
+                    <div class="z-10 flex flex-col items-center justify-center w-full px-6 text-center">
+                        <span id="instructionText" class="text-[10px] font-bold tracking-widest uppercase text-[#A3A3A3] mb-4 prayer-text">Inhale</span>
+                        <h2 id="prayerDisplayText" class="serif italic text-2xl text-[#EDEDED] leading-relaxed prayer-text drop-shadow-md">
+                            "Lord Jesus Christ"
+                        </h2>
+                    </div>
+
+                </div>
+
+                <!-- Action -->
+                <button id="stopBtn" class="stop-btn w-full mt-auto py-3.5 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center space-x-2 shrink-0">
+                    <span>End Prayer</span>
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        // Elements
+        const container = document.getElementById('widgetContainer');
+        const setupView = document.getElementById('setupView');
+        const activeView = document.getElementById('activeView');
+        
+        const inhaleInput = document.getElementById('inhaleInput');
+        const exhaleInput = document.getElementById('exhaleInput');
+        const startBtn = document.getElementById('startBtn');
+        
+        const stopBtn = document.getElementById('stopBtn');
+        const visualizerArea = document.getElementById('visualizerArea');
+        const instructionText = document.getElementById('instructionText');
+        const prayerDisplayText = document.getElementById('prayerDisplayText');
+        const timerText = document.getElementById('timerText');
+
+        // State
+        let inhalePhrase = "Lord Jesus Christ";
+        let exhalePhrase = "Have mercy on me";
+        let isBreathing = false;
+        let cycleInterval = null;
+        let timerInterval = null;
+        let secondsElapsed = 0;
+
+        // Load saved custom inputs if any
+        const savedInhale = localStorage.getItem('faithreflects_breath_in');
+        const savedExhale = localStorage.getItem('faithreflects_breath_out');
+        if (savedInhale) inhaleInput.value = savedInhale;
+        if (savedExhale) exhaleInput.value = savedExhale;
+
+        // Preset Helper
+        window.setPreset = function(inhale, exhale) {
+            inhaleInput.value = inhale;
+            exhaleInput.value = exhale;
+        };
+
+        // Format Timer
+        function formatTime(secs) {
+            const m = Math.floor(secs / 60);
+            const s = secs % 60;
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // The Breathing Animation Engine
+        function fadeTextOut(callback) {
+            instructionText.classList.remove('visible');
+            prayerDisplayText.classList.remove('visible');
+            setTimeout(callback, 800); // Wait for fade out
+        }
+
+        function fadeTextIn(instruction, prayer) {
+            instructionText.innerText = instruction;
+            prayerDisplayText.innerText = `"${prayer}"`;
+            instructionText.classList.add('visible');
+            prayerDisplayText.classList.add('visible');
+        }
+
+        function runBreathCycle() {
+            if (!isBreathing) return;
+
+            // --- INHALE PHASE (4 Seconds) ---
+            visualizerArea.classList.add('is-inhaling');
+            fadeTextOut(() => {
+                if (!isBreathing) return;
+                fadeTextIn("Inhale", inhalePhrase);
+            });
+
+            // --- EXHALE PHASE (4 Seconds) ---
+            // Triggered exactly 4 seconds after inhale starts
+            setTimeout(() => {
+                if (!isBreathing) return;
+                
+                visualizerArea.classList.remove('is-inhaling');
+                fadeTextOut(() => {
+                    if (!isBreathing) return;
+                    fadeTextIn("Exhale", exhalePhrase);
+                });
+            }, 4000); 
+        }
+
+        // Start Prayer
+        startBtn.addEventListener('click', () => {
+            // Get inputs or use defaults
+            inhalePhrase = inhaleInput.value.trim() || "Lord Jesus Christ";
+            exhalePhrase = exhaleInput.value.trim() || "Have mercy on me";
+            
+            // Save custom inputs
+            if (inhaleInput.value.trim()) localStorage.setItem('faithreflects_breath_in', inhalePhrase);
+            if (exhaleInput.value.trim()) localStorage.setItem('faithreflects_breath_out', exhalePhrase);
+
+            // Button feedback
+            startBtn.style.transform = 'scale(0.95)';
+            setTimeout(() => startBtn.style.transform = 'scale(1)', 150);
+
+            // Transition Views
+            setupView.classList.add('hidden-view');
+            activeView.classList.add('visible-view');
+            container.classList.add('is-praying');
+
+            // Initialize State
+            isBreathing = true;
+            secondsElapsed = 0;
+            timerText.innerText = "00:00";
+            
+            // Reset text state instantly before starting
+            instructionText.classList.remove('visible');
+            prayerDisplayText.classList.remove('visible');
+
+            // Wait for view transition to finish before breathing
+            setTimeout(() => {
+                if (!isBreathing) return;
+                
+                // Start Timer
+                timerInterval = setInterval(() => {
+                    secondsElapsed++;
+                    timerText.innerText = formatTime(secondsElapsed);
+                }, 1000);
+
+                // Start First Breath Immediately
+                runBreathCycle();
+                
+                // Then loop every 8 seconds
+                cycleInterval = setInterval(runBreathCycle, 8000);
+            }, 800);
+        });
+
+        // Stop Prayer
+        stopBtn.addEventListener('click', () => {
+            isBreathing = false;
+            clearInterval(cycleInterval);
+            clearInterval(timerInterval);
+
+            // Reset Visuals
+            visualizerArea.classList.remove('is-inhaling');
+            container.classList.remove('is-praying');
+            
+            // Fade text out
+            instructionText.classList.remove('visible');
+            prayerDisplayText.classList.remove('visible');
+
+            // Transition Views
+            activeView.classList.remove('visible-view');
+            setupView.classList.remove('hidden-view');
+        });
+
+    </script>
+</body>
+</html>

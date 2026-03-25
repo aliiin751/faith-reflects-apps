@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-[#191919]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golden Insight Lantern</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+    <style>
+        /* Notion Dark Mode Base - Forced completely */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #191919 !important; 
+            color: #D4D4D4; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        .widget-box {
+            background-color: #191919; 
+            border: 1px solid #2d2d2d;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            transition: all 1.5s ease;
+        }
+
+        /* Lantern Flame Animation */
+        .flame {
+            transform-origin: 50% 100%;
+            animation: flicker 3s ease-in-out infinite alternate;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: opacity 1.5s ease, transform 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .lantern.is-lit .flame { 
+            opacity: 1; 
+            transform: scale(1);
+        }
+
+        @keyframes flicker {
+            0% { transform: scale(1) rotate(-2deg); filter: drop-shadow(0 0 12px rgba(252, 211, 77, 0.5)); }
+            50% { transform: scale(1.05) rotate(2deg); filter: drop-shadow(0 0 25px rgba(252, 211, 77, 0.8)); }
+            100% { transform: scale(0.95) rotate(-1deg); filter: drop-shadow(0 0 18px rgba(252, 211, 77, 0.6)); }
+        }
+
+        /* Ambient Glow that bathes the text */
+        .ambient-glow {
+            position: absolute;
+            top: 25%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, rgba(252, 211, 77, 0.12) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 2s ease;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .lantern.is-lit ~ .ambient-glow { opacity: 1; }
+
+        /* Interactive Sparks while typing */
+        .spark {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background-color: #FCD34D;
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: 0 0 8px #F59E0B;
+            animation: fly-spark 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+            z-index: 20;
+        }
+        @keyframes fly-spark {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+
+        /* State Transitions (Edit vs Saved) */
+        #editState {
+            transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #editState.hidden-state {
+            opacity: 0;
+            transform: translateY(20px);
+            pointer-events: none;
+            position: absolute;
+        }
+
+        #savedState {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 1s ease 0.5s, transform 1s cubic-bezier(0.34, 1.56, 0.64, 1) 0.5s;
+            pointer-events: none;
+            position: absolute;
+            width: 100%;
+            padding: 0 2rem;
+            text-align: center;
+        }
+        #savedState.visible-state {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+            position: relative;
+        }
+
+        /* Input styling */
+        textarea, input[type="text"] {
+            background-color: #111111;
+            border: 1px solid #333333;
+            transition: all 0.3s ease;
+            color: #E5E5E5;
+        }
+        textarea:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #D4AF37;
+            background-color: #1a1a1a;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
+        }
+        textarea::placeholder, input[type="text"]::placeholder { color: #525252; font-style: italic; }
+        textarea { resize: none; }
+        
+        textarea::-webkit-scrollbar { width: 4px; }
+        textarea::-webkit-scrollbar-track { background: transparent; }
+        textarea::-webkit-scrollbar-thumb { background: #404040; border-radius: 4px; }
+
+        /* Buttons */
+        .ignite-btn {
+            background-color: #2D2416;
+            color: #FCD34D;
+            border: 1px solid #5C451A;
+            transition: all 0.4s ease;
+        }
+        .ignite-btn:hover { 
+            box-shadow: 0 0 15px rgba(217, 119, 6, 0.2);
+            background-color: #3d311d;
+        }
+        .ignite-btn:active { transform: scale(0.96); }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(0,0,0,0.6); }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden bg-[#191919]">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-sm rounded-3xl p-6 md:p-8 flex flex-col items-center min-h-[520px] overflow-hidden">
+        
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-6 z-10 shrink-0">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#737373]">@faithreflects</span>
+            <div class="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider text-[#A3A3A3] border border-[#333] bg-[#1a1a1a]">
+                Weekly Insight
+            </div>
+        </div>
+
+        <h2 class="serif text-2xl text-[#EDEDED] mb-1 z-10 shrink-0">Golden Insight</h2>
+        <p class="text-xs text-[#8B8B8B] italic mb-6 z-10 shrink-0 text-center px-4">"Thy word is a lamp unto my feet."</p>
+
+        <!-- Hanging Lantern SVG container -->
+        <div class="relative w-32 h-44 mb-6 lantern z-10 shrink-0" id="lanternGroup">
+            
+            <div id="sparksContainer" class="absolute inset-0 z-20 overflow-visible"></div>
+
+            <svg viewBox="0 0 100 160" class="w-full h-full overflow-visible">
+                
+                <!-- Hanging Chain -->
+                <line x1="50" y1="0" x2="50" y2="25" stroke="#333333" stroke-width="2" stroke-dasharray="4 2"/>
+                
+                <!-- Lantern Ring/Handle -->
+                <path d="M50 25 C40 25, 35 35, 35 40" stroke="#737373" stroke-width="3" fill="none" stroke-linecap="round"/>
+                <path d="M50 25 C60 25, 65 35, 65 40" stroke="#737373" stroke-width="3" fill="none" stroke-linecap="round"/>
+                <circle cx="50" cy="25" r="4" fill="none" stroke="#737373" stroke-width="2"/>
+                
+                <!-- Lantern Top Hood -->
+                <path d="M30 55 L70 55 L60 40 L40 40 Z" fill="#222222" stroke="#111" stroke-width="1"/>
+                <rect x="25" y="55" width="50" height="4" rx="2" fill="#151515"/>
+                
+                <!-- Glass Body (Darker when unlit) -->
+                <path d="M30 59 L70 59 L65 115 L35 115 Z" fill="#1a1a1a" stroke="#2d2d2d" stroke-width="1"/>
+                
+                <!-- Metal framing lines -->
+                <line x1="50" y1="59" x2="50" y2="115" stroke="#111" stroke-width="2" opacity="0.6"/>
+                <line x1="38" y1="59" x2="43" y2="115" stroke="#111" stroke-width="2" opacity="0.6"/>
+                <line x1="62" y1="59" x2="57" y2="115" stroke="#111" stroke-width="2" opacity="0.6"/>
+
+                <!-- Base -->
+                <rect x="30" y="115" width="40" height="6" rx="1" fill="#151515"/>
+                <path d="M30 121 L70 121 L75 135 L25 135 Z" fill="#222222" stroke="#111" stroke-width="1"/>
+                <rect x="20" y="135" width="60" height="5" rx="2" fill="#111"/>
+
+                <!-- Inner Candle -->
+                <rect x="44" y="90" width="12" height="25" fill="#D4D4D4" rx="2"/>
+                <line x1="50" y1="90" x2="50" y2="86" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+
+                <!-- The Flame -->
+                <path class="flame" d="M50 68 C50 68, 42 80, 42 86 C42 90, 46 93, 50 93 C54 93, 58 90, 58 86 C58 80, 50 68, 50 68 Z" fill="url(#flameGrad)"/>
+
+                <defs>
+                    <linearGradient id="flameGrad" x1="50" y1="68" x2="50" y2="93" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#FFFBEB"/>
+                        <stop offset="40%" stop-color="#FCD34D"/>
+                        <stop offset="100%" stop-color="#D97706"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+        </div>
+        
+        <div class="ambient-glow"></div>
+
+        <!-- STATE 1: Editing Input Area -->
+        <div id="editState" class="w-full flex-1 flex flex-col z-10">
+            <div class="flex flex-col flex-1 mb-3">
+                <label class="text-[10px] font-bold tracking-widest uppercase text-[#525252] mb-1.5 pl-1">The Golden Insight</label>
+                <textarea id="insightInput" placeholder="Write the one thing you don't want to forget..." class="w-full flex-1 rounded-xl px-4 py-3 text-sm font-light mb-3" autocomplete="off"></textarea>
+                
+                <label class="text-[10px] font-bold tracking-widest uppercase text-[#525252] mb-1.5 pl-1">Through which discipline?</label>
+                <input type="text" id="disciplineInput" placeholder="e.g., Scripture, Silence, Worship..." class="w-full rounded-xl px-4 py-3 text-xs font-light" autocomplete="off">
+            </div>
+            
+            <button id="igniteBtn" class="ignite-btn w-full py-3.5 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center space-x-2 shadow-lg shrink-0">
+                <span class="text-base">🔥</span>
+                <span>Ignite Insight</span>
+            </button>
+        </div>
+
+        <!-- STATE 2: Saved / Illuminated Display -->
+        <div id="savedState" class="z-20 flex flex-col justify-center items-center flex-1 w-full">
+            <span class="text-2xl mb-3 block">✨</span>
+            <h3 id="displayText" class="serif italic text-[17px] text-[#FCD34D] leading-relaxed mb-4">
+                "Insight goes here."
+            </h3>
+            
+            <div class="flex items-center space-x-2 border-t border-[#333333] pt-4">
+                <span class="text-[9px] font-bold tracking-widest uppercase text-[#737373]">Revealed through</span>
+                <span id="displayDiscipline" class="text-[10px] font-bold tracking-widest uppercase text-[#D4D4D4] bg-[#222] px-2 py-1 rounded-md">Scripture</span>
+            </div>
+            
+            <button id="resetTriggerBtn" class="mt-8 text-[10px] tracking-widest text-[#525252] uppercase hover:text-[#A3A3A3] transition-colors pb-1 border-b border-transparent hover:border-[#333]">
+                Clear Lantern (New Week)
+            </button>
+        </div>
+
+        <!-- Custom Reset Modal -->
+        <div id="resetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#191919] rounded-2xl p-6 w-full max-w-[260px] border border-[#2d2d2d] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#EDEDED]">Start New Week?</h3>
+                <p class="text-xs text-[#8B8B8B] mb-6">This will extinguish the lantern and clear your insight for a new week.</p>
+                <div class="flex space-x-3">
+                    <button id="cancelResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-[#A3A3A3] hover:bg-[#262626] border border-transparent transition-colors">Cancel</button>
+                    <button id="confirmResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#262626] text-[#EDEDED] border border-[#333] hover:bg-[#333] transition-colors">Clear</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const lanternGroup = document.getElementById('lanternGroup');
+        const sparksContainer = document.getElementById('sparksContainer');
+        
+        const editState = document.getElementById('editState');
+        const savedState = document.getElementById('savedState');
+        
+        const insightInput = document.getElementById('insightInput');
+        const disciplineInput = document.getElementById('disciplineInput');
+        const igniteBtn = document.getElementById('igniteBtn');
+        
+        const displayText = document.getElementById('displayText');
+        const displayDiscipline = document.getElementById('displayDiscipline');
+        
+        const resetModal = document.getElementById('resetModal');
+        const resetTriggerBtn = document.getElementById('resetTriggerBtn');
+        const cancelResetBtn = document.getElementById('cancelResetBtn');
+        const confirmResetBtn = document.getElementById('confirmResetBtn');
+
+        // State
+        let state = JSON.parse(localStorage.getItem('faithreflects_weekly_insight')) || { 
+            text: '', 
+            discipline: '',
+            isLit: false 
+        };
+
+        // Initialize UI based on saved state
+        function init() {
+            if (state.isLit && state.text) {
+                // Show saved state instantly
+                editState.classList.add('hidden-state');
+                savedState.classList.add('visible-state');
+                lanternGroup.classList.add('is-lit');
+                
+                displayText.innerText = `"${state.text}"`;
+                displayDiscipline.innerText = state.discipline || "Reflection";
+            } else {
+                // Show edit state
+                editState.classList.remove('hidden-state');
+                savedState.classList.remove('visible-state');
+                lanternGroup.classList.remove('is-lit');
+                
+                insightInput.value = state.text;
+                disciplineInput.value = state.discipline;
+            }
+        }
+
+        // Spark Effect Generator (Fires while typing)
+        function createSpark() {
+            if(state.isLit) return; 
+
+            const spark = document.createElement('div');
+            spark.className = 'spark';
+            
+            // Start at the candle wick
+            spark.style.left = '50%';
+            spark.style.top = '60%'; // Wick height
+            
+            // Explosive outward trajectory
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 40 + Math.random() * 50;
+            const tx = Math.cos(angle) * distance;
+            const ty = Math.sin(angle) * distance - 20; // Bias upwards
+            
+            spark.style.setProperty('--tx', `${tx}px`);
+            spark.style.setProperty('--ty', `${ty}px`);
+            
+            sparksContainer.appendChild(spark);
+            
+            setTimeout(() => {
+                if (sparksContainer.contains(spark)) spark.remove();
+            }, 1200);
+        }
+
+        // Subtle gamification: sparks fly when typing in the textarea
+        insightInput.addEventListener('input', () => {
+            if (!state.isLit && Math.random() > 0.4) { // 60% chance to spark per keystroke
+                createSpark();
+            }
+        });
+
+        // Ignite & Save
+        igniteBtn.addEventListener('click', () => {
+            const text = insightInput.value.trim();
+            if (!text) {
+                insightInput.focus();
+                return;
+            }
+
+            // Button feedback
+            igniteBtn.style.transform = 'scale(0.95)';
+            setTimeout(() => igniteBtn.style.transform = 'scale(1)', 150);
+
+            // Update State
+            state = { 
+                text: text, 
+                discipline: disciplineInput.value.trim(), 
+                isLit: true 
+            };
+            localStorage.setItem('faithreflects_weekly_insight', JSON.stringify(state));
+
+            // Burst of sparks!
+            for(let i=0; i<20; i++) {
+                setTimeout(createSpark, i * 40);
+            }
+
+            // Transition UI
+            editState.classList.add('hidden-state');
+            lanternGroup.classList.add('is-lit');
+            
+            displayText.innerText = `"${state.text}"`;
+            displayDiscipline.innerText = state.discipline || "Reflection";
+            
+            setTimeout(() => {
+                savedState.classList.add('visible-state');
+            }, 300); // Wait for edit state to fade
+        });
+
+        // Reset Modal Logic
+        resetTriggerBtn.addEventListener('click', () => resetModal.classList.remove('hidden'));
+        cancelResetBtn.addEventListener('click', () => resetModal.classList.add('hidden'));
+        
+        confirmResetBtn.addEventListener('click', () => {
+            state = { text: '', discipline: '', isLit: false };
+            localStorage.setItem('faithreflects_weekly_insight', JSON.stringify(state));
+            
+            insightInput.value = '';
+            disciplineInput.value = '';
+            
+            savedState.classList.remove('visible-state');
+            lanternGroup.classList.remove('is-lit');
+            
+            setTimeout(() => {
+                editState.classList.remove('hidden-state');
+                resetModal.classList.add('hidden');
+            }, 500); // Wait for saved state to fade
+        });
+
+        // Start
+        init();
+
+    </script>
+</body>
+</html>

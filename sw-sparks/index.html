@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-[#191919]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Midnight Gratitude Embers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+    <style>
+        /* Notion Dark Mode Base - Forced completely */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #191919 !important; 
+            color: #D4D4D4; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        .widget-box {
+            background-color: #191919; 
+            border: 1px solid #2d2d2d;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            transition: all 1.5s ease;
+        }
+
+        /* Ember Bed Animations */
+        .coals {
+            transition: all 1.5s ease;
+        }
+        
+        .glow-core {
+            opacity: 0.1; /* Base state */
+            transition: opacity 1.5s ease, filter 1.5s ease;
+            animation: breathe 4s infinite alternate ease-in-out;
+            transform-origin: center;
+        }
+
+        @keyframes breathe {
+            0% { transform: scale(0.95); filter: brightness(0.8); }
+            100% { transform: scale(1.05); filter: brightness(1.2); }
+        }
+
+        /* Ambient Glow (Expands as gratitude increases) */
+        .ambient-glow {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.2) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 1.5s ease, transform 1.5s ease;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Floating Sparks */
+        .spark {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 20;
+            animation: float-up 2.5s cubic-bezier(0.25, 1, 0.3, 1) forwards;
+        }
+        .spark.gold { background-color: #FCD34D; box-shadow: 0 0 8px #F59E0B; }
+        .spark.orange { background-color: #F59E0B; box-shadow: 0 0 10px #D97706; }
+        .spark.red { background-color: #D97706; box-shadow: 0 0 6px #B45309; }
+
+        @keyframes float-up {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+
+        /* Input & Button Styling */
+        input[type="text"] {
+            background-color: #222222;
+            border: 1px solid #333333;
+            transition: all 0.3s ease;
+            color: #E5E5E5;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #D4AF37;
+            background-color: #262626;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
+        }
+        input[type="text"]::placeholder { color: #525252; font-style: italic; }
+
+        .submit-btn {
+            background-color: #262626;
+            color: #A3A3A3;
+            border: 1px solid #333333;
+            transition: all 0.4s ease;
+        }
+        .submit-btn:hover { 
+            background-color: #2D2416; 
+            color: #FCD34D; 
+            border-color: #5C451A; 
+            box-shadow: 0 0 15px rgba(217, 119, 6, 0.15);
+        }
+        .submit-btn:active { transform: scale(0.95); }
+
+        /* Log items fade in */
+        .log-item {
+            animation: fadeInDrop 0.5s ease forwards;
+        }
+        @keyframes fadeInDrop {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom Scrollbar for the log */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(0,0,0,0.6); }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden bg-[#191919]">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-sm rounded-3xl p-8 flex flex-col items-center h-[520px] overflow-hidden">
+        
+        <div id="ambientGlow" class="ambient-glow"></div>
+
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-6 z-10 shrink-0">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#737373]">@faithreflects</span>
+            <div class="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider text-[#A3A3A3] border border-[#333] bg-[#1a1a1a] flex items-center space-x-1">
+                <span id="emberCount" class="text-[#D4AF37]">0</span>
+                <span>Sparks</span>
+            </div>
+        </div>
+
+        <h2 class="serif text-2xl text-[#EDEDED] mb-1 z-10">Tonight's Gratitude</h2>
+        <p class="text-xs text-[#8B8B8B] italic mb-6 z-10 text-center">"Name three gifts—big or small."</p>
+
+        <!-- Visual Ember Bed -->
+        <div class="relative w-full h-32 mb-6 flex items-center justify-center z-10" id="emberArea">
+            <!-- Sparks generated here -->
+            <div id="sparksContainer" class="absolute inset-0 pointer-events-none z-20"></div>
+
+            <svg viewBox="0 0 200 120" class="w-full h-full overflow-visible z-10">
+                <!-- Base Dark Coals -->
+                <path d="M50 100 C70 90, 130 90, 150 100 C170 110, 30 110, 50 100" fill="#111111" stroke="#1A1A1A" stroke-width="2"/>
+                
+                <!-- Glowing Core (Opacity increases with gratitude) -->
+                <g id="glowCore" class="glow-core">
+                    <ellipse cx="100" cy="100" rx="40" ry="12" fill="url(#coreGlow)"/>
+                    <path d="M70 100 C80 85, 120 85, 130 100 Z" fill="url(#hotGlow)" opacity="0.8"/>
+                    
+                    <!-- Hot ember spots -->
+                    <circle cx="90" cy="98" r="4" fill="#FCD34D" filter="blur(1px)"/>
+                    <circle cx="110" cy="102" r="3" fill="#FFFBEB" filter="blur(1px)"/>
+                    <circle cx="100" cy="95" r="5" fill="#F59E0B" filter="blur(2px)"/>
+                    <circle cx="80" cy="105" r="2" fill="#D97706"/>
+                    <circle cx="120" cy="98" r="3" fill="#D97706"/>
+                </g>
+
+                <!-- Foreground Coals (to give depth) -->
+                <path d="M60 105 Q80 95 100 105 Q120 95 140 105 Q100 115 60 105" fill="#151515" stroke="#222222" stroke-width="1"/>
+                <ellipse cx="85" cy="108" rx="12" ry="5" fill="#1A1A1A"/>
+                <ellipse cx="115" cy="106" rx="15" ry="6" fill="#111111"/>
+                <ellipse cx="100" cy="110" rx="10" ry="4" fill="#1A1A1A"/>
+
+                <!-- Edge highlights reflecting glow -->
+                <path id="coalHighlight" d="M85 103 Q100 95 115 103" stroke="#D97706" stroke-width="1" fill="none" opacity="0.1" transition="opacity 1s ease"/>
+
+                <defs>
+                    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#D97706"/>
+                        <stop offset="100%" stop-color="rgba(217, 119, 6, 0)"/>
+                    </radialGradient>
+                    <radialGradient id="hotGlow" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#FCD34D"/>
+                        <stop offset="100%" stop-color="rgba(252, 211, 77, 0)"/>
+                    </radialGradient>
+                </defs>
+            </svg>
+        </div>
+
+        <!-- Input Area -->
+        <div class="w-full flex space-x-2 z-10 mb-4 shrink-0">
+            <input type="text" id="gratitudeInput" placeholder="I am thankful for..." class="flex-1 rounded-xl px-4 py-3 text-sm text-[#D4D4D4] font-light" autocomplete="off">
+            
+            <button id="submitBtn" class="submit-btn px-4 py-3 rounded-xl flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            </button>
+        </div>
+
+        <!-- Recent Logs -->
+        <div class="w-full flex-1 flex flex-col space-y-2 overflow-y-auto custom-scrollbar pr-1 z-10 min-h-0" id="logList">
+            <!-- Injected by JS -->
+        </div>
+
+        <!-- Hidden Reset button -->
+        <button id="resetTriggerBtn" class="mt-4 text-[10px] tracking-widest text-[#525252] uppercase hover:text-[#A3A3A3] transition-colors z-10 shrink-0">
+            Clear Embers (New Night)
+        </button>
+
+        <!-- Custom Reset Modal -->
+        <div id="resetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#191919] rounded-2xl p-6 w-full max-w-[260px] border border-[#2d2d2d] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#EDEDED]">Start New Night?</h3>
+                <p class="text-xs text-[#8B8B8B] mb-6">This will clear tonight's gratitudes and let the fire dim.</p>
+                <div class="flex space-x-3">
+                    <button id="cancelResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-[#A3A3A3] hover:bg-[#262626] border border-transparent transition-colors">Cancel</button>
+                    <button id="confirmResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#262626] text-[#EDEDED] border border-[#333] hover:bg-[#333] transition-colors">Clear</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // State Management
+        let gratitudes = JSON.parse(localStorage.getItem('faithreflects_lofi_gratitude')) || [];
+        const today = new Date().toDateString();
+        const lastDate = localStorage.getItem('faithreflects_lofi_gratitude_date');
+
+        // Auto-reset if it's a new day
+        if (lastDate !== today) {
+            gratitudes = [];
+            localStorage.setItem('faithreflects_lofi_gratitude_date', today);
+            localStorage.setItem('faithreflects_lofi_gratitude', JSON.stringify(gratitudes));
+        }
+
+        // Elements
+        const input = document.getElementById('gratitudeInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const logList = document.getElementById('logList');
+        const countDisplay = document.getElementById('emberCount');
+        const sparksContainer = document.getElementById('sparksContainer');
+        const glowCore = document.getElementById('glowCore');
+        const ambientGlow = document.getElementById('ambientGlow');
+        const coalHighlight = document.getElementById('coalHighlight');
+        
+        // Modal
+        const resetModal = document.getElementById('resetModal');
+        const resetTriggerBtn = document.getElementById('resetTriggerBtn');
+        const cancelResetBtn = document.getElementById('cancelResetBtn');
+        const confirmResetBtn = document.getElementById('confirmResetBtn');
+
+        function updateFireVisuals() {
+            const count = gratitudes.length;
+            countDisplay.innerText = count;
+
+            // Cap the visual intensity at 5 entries
+            const intensity = Math.min(count, 5); 
+            
+            // Base opacity is 0.1. Each entry adds 0.18 up to ~1.0
+            const opacity = 0.1 + (intensity * 0.18);
+            
+            // Scale the ambient background glow
+            const scale = 1 + (intensity * 0.2);
+            
+            glowCore.style.opacity = opacity;
+            ambientGlow.style.opacity = opacity * 0.7; // Slightly dimmer than core
+            ambientGlow.style.transform = `translate(-50%, -50%) scale(${scale})`;
+            
+            // Highlight the front coals based on fire intensity
+            coalHighlight.style.opacity = opacity * 0.5;
+
+            // If 3 or more (the goal!), make the counter text glow
+            if (count >= 3) {
+                countDisplay.style.textShadow = '0 0 10px rgba(212, 175, 55, 0.8)';
+            } else {
+                countDisplay.style.textShadow = 'none';
+            }
+        }
+
+        function createSparks() {
+            // Create a burst of 10-15 sparks
+            const sparkCount = 10 + Math.floor(Math.random() * 5);
+            
+            for(let i = 0; i < sparkCount; i++) {
+                setTimeout(() => {
+                    const spark = document.createElement('div');
+                    
+                    const rand = Math.random();
+                    let colorClass = 'gold';
+                    if (rand > 0.6) colorClass = 'orange';
+                    if (rand > 0.9) colorClass = 'red';
+                    
+                    spark.className = `spark ${colorClass}`;
+                    
+                    // Start roughly in the center of the coals
+                    spark.style.left = `calc(50% + ${Math.random() * 40 - 20}px)`;
+                    spark.style.top = '70%'; 
+                    
+                    // Float up and slightly side-to-side
+                    const travelX = (Math.random() * 60) - 30; // -30px to 30px
+                    const travelY = -(Math.random() * 80 + 40); // Up 40px to 120px
+                    
+                    spark.style.setProperty('--tx', `${travelX}px`);
+                    spark.style.setProperty('--ty', `${travelY}px`);
+                    
+                    sparksContainer.appendChild(spark);
+                    
+                    // Cleanup
+                    setTimeout(() => {
+                        if (sparksContainer.contains(spark)) spark.remove();
+                    }, 2500);
+                }, i * 40); // Stagger
+            }
+        }
+
+        window.removeGratitude = function(id) {
+            gratitudes = gratitudes.filter(g => g.id !== id);
+            localStorage.setItem('faithreflects_lofi_gratitude', JSON.stringify(gratitudes));
+            renderLogs();
+            updateFireVisuals();
+        };
+
+        function renderLogs() {
+            logList.innerHTML = '';
+            
+            if (gratitudes.length === 0) {
+                logList.innerHTML = `<p class="text-xs text-[#525252] text-center mt-2 italic">Awaiting your blessings...</p>`;
+                return;
+            }
+
+            // Show newest at the top
+            const reversed = [...gratitudes].reverse();
+
+            reversed.forEach((g, index) => {
+                const item = document.createElement('div');
+                item.className = 'log-item bg-[#222222] border border-[#2d2d2d] p-3 rounded-xl flex items-start space-x-3 shadow-sm relative group';
+                item.style.animationDelay = `${index * 0.05}s`;
+                
+                item.innerHTML = `
+                    <div class="text-[#D97706] mt-0.5 opacity-80">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path></svg>
+                    </div>
+                    <p class="text-xs text-[#D4D4D4] leading-relaxed break-words flex-1 pr-6 font-light">${g.text}</p>
+                    <button onclick="removeGratitude(${g.id})" class="absolute right-3 top-3 opacity-0 group-hover:opacity-100 transition-opacity text-[#525252] hover:text-[#EF4444]" title="Remove">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                `;
+                logList.appendChild(item);
+            });
+        }
+
+        submitBtn.addEventListener('click', () => {
+            const text = input.value.trim();
+            if (text) {
+                gratitudes.push({ text: text, id: Date.now() });
+                localStorage.setItem('faithreflects_lofi_gratitude', JSON.stringify(gratitudes));
+                
+                input.value = '';
+                
+                // Triggers
+                renderLogs();
+                createSparks();
+                updateFireVisuals();
+                
+                // Button feedback
+                submitBtn.style.transform = 'scale(0.95)';
+                setTimeout(() => submitBtn.style.transform = 'scale(1)', 150);
+            }
+        });
+
+        // Enter key to submit
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') submitBtn.click();
+        });
+
+        // Reset Modal Logic
+        resetTriggerBtn.addEventListener('click', () => resetModal.classList.remove('hidden'));
+        cancelResetBtn.addEventListener('click', () => resetModal.classList.add('hidden'));
+        
+        confirmResetBtn.addEventListener('click', () => {
+            gratitudes = [];
+            localStorage.setItem('faithreflects_lofi_gratitude', JSON.stringify(gratitudes));
+            renderLogs();
+            updateFireVisuals();
+            clearModal.classList.add('hidden');
+        });
+
+        // Init
+        renderLogs();
+        updateFireVisuals();
+
+    </script>
+</body>
+</html>

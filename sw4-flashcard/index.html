@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-[#191919]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scripture Memory Flashcard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        /* Notion Dark Mode Base */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #191919 !important; 
+            color: #D4D4D4; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        .widget-box {
+            background-color: #191919; 
+            border: 1px solid #2d2d2d;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            transition: all 1.5s ease;
+        }
+
+        /* 3D Flip Card Physics */
+        .perspective { perspective: 1000px; }
+        
+        .flip-card-inner {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+        
+        .flip-card-inner.is-flipped {
+            transform: rotateY(180deg);
+        }
+        
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1.5rem;
+            border: 1px solid #333333;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+        }
+        
+        .flip-card-front {
+            background: linear-gradient(145deg, #222222 0%, #151515 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: border-color 0.3s ease;
+        }
+        .flip-card-front:hover { border-color: #525252; }
+        
+        .flip-card-back {
+            background: linear-gradient(145deg, #262626 0%, #1a1a1a 100%);
+            transform: rotateY(180deg);
+            display: flex;
+            flex-direction: column;
+            padding: 2rem;
+            border-color: #404040;
+        }
+
+        /* Redacted Text Styling */
+        .redacted-word {
+            color: transparent;
+            border-bottom: 2px solid #525252;
+            display: inline-block;
+            margin: 0 2px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .first-letter {
+            color: #D4AF37;
+            font-weight: 600;
+            border-bottom: 2px solid #D4AF37;
+            margin: 0 2px;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        .first-letter-text {
+            color: #D4AF37;
+        }
+        .first-letter-blank {
+            color: transparent;
+        }
+
+        /* Tap Pulse Animation */
+        .hint-pulse { animation: soft-pulse 2s infinite; }
+        @keyframes soft-pulse {
+            0% { opacity: 0.4; transform: translateY(0); }
+            50% { opacity: 1; transform: translateY(3px); }
+            100% { opacity: 0.4; transform: translateY(0); }
+        }
+
+        /* Buttons */
+        .nav-btn {
+            background-color: #222222;
+            color: #A3A3A3;
+            border: 1px solid #333333;
+            transition: all 0.3s ease;
+        }
+        .nav-btn:hover:not(:disabled) { background-color: #2a2a2a; color: #E5E5E5; border-color: #444; }
+        .nav-btn:active:not(:disabled) { transform: scale(0.95); }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .challenge-btn {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .challenge-btn::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(212, 175, 55, 0.1);
+            transform: translateX(-100%);
+            transition: transform 0.4s ease;
+        }
+        .challenge-btn:hover::after { transform: translateX(0); }
+
+        /* Level Indicators */
+        .level-dot {
+            transition: all 0.4s ease;
+        }
+        .level-dot.active {
+            background-color: #D4AF37;
+            box-shadow: 0 0 8px rgba(212, 175, 55, 0.6);
+        }
+
+        /* Ambient Glow */
+        .card-glow {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%; height: 80%;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden bg-[#191919]">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-sm rounded-3xl p-6 md:p-8 flex flex-col items-center min-h-[480px] overflow-hidden">
+        
+        <!-- Header Controls -->
+        <div class="w-full flex justify-between items-center mb-4 z-10 shrink-0">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#737373]">@faithreflects</span>
+            <button id="openAddModalBtn" class="text-[10px] tracking-widest text-[#525252] uppercase hover:text-[#A3A3A3] transition-colors flex items-center space-x-1 border border-[#333] px-2 py-1 rounded-md bg-[#1a1a1a]">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                <span>Add Verse</span>
+            </button>
+        </div>
+
+        <div class="w-full flex justify-between items-center mb-6 z-10 shrink-0">
+            <button id="prevBtn" class="nav-btn p-2 rounded-full flex items-center justify-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+            
+            <div class="px-4 py-1.5 rounded-full text-[10px] font-semibold tracking-wider text-[#A3A3A3] border border-[#333] bg-[#1a1a1a] flex items-center space-x-1">
+                <span id="currentCardNum" class="text-[#D4AF37]">1</span>
+                <span>of</span>
+                <span id="totalCardNum">6</span>
+            </div>
+
+            <button id="nextBtn" class="nav-btn p-2 rounded-full flex items-center justify-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </button>
+        </div>
+
+        <!-- 3D Flashcard Container -->
+        <div class="perspective w-full flex-1 min-h-[320px] mb-2 z-10 relative" id="cardWrapper">
+            <div class="card-glow"></div>
+            
+            <div class="flip-card-inner" id="flashcard">
+                
+                <!-- FRONT OF CARD -->
+                <div class="flip-card-front">
+                    <!-- Top Tags -->
+                    <div class="absolute top-6 left-0 w-full flex justify-between items-center px-4">
+                        <div class="flex space-x-2">
+                            <span id="tagTopic" class="px-2 py-1 bg-[#2b3a4a] text-[#93C5FD] rounded text-[9px] font-bold uppercase tracking-wider border border-[#1e293b]">Topic</span>
+                            <span id="tagStatus" class="px-2 py-1 bg-[#3a4d3e] text-[#8FBC8F] rounded text-[9px] font-bold uppercase tracking-wider border border-[#2c3e30]">🌱 Rooted</span>
+                        </div>
+                        <button id="deleteBtn" class="text-[#525252] hover:text-[#EF4444] transition-colors z-20" onclick="event.stopPropagation(); deleteCurrentVerse();" title="Delete Verse">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+
+                    <h2 id="frontRef" class="serif text-4xl text-[#EDEDED] mt-4 mb-8 text-center px-4">Verse Ref</h2>
+                    
+                    <div class="flex flex-col items-center text-[#737373] hint-pulse absolute bottom-8">
+                        <span class="text-[10px] uppercase tracking-widest font-semibold mb-1">Tap to flip</span>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                    </div>
+                </div>
+
+                <!-- BACK OF CARD -->
+                <div class="flip-card-back">
+                    
+                    <div class="w-full flex justify-between items-start mb-4 border-b border-[#333] pb-3">
+                        <span id="backRef" class="text-[10px] font-bold tracking-widest uppercase text-[#D4AF37]">Reference</span>
+                        <div class="flex space-x-1" id="levelDots">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+                    
+                    <!-- The Verse Text Container -->
+                    <div class="flex-1 flex items-center justify-center relative w-full mb-4">
+                        <!-- Decorative quote -->
+                        <span class="absolute top-0 left-0 text-4xl text-[#333] font-serif leading-none -translate-x-2 -translate-y-2">"</span>
+                        
+                        <p id="verseContent" class="serif italic text-[17px] text-[#D4D4D4] leading-relaxed text-center px-2 z-10 w-full">
+                            <!-- Injected and redacted via JS -->
+                        </p>
+                        
+                        <span class="absolute bottom-0 right-0 text-4xl text-[#333] font-serif leading-none translate-x-2 translate-y-4">"</span>
+                    </div>
+
+                    <!-- Challenge Controls (Stop Propagation to prevent flip) -->
+                    <div class="mt-auto w-full pt-4 border-t border-[#333]" onclick="event.stopPropagation()">
+                        <button id="challengeBtn" class="challenge-btn w-full py-3 bg-[#111111] text-[#A3A3A3] border border-[#333333] rounded-xl text-[10px] font-semibold uppercase tracking-widest hover:border-[#D4AF37] hover:text-[#D4AF37] flex items-center justify-center space-x-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                            <span id="challengeText">Increase Challenge</span>
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Add Verse Modal -->
+        <div id="addModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#191919] rounded-2xl p-6 w-full max-w-[300px] border border-[#2d2d2d] shadow-2xl transform transition-all flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-serif text-xl text-[#EDEDED]">Add New Verse</h3>
+                    <button id="closeAddModalBtn" class="text-[#737373] hover:text-[#D4D4D4] p-1"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                </div>
+                <input type="text" id="newRef" placeholder="Reference (e.g. John 11:35)" class="w-full bg-[#111] text-sm text-[#D4D4D4] border border-[#333] rounded-xl p-3 mb-3 focus:border-[#D4AF37] outline-none transition-colors">
+                <textarea id="newText" placeholder="Verse text..." class="w-full bg-[#111] text-sm text-[#D4D4D4] border border-[#333] rounded-xl p-3 mb-4 focus:border-[#D4AF37] outline-none resize-none transition-colors" rows="4"></textarea>
+                <button id="saveNewVerseBtn" class="w-full py-3 rounded-xl text-xs font-semibold bg-[#2D2416] text-[#FCD34D] border border-[#5C451A] hover:bg-[#3d311d] transition-colors shadow-lg">Save Verse</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Database mirroring the user's Notion setup
+        const defaultVerses = [
+            { ref: "Jeremiah 29:11", text: "For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, plans to give you hope and a future.", topic: "Trust", status: "🌱 Deepening" },
+            { ref: "Ephesians 2:10", text: "For we are God's handiwork, created in Christ Jesus to do good works, which God prepared in advance for us to do.", topic: "Identity", status: "🌱 Seed" },
+            { ref: "Philippians 4:6-7", text: "Do not be anxious about anything, but in every situation, by prayer and petition, with thanksgiving, present your requests to God. And the peace of God, which transcends all understanding, will guard your hearts and your minds in Christ Jesus.", topic: "Peace", status: "🌿 Rooted" },
+            { ref: "Romans 8:28", text: "And we know that in all things God works for the good of those who love him, who have been called according to his purpose.", topic: "Faith", status: "🌿 Growing" },
+            { ref: "Psalm 46:10", text: "He says, Be still, and know that I am God; I will be exalted among the nations, I will be exalted in the earth.", topic: "Peace", status: "🌿 Rooted" },
+            { ref: "Isaiah 41:10", text: "So do not fear, for I am with you; do not be dismayed, for I am your God. I will strengthen you and help you; I will uphold you with my righteous right hand.", topic: "Courage", status: "🌿 Growing" }
+        ];
+
+        // State
+        let verses = JSON.parse(localStorage.getItem('faithreflects_flashcards_data')) || [...defaultVerses];
+        let currentIndex = parseInt(localStorage.getItem('faithreflects_flashcard_index')) || 0;
+        let challengeLevel = 0; // 0 = Full, 1 = 30%, 2 = 60%, 3 = First Letters
+        const maxChallenge = 3;
+
+        // Elements
+        const card = document.getElementById('flashcard');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const currentCardNum = document.getElementById('currentCardNum');
+        const totalCardNum = document.getElementById('totalCardNum');
+        
+        const frontRef = document.getElementById('frontRef');
+        const tagTopic = document.getElementById('tagTopic');
+        const tagStatus = document.getElementById('tagStatus');
+        
+        const backRef = document.getElementById('backRef');
+        const verseContent = document.getElementById('verseContent');
+        const challengeBtn = document.getElementById('challengeBtn');
+        const challengeText = document.getElementById('challengeText');
+        const levelDots = document.getElementById('levelDots');
+        
+        // Modal Elements
+        const addModal = document.getElementById('addModal');
+        const openAddModalBtn = document.getElementById('openAddModalBtn');
+        const closeAddModalBtn = document.getElementById('closeAddModalBtn');
+        const saveNewVerseBtn = document.getElementById('saveNewVerseBtn');
+        const newRef = document.getElementById('newRef');
+        const newText = document.getElementById('newText');
+
+        function init() {
+            // Ensure index is valid after deletions
+            if (currentIndex >= verses.length) currentIndex = Math.max(0, verses.length - 1);
+            totalCardNum.innerText = verses.length;
+            loadCard(currentIndex);
+        }
+
+        function loadCard(index) {
+            const verse = verses[index];
+            currentCardNum.innerText = index + 1;
+            
+            // Front
+            frontRef.innerText = verse.ref;
+            tagTopic.innerText = verse.topic;
+            tagStatus.innerText = verse.status;
+            
+            // Back
+            backRef.innerText = verse.ref;
+            
+            // Reset challenge state on new card
+            challengeLevel = 0;
+            renderText();
+            updateDots();
+            
+            // Manage button states
+            prevBtn.disabled = index === 0;
+            nextBtn.disabled = index === verses.length - 1;
+            
+            // Ensure card is flipped to front
+            card.classList.remove('is-flipped');
+        }
+
+        // The core cognitive function for rendering redactions
+        function renderText() {
+            const verseText = verses[currentIndex].text;
+            
+            if (challengeLevel === 0) {
+                verseContent.innerHTML = verseText;
+                challengeText.innerText = "Hide 30% of words";
+                return;
+            }
+
+            const words = verseText.split(/(\s+)/); // Split keeping whitespace to rebuild perfectly
+            let renderedHtml = '';
+
+            words.forEach((word, i) => {
+                // If it's just whitespace, append it
+                if (!word.trim()) {
+                    renderedHtml += word;
+                    return;
+                }
+
+                // Strip punctuation for logic, but keep it for rendering
+                const cleanWord = word.replace(/[.,;!?"']/g, '');
+                const punctuation = word.replace(/[a-zA-Z0-9-]/g, ''); // Extract just punctuation
+                const isEligible = cleanWord.length > 2; // Don't blank out tiny words like "a", "of", "in" for levels 1 & 2
+
+                if (challengeLevel === 1) {
+                    // Hide ~30% of words (every 3rd eligible word)
+                    if (isEligible && (i % 3 === 0)) {
+                        renderedHtml += `<span class="redacted-word" style="width: ${cleanWord.length * 8}px;">_</span>${punctuation}`;
+                    } else {
+                        renderedHtml += word;
+                    }
+                    challengeText.innerText = "Hide 60% of words";
+                } 
+                else if (challengeLevel === 2) {
+                    // Hide ~60% of words (every 2nd eligible word, plus some)
+                    if (isEligible && (i % 2 === 0 || i % 5 === 0)) {
+                        renderedHtml += `<span class="redacted-word" style="width: ${cleanWord.length * 8}px;">_</span>${punctuation}`;
+                    } else {
+                        renderedHtml += word;
+                    }
+                    challengeText.innerText = "First Letters Only";
+                }
+                else if (challengeLevel === 3) {
+                    // METHOD 2: First Letters Only. Keep punctuation, show first letter, underscore the rest.
+                    if (cleanWord.length > 0) {
+                        const firstChar = cleanWord.charAt(0);
+                        renderedHtml += `<span class="first-letter"><span class="first-letter-text">${firstChar}</span><span class="first-letter-blank">${cleanWord.slice(1)}</span></span>${punctuation}`;
+                    } else {
+                        renderedHtml += word; // Fallback for pure punctuation
+                    }
+                    challengeText.innerText = "Show Full Text";
+                }
+            });
+
+            verseContent.innerHTML = renderedHtml;
+        }
+
+        function updateDots() {
+            levelDots.innerHTML = '';
+            for(let i=0; i<maxChallenge; i++) {
+                const isActive = i < challengeLevel;
+                levelDots.innerHTML += `<div class="w-1.5 h-1.5 rounded-full bg-[#333] level-dot ${isActive ? 'active' : ''}"></div>`;
+            }
+        }
+
+        // Event Listeners
+        card.addEventListener('click', function(e) {
+            // Prevent flip if clicking controls
+            if(e.target.tagName.toLowerCase() === 'button' || e.target.closest('button')) return;
+            this.classList.toggle('is-flipped');
+        });
+
+        challengeBtn.addEventListener('click', () => {
+            challengeLevel++;
+            if (challengeLevel > maxChallenge) challengeLevel = 0;
+            
+            // Small transition effect
+            verseContent.style.opacity = 0;
+            setTimeout(() => {
+                renderText();
+                updateDots();
+                verseContent.style.opacity = 1;
+            }, 200);
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentIndex < verses.length - 1) {
+                currentIndex++;
+                localStorage.setItem('faithreflects_flashcard_index', currentIndex);
+                loadCard(currentIndex);
+            }
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                localStorage.setItem('faithreflects_flashcard_index', currentIndex);
+                loadCard(currentIndex);
+            }
+        });
+        
+        // Add Verse Logic
+        openAddModalBtn.addEventListener('click', () => {
+            addModal.classList.remove('hidden');
+            newRef.focus();
+        });
+
+        closeAddModalBtn.addEventListener('click', () => {
+            addModal.classList.add('hidden');
+            newRef.value = '';
+            newText.value = '';
+        });
+
+        saveNewVerseBtn.addEventListener('click', () => {
+            if (newRef.value.trim() && newText.value.trim()) {
+                verses.push({
+                    ref: newRef.value.trim(),
+                    text: newText.value.trim(),
+                    topic: "Custom",
+                    status: "🌱 Seed"
+                });
+                localStorage.setItem('faithreflects_flashcards_data', JSON.stringify(verses));
+                currentIndex = verses.length - 1;
+                localStorage.setItem('faithreflects_flashcard_index', currentIndex);
+                init();
+                closeAddModalBtn.click();
+            }
+        });
+        
+        // Delete Verse Logic
+        window.deleteCurrentVerse = function() {
+            if(confirm("Remove this verse from your flashcards?")) {
+                verses.splice(currentIndex, 1);
+                
+                // If they delete all verses, restore defaults so it doesn't break
+                if (verses.length === 0) {
+                    verses = [...defaultVerses];
+                }
+                
+                localStorage.setItem('faithreflects_flashcards_data', JSON.stringify(verses));
+                init();
+            }
+        };
+
+        // Start
+        init();
+
+    </script>
+</body>
+</html>

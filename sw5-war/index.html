@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-[#191919]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>War Room Command Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        /* Notion Dark Mode Base - Forced completely */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #191919 !important; 
+            color: #D4D4D4; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        .widget-box {
+            background-color: #191919; 
+            border: 1px solid #2d2d2d;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            transition: all 1.5s ease;
+        }
+
+        /* Badges / Emblems */
+        .station-badge {
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            filter: grayscale(1) brightness(0.7);
+            opacity: 0.6;
+        }
+        
+        .station-badge:hover {
+            transform: translateY(-4px);
+            filter: grayscale(0.5) brightness(1);
+            opacity: 1;
+        }
+
+        .station-badge.is-selected {
+            transform: translateY(-4px) scale(1.05);
+            filter: grayscale(0) brightness(1.2);
+            opacity: 1;
+        }
+
+        /* The Glowing "Deployed" State */
+        .station-badge.is-deployed .badge-core {
+            fill: #D97706; /* Inner amber */
+            transition: fill 1s ease;
+            animation: ember-pulse 3s infinite alternate ease-in-out;
+        }
+        
+        .station-badge.is-deployed .badge-ring {
+            stroke: #FCD34D;
+            filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.6));
+        }
+
+        .station-badge.is-deployed .badge-icon {
+            fill: #FFFBEB;
+        }
+
+        @keyframes ember-pulse {
+            0% { fill: #B45309; filter: drop-shadow(0 0 4px rgba(217, 119, 6, 0.4)); }
+            100% { fill: #D97706; filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.8)); }
+        }
+
+        /* Tactical Panel Bottom Sheet Animation */
+        #panelOverlay {
+            position: absolute;
+            inset: 0;
+            background-color: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            z-index: 40;
+            border-radius: 1.5rem;
+        }
+        #panelOverlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #tacticalPanel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 420px;
+            background-color: #151515;
+            border-top: 1px solid #2d2d2d;
+            border-radius: 1.5rem 1.5rem 0 0;
+            padding: 1.5rem;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
+            transform: translateY(100%);
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+        }
+        #tacticalPanel.open {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Inputs & Buttons */
+        textarea {
+            background-color: #111111;
+            border: 1px solid #333333;
+            color: #E5E5E5;
+            transition: all 0.3s ease;
+            resize: none;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #D4AF37;
+            background-color: #151515;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
+        }
+        textarea::placeholder { color: #525252; font-style: italic; }
+
+        .deploy-btn {
+            background-color: #2D2416;
+            color: #FCD34D;
+            border: 1px solid #5C451A;
+            transition: all 0.4s ease;
+        }
+        .deploy-btn:hover { 
+            background-color: #3d311d; 
+            box-shadow: 0 0 15px rgba(217, 119, 6, 0.2);
+        }
+        .deploy-btn:active { transform: scale(0.96); }
+
+        .recall-btn {
+            background-color: transparent;
+            color: #737373;
+            border: 1px solid #333333;
+            transition: all 0.3s ease;
+        }
+        .recall-btn:hover { background-color: #262626; color: #EF4444; border-color: #EF4444; }
+
+        /* Custom Scrollbar for Scriptures List */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* Ambient Glow behind badges */
+        .ambient-glow {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 150px;
+            border-radius: 50%;
+            background: radial-gradient(ellipse, rgba(217, 119, 6, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            transition: opacity 1s ease;
+        }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden bg-[#191919]">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-md rounded-3xl p-6 md:p-8 flex flex-col h-[600px] overflow-hidden">
+        
+        <div class="ambient-glow" id="glow"></div>
+
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-6 z-10 shrink-0">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#737373]">@faithreflects</span>
+            <div class="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider text-[#A3A3A3] border border-[#333] bg-[#1a1a1a] flex items-center space-x-1">
+                <span id="activeCount" class="text-[#D4AF37]">0</span>
+                <span>/ 6 Stations Active</span>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between z-10 shrink-0 mb-6">
+            <div>
+                <h2 class="serif text-2xl text-[#EDEDED] mb-1">War Room</h2>
+                <p class="text-xs text-[#8B8B8B] italic">"Stand in the gap."</p>
+            </div>
+            <button id="clearAllBtn" class="text-[9px] tracking-widest uppercase text-[#525252] hover:text-[#A3A3A3] transition-colors pb-0.5 border-b border-transparent hover:border-[#525252]">
+                Clear All
+            </button>
+        </div>
+
+        <!-- 3x2 Grid of Badges -->
+        <div class="grid grid-cols-3 gap-4 w-full z-10 shrink-0" id="badgesContainer">
+            <!-- Badges injected by JS -->
+        </div>
+
+        <!-- Tactical Panel Overlay -->
+        <div id="panelOverlay"></div>
+
+        <!-- Tactical Panel (Hidden by default) -->
+        <div id="tacticalPanel">
+            
+            <div class="flex justify-between items-center mb-3 pb-3 border-b border-[#2d2d2d] shrink-0">
+                <div class="flex items-center space-x-2">
+                    <span id="panelIcon" class="text-lg">🛡️</span>
+                    <h3 id="panelTitle" class="font-serif text-[#EDEDED] font-medium text-lg">Station Name</h3>
+                </div>
+                <button id="closePanelBtn" class="text-[#737373] hover:text-[#A3A3A3] transition-colors p-1 rounded-full hover:bg-[#222]">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- Targets List -->
+            <div class="mb-4 shrink-0 max-h-[120px] overflow-y-auto custom-scrollbar pr-2">
+                <span class="text-[9px] font-bold tracking-widest uppercase text-[#737373] block mb-2">Scripture Targets</span>
+                <ul id="targetsList" class="space-y-2 text-xs text-[#A3A3A3] leading-relaxed">
+                    <!-- Injected by JS -->
+                </ul>
+            </div>
+
+            <!-- Input Area -->
+            <div class="flex-1 flex flex-col min-h-0 relative">
+                <span class="text-[9px] font-bold tracking-widest uppercase text-[#737373] block mb-2">Deployed Prayer</span>
+                <textarea id="prayerInput" class="flex-1 w-full rounded-xl p-3 text-sm font-light leading-relaxed mb-3" placeholder="Write your specific prayer for this station..."></textarea>
+                
+                <div class="flex space-x-2 shrink-0">
+                    <button id="recallBtn" class="recall-btn px-4 py-3 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center hidden" title="Clear this station">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                    <button id="deployBtn" class="deploy-btn flex-1 py-3 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center space-x-1 shadow-lg">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        <span>Deploy</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Default Empty State Message (Visible when panel is closed) -->
+        <div id="emptyStateMsg" class="flex-1 flex items-center justify-center w-full z-0 opacity-50 transition-opacity duration-300">
+            <span class="text-[11px] uppercase tracking-widest text-[#737373] font-medium text-center">Select a station to command</span>
+        </div>
+
+    </div>
+
+    <script>
+        // Database perfectly mapped to the user's template
+        const stationsData = [
+            {
+                id: 'family', title: 'Family', emoji: '🙏',
+                svgPath: 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z',
+                targets: [
+                    "Protection over household — <i>Psalm 91:1-2</i>",
+                    "Unity and love in family — <i>Colossians 3:14</i>",
+                    "Salvation for unsaved members — <i>Acts 16:31</i>",
+                    "Wisdom for parents — <i>James 1:5</i>",
+                    "Peace in the home — <i>Isaiah 32:18</i>"
+                ]
+            },
+            {
+                id: 'work', title: 'Work', emoji: '💼',
+                svgPath: 'M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z',
+                targets: [
+                    "Clarity about calling — <i>Proverbs 3:5-6</i>",
+                    "Integrity in the workplace — <i>Colossians 3:23</i>",
+                    "Favor and open doors — <i>Revelation 3:8</i>",
+                    "Wisdom in decisions — <i>James 1:5</i>",
+                    "Provision and contentment — <i>Philippians 4:19</i>"
+                ]
+            },
+            {
+                id: 'world', title: 'World', emoji: '🌍',
+                svgPath: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z',
+                targets: [
+                    "Peace among nations — <i>1 Timothy 2:1-2</i>",
+                    "Persecuted believers — <i>Hebrews 13:3</i>",
+                    "Spread of the gospel — <i>Matthew 24:14</i>",
+                    "Those in natural disasters — <i>Psalm 46:1</i>",
+                    "Wisdom for leaders — <i>Romans 13:1</i>"
+                ]
+            },
+            {
+                id: 'healing', title: 'Healing', emoji: '❤️',
+                svgPath: 'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z',
+                targets: [
+                    "Physical healing — <i>Jeremiah 30:17</i>",
+                    "Emotional healing — <i>Psalm 147:3</i>",
+                    "Healing of relationships — <i>Matthew 5:23-24</i>",
+                    "Healing from grief — <i>Psalm 34:18</i>",
+                    "Healing of memories — <i>Isaiah 43:18-19</i>"
+                ]
+            },
+            {
+                id: 'protection', title: 'Protection', emoji: '🛡️',
+                svgPath: 'M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z',
+                targets: [
+                    "Spiritual protection — <i>Ephesians 6:11</i>",
+                    "Protection from temptation — <i>Matthew 26:41</i>",
+                    "Protection of my mind — <i>2 Corinthians 10:5</i>",
+                    "Protection over children — <i>Isaiah 54:13</i>",
+                    "Protection on the journey — <i>Psalm 121:7-8</i>"
+                ]
+            },
+            {
+                id: 'revival', title: 'Revival', emoji: '🔥',
+                svgPath: 'M11.71 19c1.94 0 3.48-1.57 3.48-3.5 0-2.31-2.34-4.87-3.48-6.14-1.14 1.27-3.48 3.83-3.48 6.14 0 1.93 1.54 3.5 3.48 3.5zm-6.2-5c0-4.67 4.12-7.23 5.45-8.08.38-.25.86-.56 1.04-1.04.13-.35.1-.73-.09-1.09l-.4-1.01c-.13-.34-.41-.59-.76-.68-.35-.09-.73-.01-1.03.22C6.83 4.19 2 8.7 2 14c0 3.51 1.76 6.61 4.46 8.35.33.22.77.2 1.07-.05l.89-.73c.27-.22.37-.6.23-.92-.61-1.42-.94-2.99-.94-4.65z',
+                targets: [
+                    "Personal revival — <i>Psalm 85:6</i>",
+                    "Revival in my church — <i>2 Chronicles 7:14</i>",
+                    "Revival in my city — <i>Habakkuk 3:2</i>",
+                    "Fresh outpouring — <i>Acts 2:17</i>",
+                    "Boldness to share — <i>Acts 4:29</i>"
+                ]
+            }
+        ];
+
+        // State Management
+        let state = JSON.parse(localStorage.getItem('faithreflects_war_room')) || {};
+        let activeStationId = null;
+
+        // Elements
+        const badgesContainer = document.getElementById('badgesContainer');
+        const activeCountText = document.getElementById('activeCount');
+        const emptyStateMsg = document.getElementById('emptyStateMsg');
+        
+        const tacticalPanel = document.getElementById('tacticalPanel');
+        const panelOverlay = document.getElementById('panelOverlay');
+        const panelTitle = document.getElementById('panelTitle');
+        const panelIcon = document.getElementById('panelIcon');
+        const targetsList = document.getElementById('targetsList');
+        const prayerInput = document.getElementById('prayerInput');
+        const closePanelBtn = document.getElementById('closePanelBtn');
+        const deployBtn = document.getElementById('deployBtn');
+        const recallBtn = document.getElementById('recallBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const glow = document.getElementById('glow');
+
+        // Generates the SVG Badges dynamically
+        function renderBadges() {
+            badgesContainer.innerHTML = stationsData.map(station => {
+                const isDeployed = state[station.id] && state[station.id].trim() !== '';
+                return `
+                    <div id="badge-${station.id}" onclick="openPanel('${station.id}')" class="station-badge flex flex-col items-center group ${isDeployed ? 'is-deployed' : ''}">
+                        <svg viewBox="0 0 50 60" class="w-10 h-12 mb-1">
+                            <!-- Outer Shield Base -->
+                            <path class="badge-ring" d="M 5 5 L 45 5 L 45 35 C 45 50, 25 55, 25 55 C 25 55, 5 50, 5 35 Z" fill="#222222" stroke="#333333" stroke-width="2"/>
+                            <!-- Inner Core -->
+                            <path class="badge-core" d="M 10 10 L 40 10 L 40 33 C 40 45, 25 50, 25 50 C 25 50, 10 45, 10 33 Z" fill="#111111" transition="fill 0.5s ease"/>
+                            <!-- Icon -->
+                            <g transform="scale(0.8) translate(12, 16)">
+                                <path class="badge-icon" d="${station.svgPath}" fill="#525252" transition="fill 0.5s ease"/>
+                            </g>
+                        </svg>
+                        <span class="text-[9px] font-bold uppercase tracking-widest text-[#A3A3A3] text-center w-full truncate">${station.title}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateGlobals() {
+            const activeStations = Object.keys(state).filter(k => state[k].trim() !== '');
+            const count = activeStations.length;
+            activeCountText.innerText = count;
+
+            // Ambient glow intensity
+            if (count > 0) {
+                glow.style.opacity = Math.min(1, 0.2 + (count * 0.15));
+            } else {
+                glow.style.opacity = 0;
+            }
+            
+            // Re-render badges to show glowing states
+            renderBadges();
+        }
+
+        function openPanel(stationId) {
+            activeStationId = stationId;
+            const station = stationsData.find(s => s.id === stationId);
+
+            // Populate Panel
+            panelTitle.innerText = `${station.title} Station`;
+            panelIcon.innerText = station.emoji;
+            
+            targetsList.innerHTML = station.targets.map(target => `
+                <li class="flex items-start">
+                    <span class="text-[#D97706] mr-2 mt-0.5">•</span>
+                    <span>${target}</span>
+                </li>
+            `).join('');
+
+            // Load existing prayer if any
+            prayerInput.value = state[stationId] || '';
+
+            // Recall button visibility
+            if (state[stationId]) recallBtn.classList.remove('hidden');
+            else recallBtn.classList.add('hidden');
+
+            // Highlight selected badge
+            document.querySelectorAll('.station-badge').forEach(b => b.classList.remove('is-selected'));
+            document.getElementById(`badge-${stationId}`).classList.add('is-selected');
+
+            // Open animations (Bottom Sheet)
+            panelOverlay.classList.add('open');
+            tacticalPanel.classList.add('open');
+        }
+
+        function closePanel() {
+            activeStationId = null;
+            document.querySelectorAll('.station-badge').forEach(b => b.classList.remove('is-selected'));
+            
+            panelOverlay.classList.remove('open');
+            tacticalPanel.classList.remove('open');
+        }
+
+        closePanelBtn.addEventListener('click', closePanel);
+        panelOverlay.addEventListener('click', closePanel);
+
+        deployBtn.addEventListener('click', () => {
+            if (!activeStationId) return;
+            
+            const text = prayerInput.value.trim();
+            if (text) {
+                state[activeStationId] = text;
+                localStorage.setItem('faithreflects_war_room', JSON.stringify(state));
+                
+                // Button feedback
+                deployBtn.style.transform = 'scale(0.95)';
+                setTimeout(() => deployBtn.style.transform = 'scale(1)', 150);
+                
+                updateGlobals();
+                closePanel();
+            }
+        });
+
+        recallBtn.addEventListener('click', () => {
+            if (!activeStationId) return;
+            
+            delete state[activeStationId];
+            localStorage.setItem('faithreflects_war_room', JSON.stringify(state));
+            
+            updateGlobals();
+            closePanel();
+        });
+
+        clearAllBtn.addEventListener('click', () => {
+            if(confirm("Are you sure you want to recall all deployed prayers?")) {
+                state = {};
+                localStorage.setItem('faithreflects_war_room', JSON.stringify(state));
+                updateGlobals();
+                if(activeStationId) closePanel();
+            }
+        });
+
+        // Init
+        updateGlobals();
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-[#191919]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Doer of the Word Forge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+    <style>
+        /* Notion Dark Mode Base */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #191919 !important; 
+            color: #D4D4D4; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        .widget-box {
+            background-color: #191919; 
+            border: 1px solid #2d2d2d;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            transition: all 1.5s ease;
+        }
+
+        /* SVG Animations */
+        #hammer {
+            transform-origin: 160px 40px;
+            transform: rotate(-15deg);
+            transition: transform 0.3s ease;
+        }
+        
+        .is-striking #hammer {
+            animation: strikeSwing 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes strikeSwing {
+            0% { transform: rotate(-30deg); }
+            40% { transform: rotate(20deg); } /* Impact */
+            60% { transform: rotate(5deg); }  /* Bounce */
+            100% { transform: rotate(-15deg); } /* Return */
+        }
+
+        /* The Iron Bar on the Anvil */
+        .iron-bar {
+            transition: all 1.5s ease;
+            fill: #262626;
+        }
+        .is-hot .iron-bar {
+            fill: #F59E0B;
+            filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.8));
+        }
+
+        /* Ambient Forge Glow */
+        .ambient-glow {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.2) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 1s ease;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .is-hot .ambient-glow { opacity: 1; }
+
+        /* Spark Particles */
+        .spark {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background-color: #FFFBEB;
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: 0 0 8px #FCD34D;
+            z-index: 30;
+            animation: fly-spark 1s cubic-bezier(0.25, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes fly-spark {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+
+        /* Steam Particles (Cooling down) */
+        .steam {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-color: #A3A3A3;
+            border-radius: 50%;
+            pointer-events: none;
+            filter: blur(10px);
+            z-index: 30;
+            animation: rise-steam 2s ease-out forwards;
+        }
+
+        @keyframes rise-steam {
+            0% { transform: translate(0, 0) scale(0.5); opacity: 0.8; }
+            100% { transform: translate(var(--tx), -100px) scale(2); opacity: 0; }
+        }
+
+        /* State Containers */
+        .state-container {
+            transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(10px) scale(0.95);
+        }
+        .state-container.active {
+            pointer-events: auto;
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            position: relative;
+        }
+
+        /* Hot Commitment Box */
+        .hot-box {
+            background: linear-gradient(145deg, rgba(217, 119, 6, 0.15) 0%, rgba(180, 83, 9, 0.05) 100%);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            box-shadow: 0 0 20px rgba(217, 119, 6, 0.1), inset 0 0 15px rgba(245, 158, 11, 0.05);
+        }
+
+        /* Cooled Iron Box */
+        .cooled-box {
+            background-color: #1A1A1A;
+            border: 2px solid #333333;
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        /* Inputs & Buttons */
+        textarea {
+            background-color: #111111;
+            border: 1px solid #333333;
+            color: #E5E5E5;
+            transition: all 0.3s ease;
+            resize: none;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #D4AF37;
+            background-color: #151515;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
+        }
+        textarea::placeholder { color: #525252; font-style: italic; }
+
+        .forge-btn {
+            background-color: #2D2416;
+            color: #FCD34D;
+            border: 1px solid #5C451A;
+            transition: all 0.4s ease;
+        }
+        .forge-btn:hover { 
+            box-shadow: 0 0 15px rgba(217, 119, 6, 0.2);
+            background-color: #3d311d;
+        }
+        .forge-btn:active { transform: scale(0.96); }
+
+        .complete-btn {
+            background-color: #064E3B;
+            color: #34D399;
+            border: 1px solid #047857;
+            transition: all 0.4s ease;
+        }
+        .complete-btn:hover {
+            background-color: #065F46;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+        }
+        .complete-btn:active { transform: scale(0.96); }
+
+        .reset-btn {
+            background-color: transparent;
+            color: #737373;
+            border: 1px solid #333333;
+            transition: all 0.3s ease;
+        }
+        .reset-btn:hover { background-color: #262626; color: #A3A3A3; }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(0,0,0,0.6); }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden bg-[#191919]">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-sm rounded-3xl p-6 md:p-8 flex flex-col h-[550px] overflow-hidden">
+        
+        <div class="ambient-glow"></div>
+
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-6 z-10 shrink-0">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#737373]">@faithreflects</span>
+            <div class="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider text-[#A3A3A3] border border-[#333] bg-[#1a1a1a]">
+                Active Application
+            </div>
+        </div>
+
+        <h2 class="serif text-2xl text-[#EDEDED] mb-1 z-10">The Forge</h2>
+        <p class="text-xs text-[#8B8B8B] italic mb-6 z-10 text-center">"Do not merely listen... do what it says."</p>
+
+        <!-- Anvil SVG Area -->
+        <div class="relative w-full h-32 mb-6 z-10 flex justify-center items-end shrink-0" id="forgeArea">
+            
+            <div id="particlesContainer" class="absolute inset-0 pointer-events-none z-30"></div>
+
+            <svg viewBox="0 0 200 120" class="w-full h-full overflow-visible z-10">
+                <!-- The Anvil -->
+                <path d="M 60 110 L 140 110 L 130 80 C 140 80, 160 80, 160 65 L 160 55 L 40 55 C 30 55, 20 60, 20 70 C 40 75, 50 80, 60 110 Z" fill="#2A2A2A" stroke="#111" stroke-width="2"/>
+                <path d="M 40 55 L 160 55" stroke="#444" stroke-width="2" stroke-linecap="round"/>
+                
+                <!-- The Iron Bar (Changes Color) -->
+                <rect class="iron-bar" x="80" y="48" width="40" height="7" rx="1" stroke="#111" stroke-width="1"/>
+
+                <!-- The Hammer -->
+                <g id="hammer">
+                    <!-- Handle -->
+                    <path d="M 160 40 L 95 10" stroke="#5C451A" stroke-width="5" stroke-linecap="round"/>
+                    <!-- Head -->
+                    <rect x="80" y="0" width="25" height="15" rx="2" fill="#111111" stroke="#333" stroke-width="1" transform="rotate(-25 90 5)"/>
+                </g>
+            </svg>
+        </div>
+
+        <!-- Dynamic Content Area -->
+        <div class="flex-1 w-full relative z-20 min-h-0">
+            
+            <!-- STATE 0: Input Area -->
+            <div id="state-input" class="state-container active">
+                <div class="flex flex-col h-full">
+                    <label class="text-[10px] uppercase tracking-widest text-[#737373] font-bold mb-1.5 pl-1">My action step this week:</label>
+                    <textarea id="actionInput" placeholder="Be specific and measurable. 'I will...'" class="w-full flex-1 rounded-xl px-4 py-3 text-sm font-light mb-4" autocomplete="off"></textarea>
+                    
+                    <button id="forgeBtn" class="forge-btn w-full py-3.5 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center space-x-2 shadow-lg shrink-0">
+                        <span class="text-base">⚒️</span>
+                        <span>Forge Commitment</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- STATE 1: Active (Hot) -->
+            <div id="state-hot" class="state-container">
+                <div class="flex flex-col h-full items-center">
+                    <span class="text-[10px] font-bold tracking-widest uppercase text-[#D4AF37] mb-2">Forged & Active</span>
+                    
+                    <div class="hot-box w-full flex-1 rounded-xl p-4 flex items-center justify-center text-center mb-4">
+                        <p id="hotText" class="serif italic text-[16px] text-[#FFFBEB] leading-relaxed drop-shadow-md">
+                            "I will share the gospel with my coworker this Friday."
+                        </p>
+                    </div>
+                    
+                    <button id="completeBtn" class="complete-btn w-full py-3.5 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center space-x-2 shadow-lg shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span>Mark Completed</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- STATE 2: Cooled (Solidified) -->
+            <div id="state-cooled" class="state-container">
+                <div class="flex flex-col h-full items-center">
+                    <span class="text-[10px] font-bold tracking-widest uppercase text-[#10B981] mb-2 flex items-center space-x-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                        <span>Solidified in Action</span>
+                    </span>
+                    
+                    <div class="cooled-box w-full flex-1 rounded-xl p-4 flex items-center justify-center text-center mb-4 relative overflow-hidden">
+                        <!-- Rivet details -->
+                        <circle cx="10" cy="10" r="2" fill="#111" class="absolute top-2 left-2"/>
+                        <p id="cooledText" class="serif italic text-[15px] text-[#737373] leading-relaxed line-through decoration-[#525252]">
+                            "I will share the gospel with my coworker this Friday."
+                        </p>
+                    </div>
+                    
+                    <button id="resetBtn" class="reset-btn w-full py-3.5 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center space-x-2 shrink-0">
+                        <span>Forge New Step</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        // State Management
+        // Status can be: 'empty', 'hot', 'cooled'
+        let state = JSON.parse(localStorage.getItem('faithreflects_forge')) || { text: '', status: 'empty' };
+
+        // Elements
+        const container = document.getElementById('widgetContainer');
+        const actionInput = document.getElementById('actionInput');
+        const forgeBtn = document.getElementById('forgeBtn');
+        const completeBtn = document.getElementById('completeBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        
+        const hotText = document.getElementById('hotText');
+        const cooledText = document.getElementById('cooledText');
+        const particlesContainer = document.getElementById('particlesContainer');
+        
+        const states = {
+            'empty': document.getElementById('state-input'),
+            'hot': document.getElementById('state-hot'),
+            'cooled': document.getElementById('state-cooled')
+        };
+
+        // Initialize UI based on saved state
+        function init() {
+            Object.values(states).forEach(el => el.classList.remove('active'));
+            states[state.status].classList.add('active');
+
+            if (state.status === 'empty') {
+                actionInput.value = state.text;
+                container.classList.remove('is-hot');
+            } else if (state.status === 'hot') {
+                hotText.innerText = `"${state.text}"`;
+                container.classList.add('is-hot');
+            } else if (state.status === 'cooled') {
+                cooledText.innerText = `"${state.text}"`;
+                container.classList.remove('is-hot');
+            }
+        }
+
+        // --- Visual Effects ---
+        function strikeSparks() {
+            // Generate sparks radiating from the anvil center
+            for(let i=0; i<25; i++) {
+                setTimeout(() => {
+                    const spark = document.createElement('div');
+                    spark.className = 'spark';
+                    
+                    // Center of anvil
+                    spark.style.left = '50%';
+                    spark.style.top = '65%';
+                    
+                    // Explosive outward trajectory
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = 40 + Math.random() * 80;
+                    
+                    spark.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+                    spark.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+                    
+                    particlesContainer.appendChild(spark);
+                    
+                    setTimeout(() => {
+                        if (particlesContainer.contains(spark)) spark.remove();
+                    }, 1000);
+                }, i * 10);
+            }
+        }
+
+        function createSteam() {
+            // Generate steam clouds rising from the cooling iron
+            for(let i=0; i<10; i++) {
+                setTimeout(() => {
+                    const steam = document.createElement('div');
+                    steam.className = 'steam';
+                    
+                    steam.style.left = `calc(50% + ${Math.random() * 40 - 20}px)`;
+                    steam.style.top = '65%';
+                    
+                    // Float up and slightly side-to-side
+                    const travelX = (Math.random() * 40) - 20;
+                    steam.style.setProperty('--tx', `${travelX}px`);
+                    
+                    particlesContainer.appendChild(steam);
+                    
+                    setTimeout(() => {
+                        if (particlesContainer.contains(steam)) steam.remove();
+                    }, 2000);
+                }, i * 100);
+            }
+        }
+
+        // --- Interactions ---
+
+        // 1. Forge the commitment
+        forgeBtn.addEventListener('click', () => {
+            const text = actionInput.value.trim();
+            if (!text) {
+                actionInput.focus();
+                return;
+            }
+
+            // Button feedback
+            forgeBtn.style.transform = 'scale(0.95)';
+            setTimeout(() => forgeBtn.style.transform = 'scale(1)', 150);
+
+            // Play Hammer Animation
+            container.classList.add('is-striking');
+            
+            // Trigger sparks right as hammer hits (approx 200ms into animation)
+            setTimeout(() => {
+                strikeSparks();
+                container.classList.add('is-hot');
+            }, 200);
+
+            // Update State
+            state.text = text;
+            state.status = 'hot';
+            localStorage.setItem('faithreflects_forge', JSON.stringify(state));
+            
+            // Transition UI
+            setTimeout(() => {
+                container.classList.remove('is-striking');
+                hotText.innerText = `"${state.text}"`;
+                init();
+            }, 600);
+        });
+
+        // 2. Mark as completed (cool down)
+        completeBtn.addEventListener('click', () => {
+            completeBtn.style.transform = 'scale(0.95)';
+            setTimeout(() => completeBtn.style.transform = 'scale(1)', 150);
+
+            // Sizzle and cool down
+            createSteam();
+            container.classList.remove('is-hot');
+
+            // Update State
+            state.status = 'cooled';
+            localStorage.setItem('faithreflects_forge', JSON.stringify(state));
+
+            // Transition UI
+            setTimeout(() => {
+                cooledText.innerText = `"${state.text}"`;
+                init();
+            }, 800); // Wait for steam to cover the transition
+        });
+
+        // 3. Reset for a new week
+        resetBtn.addEventListener('click', () => {
+            resetBtn.style.transform = 'scale(0.95)';
+            setTimeout(() => resetBtn.style.transform = 'scale(1)', 150);
+
+            state = { text: '', status: 'empty' };
+            localStorage.setItem('faithreflects_forge', JSON.stringify(state));
+            
+            actionInput.value = '';
+            init();
+        });
+
+        // Run
+        init();
+
+    </script>
+</body>
+</html>

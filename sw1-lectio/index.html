@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-[#191919]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lectio Divina Carousel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        /* Notion Dark Mode Base - Forced completely */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #191919 !important; 
+            color: #D4D4D4; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        .widget-box {
+            background-color: #191919; 
+            border: 1px solid #2d2d2d;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+        }
+
+        /* Carousel Slides */
+        .slide {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(20px);
+            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            flex-direction: column;
+        }
+        .slide.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(0);
+        }
+        .slide.prev {
+            transform: translateX(-20px);
+        }
+
+        /* Progress Bar */
+        .progress-track {
+            background-color: #262626;
+            border-radius: 4px;
+            overflow: hidden;
+            height: 4px;
+            width: 100%;
+        }
+        .progress-fill {
+            background-color: #D4AF37;
+            height: 100%;
+            transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+        }
+
+        /* Textareas */
+        textarea {
+            background-color: #111111;
+            border: 1px solid #333333;
+            color: #E5E5E5;
+            transition: all 0.3s ease;
+            resize: none;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #D4AF37;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
+        }
+        textarea::placeholder { color: #525252; font-style: italic; }
+
+        /* Custom Scrollbar for Textareas */
+        textarea::-webkit-scrollbar { width: 4px; }
+        textarea::-webkit-scrollbar-track { background: transparent; }
+        textarea::-webkit-scrollbar-thumb { background: #404040; border-radius: 4px; }
+        textarea::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* Breathing Ring Animation (Contemplatio) */
+        .breathe-ring {
+            transform-origin: center;
+        }
+        .is-breathing .breathe-ring {
+            animation: breathe 8s ease-in-out infinite;
+        }
+        @keyframes breathe {
+            0% { transform: scale(0.6); opacity: 0.8; stroke-width: 2px; filter: drop-shadow(0 0 2px rgba(212, 175, 55, 0.4)); }
+            50% { transform: scale(1.6); opacity: 0.15; stroke-width: 8px; filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.1)); }
+            100% { transform: scale(0.6); opacity: 0.8; stroke-width: 2px; filter: drop-shadow(0 0 2px rgba(212, 175, 55, 0.4)); }
+        }
+        .breath-text {
+            transition: opacity 1.5s ease;
+        }
+
+        /* Buttons */
+        .nav-btn {
+            background-color: #262626;
+            color: #E5E5E5;
+            border: 1px solid #333333;
+            transition: all 0.3s ease;
+        }
+        .nav-btn:hover:not(:disabled) { 
+            background-color: #333333; 
+            border-color: #444444; 
+        }
+        .nav-btn:active:not(:disabled) { transform: scale(0.96); }
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        .nav-btn.primary {
+            background-color: #2D2416;
+            color: #FCD34D;
+            border-color: #5C451A;
+        }
+        .nav-btn.primary:hover:not(:disabled) {
+            box-shadow: 0 0 15px rgba(217, 119, 6, 0.15);
+        }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(0,0,0,0.6); }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden bg-[#191919]">
+
+    <div class="widget-box relative w-full max-w-md rounded-3xl flex flex-col h-[520px] overflow-hidden">
+        
+        <!-- Header & Progress -->
+        <div class="p-6 pb-0 z-20 bg-[#191919]">
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#737373]">Lectio Divina</span>
+                <button id="clearBtn" class="text-[10px] tracking-widest text-[#525252] uppercase hover:text-[#A3A3A3] transition-colors">
+                    Reset
+                </button>
+            </div>
+            <div class="progress-track">
+                <div id="progressBar" class="progress-fill" style="width: 25%;"></div>
+            </div>
+        </div>
+
+        <!-- Slides Container -->
+        <div class="relative flex-1 w-full overflow-hidden mt-4">
+            
+            <!-- Slide 1: Lectio -->
+            <div class="slide active px-8 pb-6" id="slide-0">
+                <div class="flex items-center space-x-2 mb-2">
+                    <span class="text-xl">📖</span>
+                    <h3 class="serif text-2xl text-[#EDEDED]">1. Lectio <span class="text-[#737373] text-lg italic">— Read</span></h3>
+                </div>
+                <p class="text-xs text-[#8B8B8B] mb-4 leading-relaxed">
+                    Read the passage slowly, out loud if possible. Let the words wash over you. Don't rush or analyze yet; just listen.
+                </p>
+                <div class="flex-1 flex flex-col">
+                    <label class="text-[10px] uppercase tracking-widest text-[#525252] font-semibold mb-2">Today's Passage</label>
+                    <textarea id="lectioInput" class="flex-1 w-full rounded-xl p-4 text-sm font-light leading-relaxed" placeholder="Type or paste your Scripture passage here..."></textarea>
+                </div>
+            </div>
+
+            <!-- Slide 2: Meditatio -->
+            <div class="slide px-8 pb-6" id="slide-1">
+                <div class="flex items-center space-x-2 mb-2">
+                    <span class="text-xl">🔍</span>
+                    <h3 class="serif text-2xl text-[#EDEDED]">2. Meditatio <span class="text-[#737373] text-lg italic">— Reflect</span></h3>
+                </div>
+                <p class="text-xs text-[#8B8B8B] mb-4 leading-relaxed">
+                    Read it again. What single word or short phrase immediately stands out to you? Sit with it. Turn it over in your mind.
+                </p>
+                <div class="flex-1 flex flex-col">
+                    <label class="text-[10px] uppercase tracking-widest text-[#525252] font-semibold mb-2">Word or phrase</label>
+                    <textarea id="meditatioInput" class="flex-1 w-full rounded-xl p-4 text-sm font-light leading-relaxed" placeholder="What stood out?"></textarea>
+                </div>
+            </div>
+
+            <!-- Slide 3: Oratio -->
+            <div class="slide px-8 pb-6" id="slide-2">
+                <div class="flex items-center space-x-2 mb-2">
+                    <span class="text-xl">🙏</span>
+                    <h3 class="serif text-2xl text-[#EDEDED]">3. Oratio <span class="text-[#737373] text-lg italic">— Respond</span></h3>
+                </div>
+                <p class="text-xs text-[#8B8B8B] mb-4 leading-relaxed">
+                    Talk to God about what you've read. What is He saying to you through this word? How does it apply to your life right now?
+                </p>
+                <div class="flex-1 flex flex-col">
+                    <label class="text-[10px] uppercase tracking-widest text-[#525252] font-semibold mb-2">My response to God</label>
+                    <textarea id="oratioInput" class="flex-1 w-full rounded-xl p-4 text-sm font-light leading-relaxed" placeholder="Write your honest prayer here..."></textarea>
+                </div>
+            </div>
+
+            <!-- Slide 4: Contemplatio -->
+            <div class="slide px-8 pb-6" id="slide-3">
+                <div class="flex items-center justify-center space-x-2 mb-2">
+                    <span class="text-xl">🌿</span>
+                    <h3 class="serif text-2xl text-[#EDEDED] text-center">4. Contemplatio <span class="text-[#737373] text-lg italic">— Rest</span></h3>
+                </div>
+                <p class="text-xs text-[#8B8B8B] mb-4 leading-relaxed text-center max-w-[280px] mx-auto">
+                    Be silent. Rest in God's presence. You don't need to say anything anymore. Just be.
+                </p>
+                
+                <div class="flex-1 flex flex-col items-center justify-center relative" id="contemplatioArea">
+                    <svg width="160" height="160" viewBox="0 0 160 160" class="absolute inset-0 m-auto pointer-events-none">
+                        <circle cx="80" cy="80" r="40" fill="none" stroke="#D4AF37" stroke-width="2" class="breathe-ring" opacity="0.5"/>
+                    </svg>
+                    
+                    <div class="z-10 flex flex-col items-center justify-center space-y-4">
+                        <span id="timerDisplay" class="font-serif text-3xl text-[#FCD34D] filter drop-shadow-[0_0_8px_rgba(212,175,55,0.3)]">01:00</span>
+                        <p id="breathPrompt" class="text-xs italic text-[#A3A3A3] breath-text">Press start to breathe.</p>
+                        
+                        <button id="startRestBtn" class="bg-[#2D2416] text-[#FCD34D] border border-[#5C451A] px-6 py-2 rounded-full text-xs font-semibold uppercase tracking-wider hover:bg-[#3d311d] transition-colors shadow-lg">
+                            Begin Silence
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Navigation Footer -->
+        <div class="p-6 pt-0 bg-[#191919] flex space-x-3 z-20">
+            <button id="prevBtn" class="nav-btn px-6 py-3.5 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center" disabled>
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                Back
+            </button>
+            <button id="nextBtn" class="nav-btn primary flex-1 py-3.5 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center">
+                <span>Continue</span>
+                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </button>
+        </div>
+
+        <!-- Custom Reset Modal -->
+        <div id="clearModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#191919] rounded-2xl p-6 w-full max-w-[260px] border border-[#2d2d2d] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#EDEDED]">Clear Session?</h3>
+                <p class="text-xs text-[#8B8B8B] mb-6">This will erase your current text to start fresh.</p>
+                <div class="flex space-x-3">
+                    <button id="cancelClearBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-[#A3A3A3] hover:bg-[#262626] border border-transparent transition-colors">Cancel</button>
+                    <button id="confirmClearBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#262626] text-[#EDEDED] border border-[#333] hover:bg-[#333] transition-colors">Clear</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // State
+        const TOTAL_SLIDES = 4;
+        let currentSlide = 0;
+        
+        let journalData = JSON.parse(localStorage.getItem('faithreflects_lectio')) || { lectio: '', meditatio: '', oratio: '' };
+        
+        // Timer State
+        let timerId = null;
+        let breathId = null;
+        let timeLeft = 60;
+        let isResting = false;
+
+        // Elements
+        const slides = [
+            document.getElementById('slide-0'),
+            document.getElementById('slide-1'),
+            document.getElementById('slide-2'),
+            document.getElementById('slide-3')
+        ];
+        
+        const inputs = {
+            lectio: document.getElementById('lectioInput'),
+            meditatio: document.getElementById('meditatioInput'),
+            oratio: document.getElementById('oratioInput')
+        };
+
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const progressBar = document.getElementById('progressBar');
+        const contemplatioArea = document.getElementById('contemplatioArea');
+        const startRestBtn = document.getElementById('startRestBtn');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const breathPrompt = document.getElementById('breathPrompt');
+        
+        // Modal
+        const clearBtn = document.getElementById('clearBtn');
+        const clearModal = document.getElementById('clearModal');
+        const cancelClearBtn = document.getElementById('cancelClearBtn');
+        const confirmClearBtn = document.getElementById('confirmClearBtn');
+
+        // Initialize Inputs
+        inputs.lectio.value = journalData.lectio;
+        inputs.meditatio.value = journalData.meditatio;
+        inputs.oratio.value = journalData.oratio;
+
+        // Save on input
+        Object.keys(inputs).forEach(key => {
+            inputs[key].addEventListener('input', (e) => {
+                journalData[key] = e.target.value;
+                localStorage.setItem('faithreflects_lectio', JSON.stringify(journalData));
+            });
+        });
+
+        // Navigation Logic
+        function updateCarousel() {
+            slides.forEach((slide, index) => {
+                if (index === currentSlide) {
+                    slide.className = 'slide active px-8 pb-6';
+                } else if (index < currentSlide) {
+                    slide.className = 'slide prev px-8 pb-6';
+                } else {
+                    slide.className = 'slide px-8 pb-6';
+                }
+            });
+
+            // Update Progress
+            progressBar.style.width = `${((currentSlide + 1) / TOTAL_SLIDES) * 100}%`;
+
+            // Update Buttons
+            prevBtn.disabled = currentSlide === 0;
+            
+            if (currentSlide === TOTAL_SLIDES - 1) {
+                nextBtn.innerHTML = '<span>Finish</span><svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+                nextBtn.classList.remove('primary'); // Make it look complete
+            } else {
+                nextBtn.innerHTML = '<span>Continue</span><svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>';
+                nextBtn.classList.add('primary');
+            }
+        }
+
+        nextBtn.addEventListener('click', () => {
+            if (currentSlide < TOTAL_SLIDES - 1) {
+                currentSlide++;
+                updateCarousel();
+            } else {
+                // Clicking Finish wraps it back to start and stops the timer if running
+                currentSlide = 0;
+                stopRest();
+                updateCarousel();
+            }
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateCarousel();
+            }
+        });
+
+        // Timer & Breathing Logic
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `0${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function toggleBreathText() {
+            if (!isResting) return;
+            breathPrompt.style.opacity = 0;
+            
+            setTimeout(() => {
+                if (!isResting) return;
+                breathPrompt.innerText = breathPrompt.innerText === "Inhale grace..." ? "Exhale striving..." : "Inhale grace...";
+                breathPrompt.style.opacity = 1;
+            }, 1000);
+        }
+
+        function stopRest() {
+            clearInterval(timerId);
+            clearInterval(breathId);
+            isResting = false;
+            contemplatioArea.classList.remove('is-breathing');
+            startRestBtn.classList.remove('hidden');
+            timeLeft = 60;
+            timerDisplay.innerText = formatTime(timeLeft);
+            breathPrompt.innerText = "Press start to breathe.";
+            breathPrompt.style.opacity = 1;
+        }
+
+        startRestBtn.addEventListener('click', () => {
+            isResting = true;
+            startRestBtn.classList.add('hidden');
+            contemplatioArea.classList.add('is-breathing');
+            
+            breathPrompt.innerText = "Inhale grace...";
+            breathId = setInterval(toggleBreathText, 4000); // Toggle text every 4s to match 8s breath ring
+
+            timerId = setInterval(() => {
+                timeLeft--;
+                timerDisplay.innerText = formatTime(timeLeft);
+                
+                if (timeLeft <= 0) {
+                    stopRest();
+                    breathPrompt.innerText = "Selah complete. You are ready.";
+                }
+            }, 1000);
+        });
+
+        // Clear Modal Logic
+        clearBtn.addEventListener('click', () => clearModal.classList.remove('hidden'));
+        cancelClearBtn.addEventListener('click', () => clearModal.classList.add('hidden'));
+        confirmClearBtn.addEventListener('click', () => {
+            journalData = { lectio: '', meditatio: '', oratio: '' };
+            localStorage.setItem('faithreflects_lectio', JSON.stringify(journalData));
+            
+            inputs.lectio.value = '';
+            inputs.meditatio.value = '';
+            inputs.oratio.value = '';
+            
+            currentSlide = 0;
+            stopRest();
+            updateCarousel();
+            clearModal.classList.add('hidden');
+        });
+
+        // Initialize
+        updateCarousel();
+    </script>
+</body>
+</html>

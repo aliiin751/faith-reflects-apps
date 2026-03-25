@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-[#191919]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Psalmist's Canvas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        /* Notion Dark Mode Base */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #191919 !important; 
+            color: #D4D4D4; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        .widget-box {
+            background-color: #191919; 
+            border: 1px solid #2d2d2d;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            transition: all 1.5s ease;
+        }
+
+        /* The Writing Canvas */
+        .canvas-area {
+            background: linear-gradient(145deg, #151515 0%, #111111 100%);
+            border: 1px solid #2d2d2d;
+            border-radius: 1.25rem;
+            position: relative;
+            transition: border-color 0.4s ease, box-shadow 0.4s ease;
+        }
+        .canvas-area:focus-within {
+            border-color: rgba(212, 175, 55, 0.4);
+            box-shadow: inset 0 0 20px rgba(212, 175, 55, 0.05), 0 0 15px rgba(212, 175, 55, 0.1);
+        }
+
+        /* Prompt Chips */
+        .prompt-chip {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 6px 12px;
+            border-radius: 12px;
+            border: 1px solid #333;
+            color: #8B8B8B;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            background-color: transparent;
+        }
+        .prompt-chip:hover { 
+            color: #D4AF37; 
+            border-color: #5C451A; 
+            background-color: #222;
+        }
+        .prompt-chip.active { 
+            background-color: #2D2416; 
+            color: #FCD34D; 
+            border-color: #5C451A; 
+        }
+
+        textarea {
+            width: 100%;
+            height: 240px;
+            background: transparent;
+            border: none;
+            color: #EDEDED;
+            resize: none;
+            line-height: 1.8;
+            transition: all 0.3s ease;
+        }
+        textarea:focus { outline: none; }
+        textarea::placeholder { color: #525252; font-style: italic; }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* Horizontal Carousel for Sealed Psalms */
+        .carousel-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+            scroll-behavior: smooth;
+        }
+        
+        .psalm-card {
+            flex: 0 0 140px;
+            height: 160px;
+            background-color: #1a1a1a;
+            border: 1px solid #2d2d2d;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .psalm-card:hover {
+            background-color: #222;
+            border-color: #525252;
+            transform: translateY(-2px);
+        }
+        .psalm-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(to right, #D4AF37, #8B6508);
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
+        }
+        .psalm-card:hover::before { opacity: 1; }
+
+        /* Buttons */
+        .action-btn {
+            background-color: #2D2416;
+            color: #FCD34D;
+            border: 1px solid #5C451A;
+            transition: all 0.4s ease;
+        }
+        .action-btn:hover { 
+            background-color: #3d311d; 
+            box-shadow: 0 0 15px rgba(217, 119, 6, 0.2);
+        }
+        .action-btn:active { transform: scale(0.96); }
+
+        /* Sealing Animation */
+        .sealing-overlay {
+            position: absolute;
+            inset: 0;
+            background-color: #191919;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 1.25rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+        .sealing-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+            animation: sealFlash 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        @keyframes sealFlash {
+            0% { opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(0,0,0,0.6); }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden bg-[#191919]">
+
+    <!-- Changed to h-auto and min-h-[720px] to allow the gallery to breathe! -->
+    <div id="widgetContainer" class="widget-box relative w-full max-w-lg rounded-3xl p-6 md:p-8 flex flex-col h-auto min-h-[720px] overflow-hidden">
+        
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-6 shrink-0">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#737373]">@faithreflects</span>
+            <div class="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider text-[#A3A3A3] border border-[#333] bg-[#1a1a1a] flex items-center space-x-1">
+                <span>✒️ Creative Worship</span>
+            </div>
+        </div>
+
+        <h2 class="serif text-2xl text-[#EDEDED] mb-1">The Psalmist's Canvas</h2>
+        <p class="text-xs text-[#8B8B8B] italic mb-6">"David wrote psalms in caves, in palaces, in deserts. Where will you write yours?"</p>
+
+        <!-- The Writing Area -->
+        <div class="canvas-area p-5 mb-6 shrink-0">
+            
+            <div class="flex justify-between items-center border-b border-[#2d2d2d] pb-3 mb-4">
+                <span class="text-[10px] font-bold tracking-widest uppercase text-[#A3A3A3]" id="currentDate">DATE</span>
+                <span class="text-[10px] font-bold tracking-widest uppercase text-[#525252]">My Psalm</span>
+            </div>
+
+            <!-- New Guided Prompt Selectors -->
+            <div class="flex space-x-2 mb-3 overflow-x-auto custom-scrollbar pb-2">
+                <button onclick="setPrompt('free')" id="prompt-free" class="prompt-chip active">Freeflow</button>
+                <button onclick="setPrompt('lament')" id="prompt-lament" class="prompt-chip">Lament</button>
+                <button onclick="setPrompt('praise')" id="prompt-praise" class="prompt-chip">Praise</button>
+                <button onclick="setPrompt('thanksgiving')" id="prompt-thanksgiving" class="prompt-chip">Thanksgiving</button>
+                <button onclick="setPrompt('trust')" id="prompt-trust" class="prompt-chip">Trust</button>
+            </div>
+            
+            <textarea id="psalmInput" class="serif text-[16px] custom-scrollbar" placeholder="Begin writing. Don't overthink it. Let your heart speak to God in its own language..."></textarea>
+            
+            <div class="flex justify-end mt-4">
+                <button id="sealBtn" class="action-btn px-6 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center space-x-2 shadow-lg">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                    <span>Seal Psalm</span>
+                </button>
+            </div>
+
+            <!-- Sealing Animation Overlay -->
+            <div id="sealingOverlay" class="sealing-overlay">
+                <div class="flex flex-col items-center">
+                    <span class="text-4xl mb-2">🕯️</span>
+                    <span class="text-xs font-bold tracking-widest uppercase text-[#D4AF37]">Sealed in Faith</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- The Gallery of Past Psalms -->
+        <div class="flex-1 flex flex-col w-full min-h-[190px]">
+            <span class="text-[9px] font-bold tracking-widest uppercase text-[#737373] block mb-3 border-b border-[#333] pb-2 shrink-0">Sealed Testimonies</span>
+            
+            <div class="relative flex-1 w-full">
+                <div class="carousel-container custom-scrollbar absolute inset-0 w-full h-full" id="galleryContainer">
+                    <!-- Cards Injected by JS -->
+                </div>
+                
+                <div id="emptyGalleryMsg" class="hidden absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <span class="text-[10px] uppercase tracking-widest text-[#525252] italic">Your gallery is empty.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- View Full Psalm Modal -->
+        <div id="viewModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#111111] rounded-2xl p-6 w-full max-w-[340px] border border-[#2d2d2d] shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col max-h-[80vh]">
+                
+                <div class="flex justify-between items-center border-b border-[#2d2d2d] pb-4 mb-4 shrink-0">
+                    <div class="flex flex-col">
+                        <span class="text-[9px] font-bold tracking-widest uppercase text-[#D4AF37] mb-1">A Psalm of David</span>
+                        <span id="modalDate" class="text-xs text-[#A3A3A3]">Date</span>
+                    </div>
+                    <button id="closeModalBtn" class="text-[#737373] hover:text-[#EDEDED] p-1"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 mb-6">
+                    <p id="modalText" class="serif text-base text-[#D4D4D4] leading-relaxed whitespace-pre-wrap"></p>
+                </div>
+
+                <div class="shrink-0 flex justify-end pt-4 border-t border-[#2d2d2d]">
+                    <button id="deleteBtn" class="text-[10px] uppercase tracking-widest text-[#525252] hover:text-[#EF4444] flex items-center space-x-1 transition-colors">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        <span>Delete</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Custom Delete Confirmation Modal -->
+        <div id="deleteConfirmModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#191919] rounded-2xl p-6 w-full max-w-[260px] border border-[#2d2d2d] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#EDEDED]">Delete Psalm?</h3>
+                <p class="text-xs text-[#8B8B8B] mb-6">This will permanently remove this psalm from your gallery.</p>
+                <div class="flex space-x-3">
+                    <button id="cancelDeleteConfirmBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-[#A3A3A3] hover:bg-[#262626] border border-transparent transition-colors">Cancel</button>
+                    <button id="confirmDeleteConfirmBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30 hover:bg-[#EF4444]/20 transition-colors">Delete</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Guided Psalm Prompts
+        const prompts = {
+            free: "Begin writing. Don't overthink it. Let your heart speak to God in its own language...\n\nYou might start with:\n'O Lord, You are...'\n'My soul cries out...'",
+            lament: "Structure for a Psalm of Lament:\n\n1. Cry out: 'O Lord, how long?'\n2. Complaint: Pour out your exact sorrow or frustration...\n3. Request: Ask God to intervene...\n4. Trust: 'But I will trust in Your unfailing love...'",
+            praise: "Structure for a Psalm of Praise:\n\n1. Address: 'O Lord, You are...'\n2. Attribute: Praise a specific trait (e.g., His majesty, power, gentleness)...\n3. Action: Remember a specific time He showed this to you...\n4. Vow: 'Therefore I will praise You forever.'",
+            thanksgiving: "Structure for a Psalm of Thanksgiving:\n\n1. Declaration: 'I give thanks to You, Lord, for...'\n2. The Story: Detail the specific blessing or answered prayer...\n3. The Feeling: How did God's provision make you feel?\n4. Praise: Thank Him for His goodness.",
+            trust: "Structure for a Psalm of Trust:\n\n1. The Threat: What is causing you fear or anxiety right now?\n2. The Truth: 'Even though I walk through this, You are...'\n3. The Choice: Declare your reliance on God's protection...\n4. The Rest: 'In peace I will lie down and sleep.'"
+        };
+
+        // State
+        let psalms = JSON.parse(localStorage.getItem('faithreflects_psalms')) || [];
+        let currentlyViewingIndex = -1;
+
+        // Elements
+        const psalmInput = document.getElementById('psalmInput');
+        const sealBtn = document.getElementById('sealBtn');
+        const sealingOverlay = document.getElementById('sealingOverlay');
+        const galleryContainer = document.getElementById('galleryContainer');
+        const emptyGalleryMsg = document.getElementById('emptyGalleryMsg');
+        const currentDateDisplay = document.getElementById('currentDate');
+        
+        // Modal Elements
+        const viewModal = document.getElementById('viewModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const modalDate = document.getElementById('modalDate');
+        const modalText = document.getElementById('modalText');
+        const deleteBtn = document.getElementById('deleteBtn');
+
+        const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+        const cancelDeleteConfirmBtn = document.getElementById('cancelDeleteConfirmBtn');
+        const confirmDeleteConfirmBtn = document.getElementById('confirmDeleteConfirmBtn');
+
+        // Set Current Date in Header
+        const today = new Date();
+        currentDateDisplay.innerText = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+        // Update Prompt
+        window.setPrompt = function(type) {
+            // Update UI Chips
+            document.querySelectorAll('.prompt-chip').forEach(chip => chip.classList.remove('active'));
+            document.getElementById(`prompt-${type}`).classList.add('active');
+            
+            // Set Placeholder
+            psalmInput.placeholder = prompts[type];
+        };
+
+        function renderGallery() {
+            galleryContainer.innerHTML = '';
+            
+            if (psalms.length === 0) {
+                emptyGalleryMsg.classList.remove('hidden');
+                return;
+            }
+            
+            emptyGalleryMsg.classList.add('hidden');
+
+            // Render from newest to oldest
+            [...psalms].reverse().forEach((psalm, reverseIndex) => {
+                const actualIndex = psalms.length - 1 - reverseIndex;
+                const dateObj = new Date(psalm.timestamp);
+                const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                
+                const card = document.createElement('div');
+                card.className = 'psalm-card shrink-0';
+                card.onclick = () => openModal(actualIndex);
+                
+                card.innerHTML = `
+                    <span class="text-[9px] font-bold tracking-widest uppercase text-[#A3A3A3] mb-2 block border-b border-[#2d2d2d] pb-2">${formattedDate}</span>
+                    <p class="serif text-xs text-[#D4D4D4] leading-relaxed line-clamp-4 italic flex-1 w-full">"${psalm.text}"</p>
+                `;
+                
+                galleryContainer.appendChild(card);
+            });
+        }
+
+        // Action: Seal Psalm
+        sealBtn.addEventListener('click', () => {
+            const text = psalmInput.value.trim();
+            if (!text) return;
+
+            // Trigger Animation
+            sealingOverlay.classList.add('active');
+            
+            // Save after animation peaks
+            setTimeout(() => {
+                psalms.push({
+                    text: text,
+                    timestamp: Date.now()
+                });
+                localStorage.setItem('faithreflects_psalms', JSON.stringify(psalms));
+                
+                psalmInput.value = '';
+                renderGallery();
+                
+                // Scroll gallery to the far left (newest)
+                galleryContainer.scrollTo({ left: 0, behavior: 'smooth' });
+                
+            }, 500);
+
+            // Remove animation class
+            setTimeout(() => {
+                sealingOverlay.classList.remove('active');
+            }, 1500);
+        });
+
+        // Modal Logic
+        function openModal(index) {
+            currentlyViewingIndex = index;
+            const psalm = psalms[index];
+            const dateObj = new Date(psalm.timestamp);
+            
+            modalDate.innerText = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+            modalText.innerText = psalm.text;
+            
+            viewModal.classList.remove('hidden');
+        }
+
+        closeModalBtn.addEventListener('click', () => {
+            viewModal.classList.add('hidden');
+            currentlyViewingIndex = -1;
+        });
+
+        deleteBtn.addEventListener('click', () => {
+            if (currentlyViewingIndex > -1) {
+                viewModal.classList.add('hidden');
+                deleteConfirmModal.classList.remove('hidden');
+            }
+        });
+
+        cancelDeleteConfirmBtn.addEventListener('click', () => {
+            deleteConfirmModal.classList.add('hidden');
+            viewModal.classList.remove('hidden');
+        });
+
+        confirmDeleteConfirmBtn.addEventListener('click', () => {
+            if (currentlyViewingIndex > -1) {
+                psalms.splice(currentlyViewingIndex, 1);
+                localStorage.setItem('faithreflects_psalms', JSON.stringify(psalms));
+                renderGallery();
+                deleteConfirmModal.classList.add('hidden');
+                currentlyViewingIndex = -1;
+            }
+        });
+
+        // Init
+        setPrompt('free'); // Set initial placeholder
+        renderGallery();
+
+    </script>
+</body>
+</html>

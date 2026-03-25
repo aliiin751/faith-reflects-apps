@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-[#191919]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Scholar's Scroll</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        /* Notion Dark Mode Base - Forced completely */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #191919 !important; 
+            color: #D4D4D4; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        .widget-box {
+            background-color: #191919; 
+            border: 1px solid #2d2d2d;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            transition: all 1.5s ease;
+        }
+
+        /* Scroll SVG Animations */
+        #scroll-paper {
+            transition: height 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #bottom-roller {
+            transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        /* Wax Seal Animation */
+        #wax-seal-group {
+            opacity: 0;
+            transform-origin: 70px 105px;
+            transform: scale(3);
+            pointer-events: none;
+        }
+        .is-sealed #wax-seal-group {
+            animation: stampDown 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes stampDown {
+            0% { transform: scale(3); opacity: 0; filter: drop-shadow(0 20px 20px rgba(0,0,0,0.5)); }
+            100% { transform: scale(1); opacity: 1; filter: drop-shadow(0 4px 8px rgba(217, 119, 6, 0.4)); }
+        }
+
+        /* Wax Splatter Particles */
+        .wax-drop {
+            opacity: 0;
+            transform-origin: center;
+        }
+        .is-sealed .wax-drop {
+            animation: splatter 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards 0.1s;
+        }
+        @keyframes splatter {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+
+        /* Accordion Styles */
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+            opacity: 0;
+        }
+        .accordion-item.open .accordion-content {
+            max-height: 250px;
+            opacity: 1;
+        }
+        .accordion-header {
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+        .accordion-item.open .accordion-header {
+            background-color: #222222;
+            border-bottom-color: transparent;
+        }
+        .chevron {
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .accordion-item.open .chevron {
+            transform: rotate(180deg);
+        }
+
+        /* Custom Checkbox */
+        .check-circle {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .is-complete .check-circle {
+            background-color: #2D2416;
+            border-color: #D4AF37;
+        }
+        .check-mark {
+            stroke-dasharray: 20;
+            stroke-dashoffset: 20;
+            transition: stroke-dashoffset 0.4s ease-in-out 0.1s;
+        }
+        .is-complete .check-mark { stroke-dashoffset: 0; }
+
+        /* Textarea styling */
+        textarea {
+            resize: none;
+            transition: all 0.3s ease;
+        }
+        textarea:focus {
+            outline: none;
+            background-color: #1a1a1a;
+            border-color: #D4AF37;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
+        }
+        textarea::placeholder { color: #525252; font-style: italic; }
+
+        /* Read-only locked state */
+        .is-sealed textarea {
+            pointer-events: none;
+            color: #8B8B8B;
+            border-color: #2d2d2d;
+            background-color: #151515;
+        }
+        .is-sealed .accordion-header {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        /* Custom Scrollbar for Accordion Area */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* Buttons */
+        .seal-btn {
+            background-color: #2D2416;
+            color: #FCD34D;
+            border: 1px solid #5C451A;
+            transition: all 0.4s ease;
+            transform: translateY(20px);
+            opacity: 0;
+            pointer-events: none;
+        }
+        .seal-btn.ready {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .seal-btn:hover {
+            box-shadow: 0 0 15px rgba(217, 119, 6, 0.2);
+            background-color: #3d311d;
+        }
+        .seal-btn:active { transform: scale(0.96); }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(0,0,0,0.6); }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden bg-[#191919]">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-2xl rounded-3xl p-6 md:p-8 flex flex-col md:flex-row h-[560px] overflow-hidden gap-6 md:gap-8">
+        
+        <!-- Left Side: Titles & Scroll Artifact -->
+        <div class="flex-shrink-0 flex flex-col items-center md:items-start w-full md:w-2/5 h-full relative">
+            
+            <div class="w-full flex justify-between items-center mb-2">
+                <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#737373]">@faithreflects</span>
+            </div>
+            
+            <h2 class="serif text-3xl text-[#EDEDED] mb-1">SOAP Journal</h2>
+            <p class="text-[11px] text-[#8B8B8B] italic mb-6">"Unroll the sacred text."</p>
+            
+            <!-- Gamified Scroll SVG -->
+            <div class="relative w-full h-full flex justify-center items-start mt-2" id="scrollContainer">
+                <svg viewBox="0 0 140 280" class="w-full h-[280px] overflow-visible">
+                    
+                    <!-- Paper Content Mask -->
+                    <clipPath id="paperClip">
+                        <rect x="35" y="35" width="70" height="var(--scroll-h, 15)" />
+                    </clipPath>
+
+                    <!-- Top Roller -->
+                    <g id="top-roller">
+                        <!-- Brass Ends -->
+                        <rect x="25" y="20" width="90" height="15" rx="3" fill="#D4AF37"/>
+                        <rect x="25" y="23" width="90" height="3" fill="#FDE68A" opacity="0.5"/>
+                        <!-- Wooden Bar -->
+                        <rect x="30" y="20" width="80" height="15" fill="#2D2114"/>
+                        <line x1="30" y1="25" x2="110" y2="25" stroke="#1A130B" stroke-width="1"/>
+                        <line x1="30" y1="30" x2="110" y2="30" stroke="#1A130B" stroke-width="1"/>
+                        <!-- Knobs -->
+                        <circle cx="25" cy="27.5" r="4" fill="#B48025"/>
+                        <circle cx="115" cy="27.5" r="4" fill="#B48025"/>
+                    </g>
+
+                    <!-- The Dark Parchment Paper -->
+                    <rect id="scroll-paper" x="35" y="35" width="70" height="var(--scroll-h, 15)" fill="#23211D" stroke="#3c3529" stroke-width="1"/>
+                    
+                    <!-- Paper Inner Content (Reveals as it unrolls) -->
+                    <g clip-path="url(#paperClip)" stroke="#4A4235" stroke-width="1.5" stroke-linecap="round" opacity="0.6">
+                        <!-- S lines -->
+                        <line x1="45" y1="50" x2="95" y2="50"/>
+                        <line x1="45" y1="58" x2="85" y2="58"/>
+                        <!-- O lines -->
+                        <line x1="45" y1="85" x2="90" y2="85"/>
+                        <line x1="45" y1="93" x2="95" y2="93"/>
+                        <line x1="45" y1="101" x2="75" y2="101"/>
+                        <!-- A lines -->
+                        <line x1="45" y1="128" x2="95" y2="128"/>
+                        <line x1="45" y1="136" x2="80" y2="136"/>
+                        <!-- P lines -->
+                        <line x1="45" y1="163" x2="95" y2="163"/>
+                        <line x1="45" y1="171" x2="85" y2="171"/>
+                    </g>
+
+                    <!-- Bottom Roller (Moves dynamically) -->
+                    <g id="bottom-roller" style="transform: translateY(var(--scroll-h, 15px));">
+                        <!-- Brass Ends -->
+                        <rect x="25" y="35" width="90" height="15" rx="3" fill="#D4AF37"/>
+                        <rect x="25" y="38" width="90" height="3" fill="#FDE68A" opacity="0.5"/>
+                        <!-- Wooden Bar -->
+                        <rect x="30" y="35" width="80" height="15" fill="#2D2114"/>
+                        <line x1="30" y1="40" x2="110" y2="40" stroke="#1A130B" stroke-width="1"/>
+                        <line x1="30" y1="45" x2="110" y2="45" stroke="#1A130B" stroke-width="1"/>
+                        <!-- Knobs -->
+                        <circle cx="25" cy="42.5" r="4" fill="#B48025"/>
+                        <circle cx="115" cy="42.5" r="4" fill="#B48025"/>
+                    </g>
+
+                    <!-- The Glowing Wax Seal -->
+                    <g id="wax-seal-group">
+                        <!-- Splatter Particles -->
+                        <circle cx="70" cy="105" r="2" fill="#D97706" class="wax-drop" style="--tx: -20px; --ty: -15px;"/>
+                        <circle cx="70" cy="105" r="1.5" fill="#B45309" class="wax-drop" style="--tx: 18px; --ty: -18px;"/>
+                        <circle cx="70" cy="105" r="2.5" fill="#D97706" class="wax-drop" style="--tx: -15px; --ty: 20px;"/>
+                        <circle cx="70" cy="105" r="1.5" fill="#EA580C" class="wax-drop" style="--tx: 22px; --ty: 15px;"/>
+                        
+                        <!-- Main Seal -->
+                        <circle cx="70" cy="105" r="16" fill="url(#waxGrad)"/>
+                        <circle cx="70" cy="105" r="13" fill="none" stroke="#9A3412" stroke-width="1.5"/>
+                        <!-- Imprint Cross -->
+                        <path d="M70 95 L70 115 M62 102 L78 102" stroke="#431407" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+                    </g>
+
+                    <defs>
+                        <radialGradient id="waxGrad" cx="40%" cy="40%" r="60%">
+                            <stop offset="0%" stop-color="#F59E0B"/> <!-- Amber bright center -->
+                            <stop offset="50%" stop-color="#D97706"/>
+                            <stop offset="100%" stop-color="#9A3412"/> <!-- Dark red-orange edge -->
+                        </radialGradient>
+                    </defs>
+                </svg>
+            </div>
+            
+            <!-- Seal Button (Appears when full) -->
+            <div class="absolute bottom-0 left-0 w-full flex flex-col items-center">
+                <button id="sealBtn" class="seal-btn w-full py-3.5 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center space-x-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    <span>Seal the Scroll</span>
+                </button>
+                
+                <button id="resetTriggerBtn" class="hidden mt-4 text-[10px] tracking-widest text-[#525252] uppercase hover:text-[#A3A3A3] transition-colors pb-1 border-b border-[#333]">
+                    Unroll New Scroll
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Right Side: The Dark Accordion -->
+        <div class="flex-1 w-full flex flex-col space-y-3 overflow-y-auto custom-scrollbar pr-2 min-h-0" id="accordionContainer">
+            
+            <!-- S - Scripture -->
+            <div class="accordion-item border border-[#2d2d2d] rounded-2xl overflow-hidden bg-[#111111] transition-all" id="item-s">
+                <button class="accordion-header w-full px-5 py-3.5 flex items-center justify-between hover:bg-[#1a1a1a] text-left" onclick="toggleAccordion('s')">
+                    <div class="flex items-center space-x-4">
+                        <div class="check-circle w-5 h-5 rounded border border-[#333] flex items-center justify-center shrink-0">
+                            <svg class="w-3.5 h-3.5 text-[#191919] check-mark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-serif text-[#EDEDED] font-medium leading-tight"><span class="font-bold text-[#D4AF37] text-lg">S</span> — Scripture</h3>
+                            <p class="text-[9px] uppercase tracking-widest text-[#737373] mt-0.5">The Sacred Text</p>
+                        </div>
+                    </div>
+                    <svg class="chevron w-4 h-4 text-[#737373]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <div class="accordion-content bg-[#151515]">
+                    <div class="px-5 pb-5 pt-2">
+                        <textarea id="text-s" placeholder="Write out the verse that stood out to you..." class="w-full bg-[#111] text-sm text-[#D4D4D4] border border-[#2d2d2d] rounded-xl p-3" rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- O - Observation -->
+            <div class="accordion-item border border-[#2d2d2d] rounded-2xl overflow-hidden bg-[#111111] transition-all" id="item-o">
+                <button class="accordion-header w-full px-5 py-3.5 flex items-center justify-between hover:bg-[#1a1a1a] text-left" onclick="toggleAccordion('o')">
+                    <div class="flex items-center space-x-4">
+                        <div class="check-circle w-5 h-5 rounded border border-[#333] flex items-center justify-center shrink-0">
+                            <svg class="w-3.5 h-3.5 text-[#191919] check-mark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-serif text-[#EDEDED] font-medium leading-tight"><span class="font-bold text-[#D4AF37] text-lg">O</span> — Observation</h3>
+                            <p class="text-[9px] uppercase tracking-widest text-[#737373] mt-0.5">The Hidden Truths</p>
+                        </div>
+                    </div>
+                    <svg class="chevron w-4 h-4 text-[#737373]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <div class="accordion-content bg-[#151515]">
+                    <div class="px-5 pb-5 pt-2">
+                        <textarea id="text-o" placeholder="What is God showing you in this passage? What stands out?" class="w-full bg-[#111] text-sm text-[#D4D4D4] border border-[#2d2d2d] rounded-xl p-3" rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- A - Application -->
+            <div class="accordion-item border border-[#2d2d2d] rounded-2xl overflow-hidden bg-[#111111] transition-all" id="item-a">
+                <button class="accordion-header w-full px-5 py-3.5 flex items-center justify-between hover:bg-[#1a1a1a] text-left" onclick="toggleAccordion('a')">
+                    <div class="flex items-center space-x-4">
+                        <div class="check-circle w-5 h-5 rounded border border-[#333] flex items-center justify-center shrink-0">
+                            <svg class="w-3.5 h-3.5 text-[#191919] check-mark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-serif text-[#EDEDED] font-medium leading-tight"><span class="font-bold text-[#D4AF37] text-lg">A</span> — Application</h3>
+                            <p class="text-[9px] uppercase tracking-widest text-[#737373] mt-0.5">The Living Word</p>
+                        </div>
+                    </div>
+                    <svg class="chevron w-4 h-4 text-[#737373]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <div class="accordion-content bg-[#151515]">
+                    <div class="px-5 pb-5 pt-2">
+                        <textarea id="text-a" placeholder="How will you apply this truth to your life today?" class="w-full bg-[#111] text-sm text-[#D4D4D4] border border-[#2d2d2d] rounded-xl p-3" rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- P - Prayer -->
+            <div class="accordion-item border border-[#2d2d2d] rounded-2xl overflow-hidden bg-[#111111] transition-all" id="item-p">
+                <button class="accordion-header w-full px-5 py-3.5 flex items-center justify-between hover:bg-[#1a1a1a] text-left" onclick="toggleAccordion('p')">
+                    <div class="flex items-center space-x-4">
+                        <div class="check-circle w-5 h-5 rounded border border-[#333] flex items-center justify-center shrink-0">
+                            <svg class="w-3.5 h-3.5 text-[#191919] check-mark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-serif text-[#EDEDED] font-medium leading-tight"><span class="font-bold text-[#D4AF37] text-lg">P</span> — Prayer</h3>
+                            <p class="text-[9px] uppercase tracking-widest text-[#737373] mt-0.5">The Humble Response</p>
+                        </div>
+                    </div>
+                    <svg class="chevron w-4 h-4 text-[#737373]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <div class="accordion-content bg-[#151515]">
+                    <div class="px-5 pb-5 pt-2">
+                        <textarea id="text-p" placeholder="Turn your application into a prayer to God..." class="w-full bg-[#111] text-sm text-[#D4D4D4] border border-[#2d2d2d] rounded-xl p-3" rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Reset Modal -->
+        <div id="clearModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#191919] rounded-2xl p-6 w-full max-w-[260px] border border-[#2d2d2d] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#EDEDED]">Unroll New Scroll?</h3>
+                <p class="text-xs text-[#8B8B8B] mb-6">This breaks the seal and clears your entries for a fresh day.</p>
+                <div class="flex space-x-3">
+                    <button id="cancelClearBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-[#A3A3A3] hover:bg-[#262626] border border-transparent transition-colors">Cancel</button>
+                    <button id="confirmClearBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#262626] text-[#EDEDED] border border-[#333] hover:bg-[#333] transition-colors">Clear</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const keys = ['s', 'o', 'a', 'p'];
+        let state = JSON.parse(localStorage.getItem('faithreflects_soap_dark')) || { s: '', o: '', a: '', p: '', isSealed: false };
+        
+        const container = document.getElementById('widgetContainer');
+        const clearModal = document.getElementById('clearModal');
+        const sealBtn = document.getElementById('sealBtn');
+        const resetTriggerBtn = document.getElementById('resetTriggerBtn');
+        
+        // CSS Variable hook for the SVG Paper Unrolling
+        // Base = 15px (closed), Max = 150px (fully open)
+        const unrollHeights = [15, 48, 82, 116, 150];
+
+        function init() {
+            keys.forEach(k => {
+                const textarea = document.getElementById(`text-${k}`);
+                textarea.value = state[k];
+                
+                textarea.addEventListener('input', (e) => {
+                    if (state.isSealed) return; // Prevent edits if sealed
+                    state[k] = e.target.value;
+                    localStorage.setItem('faithreflects_soap_dark', JSON.stringify(state));
+                    updateUI();
+                });
+            });
+            
+            updateUI(true); // true means initial load, open first empty tab
+        }
+
+        function isComplete(key) {
+            return state[key].trim().length >= 5; // User typed at least 5 chars
+        }
+
+        function toggleAccordion(key) {
+            if (state.isSealed) {
+                // If sealed, just open the tab so they can read it, but close others
+                keys.forEach(k => {
+                    const item = document.getElementById(`item-${k}`);
+                    if (k === key) item.classList.add('open');
+                    else item.classList.remove('open');
+                });
+                return;
+            }
+
+            keys.forEach(k => {
+                const item = document.getElementById(`item-${k}`);
+                if (k === key) item.classList.toggle('open');
+                else item.classList.remove('open');
+            });
+        }
+
+        function updateUI(initialLoad = false) {
+            let completedCount = 0;
+            
+            keys.forEach(k => {
+                const item = document.getElementById(`item-${k}`);
+                if (isComplete(k)) {
+                    item.classList.add('is-complete');
+                    completedCount++;
+                } else {
+                    item.classList.remove('is-complete');
+                }
+            });
+
+            // Update SVG Scroll unroll physics
+            document.documentElement.style.setProperty('--scroll-h', `${unrollHeights[completedCount]}px`);
+
+            // If sealed previously
+            if (state.isSealed) {
+                container.classList.add('is-sealed');
+                sealBtn.classList.remove('ready');
+                sealBtn.classList.add('hidden');
+                resetTriggerBtn.classList.remove('hidden');
+                
+                if (initialLoad) toggleAccordion('s'); // Just show S on load if sealed
+            } else {
+                container.classList.remove('is-sealed');
+                sealBtn.classList.remove('hidden');
+                resetTriggerBtn.classList.add('hidden');
+
+                // If all 4 are done and NOT sealed yet
+                if (completedCount === 4) {
+                    sealBtn.classList.add('ready');
+                } else {
+                    sealBtn.classList.remove('ready');
+                }
+
+                // If initial load and not sealed, open the first incomplete tab
+                if (initialLoad) {
+                    const firstIncomplete = keys.find(k => !isComplete(k)) || 's';
+                    toggleAccordion(firstIncomplete);
+                }
+            }
+        }
+
+        // Seal Animation Logic
+        sealBtn.addEventListener('click', () => {
+            state.isSealed = true;
+            localStorage.setItem('faithreflects_soap_dark', JSON.stringify(state));
+            
+            // Close all accordions so they see the seal animation clearly
+            keys.forEach(k => document.getElementById(`item-${k}`).classList.remove('open'));
+            
+            // Trigger UI update to lock everything
+            updateUI();
+            
+            // After animation, they can click headers to read their entries
+        });
+
+        // Modal Triggers
+        resetTriggerBtn.addEventListener('click', () => {
+            clearModal.classList.remove('hidden');
+        });
+        
+        document.getElementById('cancelClearBtn').addEventListener('click', () => {
+            clearModal.classList.add('hidden');
+        });
+        
+        document.getElementById('confirmClearBtn').addEventListener('click', () => {
+            state = { s: '', o: '', a: '', p: '', isSealed: false };
+            localStorage.setItem('faithreflects_soap_dark', JSON.stringify(state));
+            
+            keys.forEach(k => { document.getElementById(`text-${k}`).value = ''; });
+            
+            clearModal.classList.add('hidden');
+            
+            // Small timeout to allow CSS to un-seal smoothly before opening S
+            setTimeout(() => {
+                updateUI(true); 
+            }, 100);
+        });
+
+        init();
+    </script>
+</body>
+</html>

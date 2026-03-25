@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-[#191919]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scholar's Inkwell Carousel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+    <style>
+        /* Notion Dark Mode Base - Forced completely */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #191919 !important; 
+            color: #D4D4D4; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        .widget-box {
+            background-color: #191919; 
+            border: 1px solid #2d2d2d;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            transition: all 1.5s ease;
+        }
+
+        /* Carousel Slides */
+        .slide {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(20px);
+            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            flex-direction: column;
+        }
+        .slide.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(0);
+        }
+        .slide.prev {
+            transform: translateX(-20px);
+        }
+
+        /* Quill Writing Animation */
+        #quill {
+            transform-origin: 20px 140px; /* Base of the feather/nib */
+            transition: transform 0.4s ease;
+            transform: rotate(0deg);
+        }
+        .is-writing #quill {
+            animation: writing 0.3s infinite alternate;
+        }
+        @keyframes writing {
+            0% { transform: rotate(0deg) translate(0, 0); }
+            50% { transform: rotate(2deg) translate(2px, -1px); }
+            100% { transform: rotate(-1deg) translate(-1px, 1px); }
+        }
+
+        /* Inkwell ambient shadow */
+        .inkwell-shadow {
+            fill: rgba(0,0,0,0.3);
+            transition: fill 0.5s ease;
+        }
+        .is-writing .inkwell-shadow {
+            fill: rgba(212, 175, 55, 0.1);
+        }
+
+        /* Progress Dots */
+        .dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background-color: #333333;
+            transition: all 0.4s ease;
+        }
+        .dot.active {
+            background-color: #D4AF37;
+            box-shadow: 0 0 6px rgba(212, 175, 55, 0.5);
+            transform: scale(1.2);
+        }
+
+        /* Textareas */
+        textarea {
+            background-color: #111111;
+            border: 1px solid #333333;
+            color: #E5E5E5;
+            transition: all 0.3s ease;
+            resize: none;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #D4AF37;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
+        }
+        textarea::placeholder { color: #525252; font-style: italic; }
+
+        /* Custom Scrollbar */
+        textarea::-webkit-scrollbar { width: 4px; }
+        textarea::-webkit-scrollbar-track { background: transparent; }
+        textarea::-webkit-scrollbar-thumb { background: #404040; border-radius: 4px; }
+
+        /* Buttons */
+        .nav-btn {
+            background-color: #262626;
+            color: #E5E5E5;
+            border: 1px solid #333333;
+            transition: all 0.3s ease;
+        }
+        .nav-btn:hover:not(:disabled) { background-color: #333333; border-color: #444444; }
+        .nav-btn:active:not(:disabled) { transform: scale(0.96); }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        
+        .nav-btn.primary {
+            background-color: #2D2416;
+            color: #FCD34D;
+            border-color: #5C451A;
+        }
+        .nav-btn.primary:hover:not(:disabled) { box-shadow: 0 0 15px rgba(217, 119, 6, 0.15); }
+
+        /* Sealed State Animations */
+        #carousel-area { transition: opacity 0.6s ease, transform 0.6s ease; }
+        #sealed-area {
+            opacity: 0; pointer-events: none; transform: translateY(20px) scale(0.95);
+            transition: opacity 0.8s ease 0.4s, transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s;
+        }
+        .is-sealed #carousel-area { opacity: 0; pointer-events: none; transform: translateY(-20px) scale(0.95); }
+        .is-sealed #sealed-area { opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); }
+
+        #wax-seal {
+            transform: scale(3); opacity: 0;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) 1s, opacity 0.5s ease 1s;
+        }
+        .is-sealed #wax-seal { transform: scale(1); opacity: 1; filter: drop-shadow(0 4px 8px rgba(217, 119, 6, 0.4)); }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(0,0,0,0.6); }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden bg-[#191919]">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-sm rounded-3xl p-6 flex flex-col h-[520px] overflow-hidden">
+        
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-4 z-20 shrink-0">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#737373]">@faithreflects</span>
+            <div class="flex items-center space-x-1.5" id="progressDots">
+                <div class="dot active"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+        </div>
+
+        <!-- SVG Inkwell & Quill -->
+        <div class="relative w-full h-32 mb-2 shrink-0 flex justify-center items-end z-10" id="inkwellContainer">
+            <svg viewBox="0 0 200 160" class="w-full h-full overflow-visible">
+                
+                <!-- Desk shadow -->
+                <ellipse cx="100" cy="140" rx="40" ry="10" class="inkwell-shadow"/>
+                
+                <!-- The Inkwell Bottle -->
+                <path d="M75 140 C75 100, 90 90, 90 80 L110 80 C110 90, 125 100, 125 140 Z" fill="#111111" stroke="#2d2d2d" stroke-width="2"/>
+                <!-- Brass Rim -->
+                <ellipse cx="100" cy="80" rx="12" ry="4" fill="#B48025"/>
+                <path d="M88 80 L112 80 L110 85 L90 85 Z" fill="#D4AF37"/>
+                <ellipse cx="100" cy="85" rx="10" ry="3" fill="#8B6508"/>
+                
+                <!-- Glass Reflection -->
+                <path d="M80 135 C80 110, 90 100, 95 90" stroke="rgba(255,255,255,0.15)" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+                <!-- The Feather Quill (Animated) -->
+                <g id="quill">
+                    <!-- Metal Nib -->
+                    <path d="M20 140 L22 125 L18 125 Z" fill="#D4AF37"/>
+                    <!-- Feather Stem -->
+                    <path d="M20 125 Q40 50, 120 10" fill="none" stroke="#e9e9e7" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+                    <!-- Feather Body (Majestic Dark Raven) -->
+                    <path d="M20 110 C 10 90, 0 60, 60 25 C 100 10, 120 10, 120 10 C 120 10, 100 30, 80 60 C 60 90, 30 105, 20 110 Z" fill="#262626" stroke="#333333" stroke-width="1"/>
+                    <!-- Feather Barbs (Detail lines) -->
+                    <path d="M35 90 Q 25 70 40 45" fill="none" stroke="#111" stroke-width="1" opacity="0.5"/>
+                    <path d="M50 75 Q 45 55 60 30" fill="none" stroke="#111" stroke-width="1" opacity="0.5"/>
+                    <path d="M65 60 Q 65 40 85 20" fill="none" stroke="#111" stroke-width="1" opacity="0.5"/>
+                </g>
+            </svg>
+        </div>
+
+        <!-- MAIN CAROUSEL AREA -->
+        <div id="carousel-area" class="flex-1 flex flex-col w-full relative z-20">
+            
+            <!-- Slides Container -->
+            <div class="relative flex-1 w-full overflow-hidden mb-4">
+                
+                <!-- Slide 0 -->
+                <div class="slide active" id="slide-0">
+                    <h3 class="serif text-xl text-[#EDEDED] mb-2 text-center">Daily Reflection</h3>
+                    <p class="text-[11px] font-bold tracking-widest uppercase text-[#525252] mb-3 text-center">Prompt 1 of 5</p>
+                    <div class="flex-1 flex flex-col">
+                        <label class="text-sm text-[#8B8B8B] mb-2 text-center px-4">One word to describe today:</label>
+                        <textarea id="input-0" class="journal-input flex-1 w-full rounded-xl p-4 text-sm font-light leading-relaxed text-center flex items-center justify-center" placeholder="e.g., Peaceful, Heavy, Rushed..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Slide 1 -->
+                <div class="slide" id="slide-1">
+                    <h3 class="serif text-xl text-[#EDEDED] mb-2 text-center">Daily Reflection</h3>
+                    <p class="text-[11px] font-bold tracking-widest uppercase text-[#525252] mb-3 text-center">Prompt 2 of 5</p>
+                    <div class="flex-1 flex flex-col">
+                        <label class="text-sm text-[#8B8B8B] mb-2 text-center px-4">Where did I see God today?</label>
+                        <textarea id="input-1" class="journal-input flex-1 w-full rounded-xl p-4 text-sm font-light leading-relaxed" placeholder="Look for the small mercies..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="slide" id="slide-2">
+                    <h3 class="serif text-xl text-[#EDEDED] mb-2 text-center">Daily Reflection</h3>
+                    <p class="text-[11px] font-bold tracking-widest uppercase text-[#525252] mb-3 text-center">Prompt 3 of 5</p>
+                    <div class="flex-1 flex flex-col">
+                        <label class="text-sm text-[#8B8B8B] mb-2 text-center px-4">What am I grateful for?</label>
+                        <textarea id="input-2" class="journal-input flex-1 w-full rounded-xl p-4 text-sm font-light leading-relaxed" placeholder="Name specific blessings..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="slide" id="slide-3">
+                    <h3 class="serif text-xl text-[#EDEDED] mb-2 text-center">Daily Reflection</h3>
+                    <p class="text-[11px] font-bold tracking-widest uppercase text-[#525252] mb-3 text-center">Prompt 4 of 5</p>
+                    <div class="flex-1 flex flex-col">
+                        <label class="text-sm text-[#8B8B8B] mb-2 text-center px-4">What am I carrying that I need to give to God?</label>
+                        <textarea id="input-3" class="journal-input flex-1 w-full rounded-xl p-4 text-sm font-light leading-relaxed" placeholder="Anxieties, frustrations, control..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Slide 4 -->
+                <div class="slide" id="slide-4">
+                    <h3 class="serif text-xl text-[#EDEDED] mb-2 text-center">Daily Reflection</h3>
+                    <p class="text-[11px] font-bold tracking-widest uppercase text-[#525252] mb-3 text-center">Prompt 5 of 5</p>
+                    <div class="flex-1 flex flex-col">
+                        <label class="text-sm text-[#8B8B8B] mb-2 text-center px-4">Tomorrow, I want to remember:</label>
+                        <textarea id="input-4" class="journal-input flex-1 w-full rounded-xl p-4 text-sm font-light leading-relaxed" placeholder="A truth, a goal, or a prayer..."></textarea>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Navigation Footer -->
+            <div class="flex space-x-3 shrink-0">
+                <button id="prevBtn" class="nav-btn px-6 py-3.5 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center" disabled>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <button id="nextBtn" class="nav-btn primary flex-1 py-3.5 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center">
+                    <span id="nextBtnText">Next Prompt</span>
+                    <svg id="nextBtnIcon" class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- SEALED STATE AREA (Hidden initially) -->
+        <div id="sealed-area" class="absolute inset-0 z-30 flex flex-col items-center justify-center bg-[#191919] p-8">
+            <!-- Stylized Envelope -->
+            <div class="relative w-48 h-32 mb-6 flex justify-center items-center">
+                <svg viewBox="0 0 160 110" class="w-full h-full overflow-visible">
+                    <rect x="10" y="10" width="140" height="90" rx="4" fill="#1a1a1a" stroke="#333333" stroke-width="2"/>
+                    <!-- Envelope Flaps -->
+                    <path d="M10 10 L80 65 L150 10" fill="#222222" stroke="#333333" stroke-width="2"/>
+                    <path d="M10 100 L80 65 L150 100" fill="none" stroke="#2a2a2a" stroke-width="1"/>
+                    
+                    <!-- Wax Seal -->
+                    <g id="wax-seal" transform="translate(80, 65)">
+                        <circle cx="0" cy="0" r="14" fill="#D4AF37"/>
+                        <circle cx="0" cy="0" r="11" fill="none" stroke="#C2831E" stroke-width="1.5"/>
+                        <!-- Cross imprint -->
+                        <path d="M0 -8 L0 8 M-6 -2 L6 -2" stroke="#431407" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+                    </g>
+                </svg>
+            </div>
+            
+            <h3 class="serif text-2xl text-[#D4AF37] mb-2">Journal Sealed</h3>
+            <p class="text-xs text-[#8B8B8B] mb-8 text-center px-4">Your reflections have been offered up for today. Rest well.</p>
+            
+            <button id="openJournalBtn" class="text-[10px] tracking-widest text-[#525252] uppercase hover:text-[#A3A3A3] transition-colors pb-1 border-b border-transparent hover:border-[#333]">
+                Break Seal (Edit Today's Entry)
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        const TOTAL_SLIDES = 5;
+        let currentSlide = 0;
+        let typingTimer;
+        
+        // State Management
+        let state = JSON.parse(localStorage.getItem('faithreflects_soul_journal')) || {
+            inputs: ['', '', '', '', ''],
+            isSealed: false,
+            date: new Date().toDateString()
+        };
+
+        // Reset if it's a new day
+        const today = new Date().toDateString();
+        if (state.date !== today) {
+            state = { inputs: ['', '', '', '', ''], isSealed: false, date: today };
+            localStorage.setItem('faithreflects_soul_journal', JSON.stringify(state));
+        }
+
+        // Elements
+        const container = document.getElementById('widgetContainer');
+        const inkwellContainer = document.getElementById('inkwellContainer');
+        const dots = document.querySelectorAll('.dot');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const nextBtnText = document.getElementById('nextBtnText');
+        const nextBtnIcon = document.getElementById('nextBtnIcon');
+        const textareas = document.querySelectorAll('.journal-input');
+        const openJournalBtn = document.getElementById('openJournalBtn');
+
+        // Initialization
+        function init() {
+            // Load saved text
+            textareas.forEach((ta, index) => {
+                ta.value = state.inputs[index];
+                
+                // Typing detection for Quill animation
+                ta.addEventListener('input', (e) => {
+                    state.inputs[index] = e.target.value;
+                    localStorage.setItem('faithreflects_soul_journal', JSON.stringify(state));
+                    
+                    // Add writing class
+                    inkwellContainer.classList.add('is-writing');
+                    
+                    // Clear existing timer
+                    clearTimeout(typingTimer);
+                    // Set new timer to remove class after user stops typing for 400ms
+                    typingTimer = setTimeout(() => {
+                        inkwellContainer.classList.remove('is-writing');
+                    }, 400);
+                });
+            });
+
+            if (state.isSealed) {
+                container.classList.add('is-sealed');
+            } else {
+                updateCarousel();
+            }
+        }
+
+        // Navigation Logic
+        function updateCarousel() {
+            // Update Slides
+            for (let i = 0; i < TOTAL_SLIDES; i++) {
+                const slide = document.getElementById(`slide-${i}`);
+                if (i === currentSlide) {
+                    slide.className = 'slide active';
+                } else if (i < currentSlide) {
+                    slide.className = 'slide prev';
+                } else {
+                    slide.className = 'slide';
+                }
+            }
+
+            // Update Progress Dots
+            dots.forEach((dot, index) => {
+                dot.className = index <= currentSlide ? 'dot active' : 'dot';
+            });
+
+            // Update Buttons
+            prevBtn.disabled = currentSlide === 0;
+            
+            if (currentSlide === TOTAL_SLIDES - 1) {
+                nextBtnText.innerText = 'Seal Journal';
+                nextBtnIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>';
+            } else {
+                nextBtnText.innerText = 'Next Prompt';
+                nextBtnIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>';
+            }
+        }
+
+        nextBtn.addEventListener('click', () => {
+            if (currentSlide < TOTAL_SLIDES - 1) {
+                currentSlide++;
+                updateCarousel();
+            } else {
+                // Seal the journal!
+                state.isSealed = true;
+                localStorage.setItem('faithreflects_soul_journal', JSON.stringify(state));
+                container.classList.add('is-sealed');
+                
+                // Button click feedback
+                nextBtn.style.transform = 'scale(0.95)';
+                setTimeout(() => nextBtn.style.transform = 'scale(1)', 150);
+            }
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateCarousel();
+            }
+        });
+
+        // Break seal logic
+        openJournalBtn.addEventListener('click', () => {
+            state.isSealed = false;
+            localStorage.setItem('faithreflects_soul_journal', JSON.stringify(state));
+            container.classList.remove('is-sealed');
+            
+            // Re-render carousel to ensure proper state
+            updateCarousel();
+        });
+
+        // Start
+        init();
+
+    </script>
+</body>
+</html>

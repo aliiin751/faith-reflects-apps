@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-[#191919]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Midnight Dream Catcher</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+    <style>
+        /* Notion Dark Mode Base - Forced completely */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #191919 !important; 
+            color: #D4D4D4; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        .widget-box {
+            background-color: #191919; 
+            border: 1px solid #2d2d2d;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            transition: all 1.5s ease;
+        }
+
+        /* Ethereal Sky & Dreamcatcher Animations */
+        .dream-sky {
+            background: radial-gradient(circle at top, #1e1b4b 0%, #111827 50%, #0a0a0a 100%);
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
+            border: 1px solid #2d2d2d;
+            overflow: hidden;
+        }
+
+        .mist {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(20px);
+            opacity: 0.4;
+            animation: drift 15s infinite alternate ease-in-out;
+            pointer-events: none;
+        }
+        .mist-1 { background: #8B5CF6; width: 100px; height: 100px; top: 10%; left: 10%; }
+        .mist-2 { background: #3B82F6; width: 120px; height: 80px; top: 40%; right: 10%; animation-delay: -5s; }
+        .mist-3 { background: #6366F1; width: 80px; height: 120px; bottom: 10%; left: 30%; animation-delay: -10s; }
+
+        @keyframes drift {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, -20px) scale(1.2); }
+            100% { transform: translate(-20px, 30px) scale(0.9); }
+        }
+
+        /* Interactive Stardust */
+        .stardust {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 20;
+            animation: swirl 2s cubic-bezier(0.25, 1, 0.3, 1) forwards;
+        }
+        @keyframes swirl {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+
+        /* Save Animation: Vortex & Flash */
+        .vortex {
+            animation: suck-in 1.5s cubic-bezier(0.5, 0, 0.2, 1) forwards;
+        }
+        @keyframes suck-in {
+            0% { transform: scale(1) rotate(0deg); opacity: 1; }
+            50% { transform: scale(0.2) rotate(180deg); opacity: 0.8; }
+            90% { transform: scale(0) rotate(360deg); opacity: 0; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        .capture-flash {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 10px; height: 10px;
+            background: #ffffff;
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            box-shadow: 0 0 40px 20px rgba(139, 92, 246, 0.8);
+            z-index: 30;
+        }
+        .is-capturing .capture-flash {
+            animation: flash-bang 1.5s cubic-bezier(0.1, 0.8, 0.3, 1) forwards 1s;
+        }
+        @keyframes flash-bang {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+            20% { transform: translate(-50%, -50%) scale(10); opacity: 1; }
+            100% { transform: translate(-50%, -200px) scale(0); opacity: 0; }
+        }
+
+        /* Inputs & Form */
+        .form-area {
+            transition: opacity 0.5s ease;
+        }
+        .is-capturing .form-area {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        textarea, input[type="text"] {
+            background-color: #111111;
+            border: 1px solid #333333;
+            color: #E5E5E5;
+            transition: all 0.3s ease;
+            width: 100%;
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 300;
+        }
+        textarea { resize: none; min-height: 80px; }
+        
+        textarea:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #8B5CF6;
+            background-color: #1a1a1a;
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.15);
+        }
+        textarea::placeholder, input[type="text"]::placeholder { color: #525252; font-style: italic; }
+
+        /* Custom Scrollbar for form and logs */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* Buttons */
+        .capture-btn {
+            background-color: #262626;
+            color: #A3A3A3;
+            border: 1px solid #333333;
+            transition: all 0.4s ease;
+        }
+        .capture-btn:hover { 
+            background-color: #2e1f47; 
+            color: #DDD6FE; 
+            border-color: #6D28D9; 
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
+        }
+        .capture-btn:active { transform: scale(0.96); }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(0,0,0,0.7); }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden bg-[#191919]">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-sm rounded-3xl p-6 md:p-8 flex flex-col items-center h-[620px] overflow-hidden">
+        
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-4 z-10 shrink-0">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#737373]">@faithreflects</span>
+            <div class="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider text-[#A3A3A3] border border-[#333] bg-[#1a1a1a] flex items-center space-x-1">
+                <span id="dreamCount" class="text-[#8B5CF6]">0</span>
+                <span>Dreams</span>
+            </div>
+        </div>
+
+        <h2 class="serif text-2xl text-[#EDEDED] mb-1 z-10 shrink-0">Dream Journal</h2>
+        <p class="text-xs text-[#8B8B8B] italic mb-4 z-10 shrink-0 text-center">"Record them before they fade."</p>
+
+        <!-- Ethereal Dreamcatcher SVG Area -->
+        <div class="relative w-full h-40 rounded-2xl dream-sky mb-4 shrink-0 flex items-center justify-center" id="skyArea">
+            
+            <!-- Ambient Mist -->
+            <div class="mist mist-1"></div>
+            <div class="mist mist-2"></div>
+            <div class="mist mist-3"></div>
+
+            <!-- Stardust Container -->
+            <div id="stardustContainer" class="absolute inset-0 z-20"></div>
+            
+            <!-- Flash Element -->
+            <div class="capture-flash"></div>
+
+            <svg viewBox="0 0 200 160" class="w-full h-full overflow-visible z-10 relative opacity-60" id="dreamcatcherSvg">
+                
+                <!-- Glowing Crescent Moon -->
+                <path d="M140 40 A 25 25 0 1 0 160 80 A 30 30 0 1 1 140 40 Z" fill="#FEF3C7" filter="drop-shadow(0 0 8px rgba(252, 211, 77, 0.4))"/>
+
+                <!-- Geometric Dreamcatcher Web -->
+                <circle cx="100" cy="80" r="50" fill="none" stroke="#A78BFA" stroke-width="1" opacity="0.4"/>
+                <circle cx="100" cy="80" r="40" fill="none" stroke="#8B5CF6" stroke-width="0.5" opacity="0.3"/>
+                
+                <!-- Web lines -->
+                <g stroke="#A78BFA" stroke-width="0.5" opacity="0.3">
+                    <line x1="50" y1="80" x2="115" y2="42"/>
+                    <line x1="115" y1="42" x2="140" y2="108"/>
+                    <line x1="140" y1="108" x2="60" y2="108"/>
+                    <line x1="60" y1="108" x2="85" y2="42"/>
+                    <line x1="85" y1="42" x2="150" y2="80"/>
+                    <line x1="150" y1="80" x2="100" y2="130"/>
+                    <line x1="100" y1="130" x2="50" y2="80"/>
+                </g>
+
+                <!-- Center focal point -->
+                <circle cx="100" cy="80" r="4" fill="#DDD6FE" filter="drop-shadow(0 0 4px #8B5CF6)"/>
+                
+                <!-- Hanging feathers (abstract) -->
+                <path d="M100 130 L100 150 M98 140 L102 145 M102 140 L98 145" stroke="#A78BFA" stroke-width="1" opacity="0.5"/>
+                <path d="M65 115 L55 135 M57 125 L61 130 M61 125 L57 130" stroke="#A78BFA" stroke-width="1" opacity="0.3"/>
+                <path d="M135 115 L145 135 M143 125 L139 130 M139 125 L143 130" stroke="#A78BFA" stroke-width="1" opacity="0.3"/>
+            </svg>
+        </div>
+
+        <!-- Input Form Area -->
+        <div class="flex-1 w-full flex flex-col space-y-3 overflow-y-auto custom-scrollbar pr-2 form-area" id="formArea">
+            
+            <div class="flex flex-col">
+                <label class="text-[9px] font-bold tracking-widest uppercase text-[#737373] mb-1.5 pl-1">The Dream</label>
+                <textarea id="dreamInput" placeholder="Describe what you remember, even fragments..." class="custom-scrollbar"></textarea>
+            </div>
+
+            <div class="flex flex-col">
+                <label class="text-[9px] font-bold tracking-widest uppercase text-[#737373] mb-1.5 pl-1">Emotions Felt</label>
+                <input type="text" id="emotionInput" placeholder="e.g., afraid, peaceful, confused...">
+            </div>
+
+            <div class="flex flex-col">
+                <label class="text-[9px] font-bold tracking-widest uppercase text-[#737373] mb-1.5 pl-1">Symbols / Meaning</label>
+                <input type="text" id="symbolInput" placeholder="Recurring themes or what God might be saying...">
+            </div>
+
+            <button id="captureBtn" class="capture-btn w-full py-3.5 mt-2 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center space-x-2 shadow-lg shrink-0">
+                <span class="text-base">✨</span>
+                <span>Capture Dream</span>
+            </button>
+            
+            <button id="viewLogBtn" class="text-[10px] tracking-widest text-[#525252] uppercase hover:text-[#A3A3A3] transition-colors pb-2 mt-2 text-center border-b border-transparent hover:border-[#333]">
+                Read Dream Archive
+            </button>
+        </div>
+
+        <!-- Archive Modal -->
+        <div id="archiveModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#191919] rounded-3xl p-6 w-full max-w-md border border-[#2d2d2d] shadow-2xl flex flex-col h-[500px]">
+                
+                <div class="flex justify-between items-center mb-4 pb-4 border-b border-[#333]">
+                    <h3 class="font-serif text-xl text-[#EDEDED] flex items-center space-x-2">
+                        <span class="text-[#8B5CF6]">✨</span>
+                        <span>Dream Archive</span>
+                    </h3>
+                    <button id="closeArchiveBtn" class="text-[#737373] hover:text-[#D4D4D4] transition-colors p-1">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                
+                <div id="logList" class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-4">
+                    <!-- Logs injected by JS -->
+                </div>
+                
+                <button id="clearArchiveBtn" class="mt-4 w-full py-3 rounded-xl text-xs font-semibold text-[#737373] hover:text-[#EF4444] hover:bg-[#EF4444]/10 border border-transparent hover:border-[#EF4444]/30 transition-colors">
+                    Clear Archive (New Season)
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Colors for stardust (ethereal purples, blues, golds)
+        const dustColors = ['#8B5CF6', '#60A5FA', '#FCD34D', '#DDD6FE', '#C4B5FD'];
+        
+        // State
+        let dreams = JSON.parse(localStorage.getItem('faithreflects_dreams')) || [];
+        
+        // Elements
+        const container = document.getElementById('widgetContainer');
+        const stardustContainer = document.getElementById('stardustContainer');
+        const dreamcatcherSvg = document.getElementById('dreamcatcherSvg');
+        
+        const dreamInput = document.getElementById('dreamInput');
+        const emotionInput = document.getElementById('emotionInput');
+        const symbolInput = document.getElementById('symbolInput');
+        const captureBtn = document.getElementById('captureBtn');
+        const dreamCountDisplay = document.getElementById('dreamCount');
+        
+        // Modal Elements
+        const viewLogBtn = document.getElementById('viewLogBtn');
+        const archiveModal = document.getElementById('archiveModal');
+        const closeArchiveBtn = document.getElementById('closeArchiveBtn');
+        const clearArchiveBtn = document.getElementById('clearArchiveBtn');
+        const logList = document.getElementById('logList');
+
+        // Init
+        dreamCountDisplay.innerText = dreams.length;
+
+        function createStardust() {
+            // Don't spawn if capturing animation is running
+            if (container.classList.contains('is-capturing')) return;
+
+            const dust = document.createElement('div');
+            dust.className = 'stardust';
+            
+            // Randomize size and color
+            const size = Math.random() * 3 + 2;
+            const color = dustColors[Math.floor(Math.random() * dustColors.length)];
+            
+            dust.style.width = `${size}px`;
+            dust.style.height = `${size}px`;
+            dust.style.backgroundColor = color;
+            dust.style.boxShadow = `0 0 6px ${color}`;
+            
+            // Start around the edges of the sky area
+            const startX = Math.random() * 100;
+            const startY = Math.random() * 100;
+            dust.style.left = `${startX}%`;
+            dust.style.top = `${startY}%`;
+            
+            // Swirl towards the center dreamcatcher
+            const tx = (50 - startX) * 2; // move towards 50%
+            const ty = (50 - startY) * 2;
+            
+            dust.style.setProperty('--tx', `${tx}px`);
+            dust.style.setProperty('--ty', `${ty}px`);
+            
+            stardustContainer.appendChild(dust);
+            
+            setTimeout(() => {
+                if (stardustContainer.contains(dust)) dust.remove();
+            }, 2000);
+        }
+
+        // Spawn stardust while typing in ANY of the inputs
+        const inputs = [dreamInput, emotionInput, symbolInput];
+        inputs.forEach(input => {
+            input.addEventListener('input', () => {
+                // 30% chance to spawn dust on keystroke to keep it subtle
+                if (Math.random() > 0.7) {
+                    createStardust();
+                }
+            });
+        });
+
+        // Delete individual dream
+        window.deleteDream = function(id) {
+            dreams = dreams.filter(d => d.id !== id);
+            localStorage.setItem('faithreflects_dreams', JSON.stringify(dreams));
+            dreamCountDisplay.innerText = dreams.length;
+            renderArchive();
+        };
+
+        function renderArchive() {
+            logList.innerHTML = '';
+            
+            if (dreams.length === 0) {
+                logList.innerHTML = '<p class="text-xs text-[#525252] text-center mt-8 italic">Your dream archive is empty.</p>';
+                return;
+            }
+
+            // Show newest first
+            dreams.slice().reverse().forEach(dream => {
+                const item = document.createElement('div');
+                item.className = 'bg-[#111111] border border-[#2d2d2d] rounded-xl p-4 relative group';
+                
+                let html = `
+                    <div class="flex justify-between items-start mb-2 border-b border-[#222] pb-2">
+                        <span class="text-[9px] font-bold tracking-widest uppercase text-[#8B5CF6]">${dream.date}</span>
+                        <button onclick="deleteDream(${dream.id})" class="opacity-0 group-hover:opacity-100 text-[#525252] hover:text-[#EF4444] transition-all" title="Delete">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                    <p class="text-sm text-[#D4D4D4] leading-relaxed mb-3 font-light">"${dream.text}"</p>
+                `;
+                
+                if (dream.emotions) {
+                    html += `<div class="mb-1"><span class="text-[9px] uppercase tracking-widest text-[#525252] mr-2">Emotions:</span><span class="text-xs text-[#A3A3A3]">${dream.emotions}</span></div>`;
+                }
+                if (dream.symbols) {
+                    html += `<div><span class="text-[9px] uppercase tracking-widest text-[#525252] mr-2">Symbols:</span><span class="text-xs text-[#A3A3A3]">${dream.symbols}</span></div>`;
+                }
+                
+                item.innerHTML = html;
+                logList.appendChild(item);
+            });
+        }
+
+        captureBtn.addEventListener('click', () => {
+            const text = dreamInput.value.trim();
+            if (!text) {
+                dreamInput.focus();
+                return;
+            }
+
+            // 1. Button feedback
+            captureBtn.style.transform = 'scale(0.95)';
+            setTimeout(() => captureBtn.style.transform = 'scale(1)', 150);
+
+            // 2. Trigger the intense capture animation
+            container.classList.add('is-capturing');
+            dreamcatcherSvg.classList.add('vortex');
+            
+            // Spawn a bunch of dust being sucked in
+            for(let i=0; i<30; i++) {
+                setTimeout(createStardust, i * 30);
+            }
+
+            // 3. Save Data
+            dreams.push({
+                id: Date.now(),
+                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                text: text,
+                emotions: emotionInput.value.trim(),
+                symbols: symbolInput.value.trim()
+            });
+            localStorage.setItem('faithreflects_dreams', JSON.stringify(dreams));
+
+            // 4. Reset UI after animation completes
+            setTimeout(() => {
+                dreamInput.value = '';
+                emotionInput.value = '';
+                symbolInput.value = '';
+                
+                dreamCountDisplay.innerText = dreams.length;
+                
+                container.classList.remove('is-capturing');
+                dreamcatcherSvg.classList.remove('vortex');
+            }, 2500); // 2.5s covers the flash-bang animation
+        });
+
+        // Modal Event Listeners
+        viewLogBtn.addEventListener('click', () => {
+            renderArchive();
+            archiveModal.classList.remove('hidden');
+        });
+
+        closeArchiveBtn.addEventListener('click', () => {
+            archiveModal.classList.add('hidden');
+        });
+
+        clearArchiveBtn.addEventListener('click', () => {
+            if (confirm("Are you sure you want to clear your entire dream archive? This cannot be undone.")) {
+                dreams = [];
+                localStorage.setItem('faithreflects_dreams', JSON.stringify(dreams));
+                dreamCountDisplay.innerText = 0;
+                renderArchive();
+            }
+        });
+
+    </script>
+</body>
+</html>

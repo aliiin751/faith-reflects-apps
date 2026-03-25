@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-[#191919]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apothecary's Verse Cabinet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        /* Notion Dark Mode Base */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #191919 !important; 
+            color: #D4D4D4; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        .widget-box {
+            background-color: #191919; 
+            border: 1px solid #2d2d2d;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            transition: all 1.5s ease;
+        }
+
+        /* SVG Cabinet Styles */
+        .drawer-group {
+            cursor: pointer;
+            transform-origin: center;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .drawer-front {
+            fill: #2A1D16;
+            stroke: #1A100C;
+            stroke-width: 2;
+            transition: fill 0.3s ease;
+        }
+        
+        .drawer-shadow {
+            fill: rgba(0,0,0,0.4);
+            transition: opacity 0.3s ease;
+        }
+
+        .drawer-handle {
+            fill: #B48025;
+            stroke: #8B6508;
+            stroke-width: 1;
+            transition: all 0.3s ease;
+        }
+
+        .drawer-label {
+            fill: #D4AF37;
+            font-family: 'Inter', sans-serif;
+            font-size: 6px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        /* Hover & Click Interactions */
+        .drawer-group:hover .drawer-front { fill: #33241C; }
+        .drawer-group:hover .drawer-handle { fill: #FCD34D; }
+        .drawer-group:hover .drawer-label { fill: #FEF3C7; }
+
+        /* When a drawer is open, dim the rest */
+        .cabinet-container {
+            transition: opacity 0.5s ease, filter 0.5s ease;
+        }
+        .is-open .cabinet-container {
+            opacity: 0.3;
+            filter: blur(2px);
+            pointer-events: none;
+        }
+
+        /* The Prescription Card */
+        .prescription-card {
+            position: absolute;
+            left: 5%;
+            right: 5%;
+            bottom: 5%;
+            top: 15%;
+            background-color: #23211D; /* Dark parchment */
+            border: 1px solid #3c3529;
+            border-radius: 1.5rem;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.8), inset 0 0 40px rgba(217, 119, 6, 0.05);
+            transform: translateY(120%);
+            opacity: 0;
+            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            pointer-events: none;
+        }
+
+        .is-open .prescription-card {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Ambient Glow */
+        .card-glow {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 50px;
+            background: radial-gradient(ellipse, rgba(217, 119, 6, 0.3) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        /* Buttons */
+        .action-btn {
+            background-color: #2D2416;
+            color: #FCD34D;
+            border: 1px solid #5C451A;
+            transition: all 0.3s ease;
+        }
+        .action-btn:hover { 
+            background-color: #3d311d; 
+            box-shadow: 0 0 15px rgba(217, 119, 6, 0.2);
+        }
+        .action-btn:active { transform: scale(0.96); }
+        
+        .close-btn {
+            background-color: transparent;
+            color: #737373;
+            border: 1px solid #333333;
+            transition: all 0.3s ease;
+        }
+        .close-btn:hover { background-color: #262626; color: #A3A3A3; }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden bg-[#191919]">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-sm rounded-3xl p-6 md:p-8 flex flex-col min-h-[550px] overflow-hidden">
+        
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-6 z-10 shrink-0">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#737373]">@faithreflects</span>
+            <div class="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider text-[#A3A3A3] border border-[#333] bg-[#1a1a1a]">
+                Spiritual Medicine
+            </div>
+        </div>
+
+        <h2 class="serif text-2xl text-[#EDEDED] mb-1 z-10">Verse Apothecary</h2>
+        <p class="text-xs text-[#8B8B8B] italic mb-6 z-10 text-center">"Open a drawer for the season you are in."</p>
+
+        <!-- Antique Cabinet SVG -->
+        <div class="cabinet-container relative w-full h-full flex justify-center items-center z-10 mt-auto mb-4" id="cabinetArea">
+            <svg viewBox="0 0 200 250" class="w-full h-full overflow-visible drop-shadow-xl">
+                
+                <!-- Cabinet Outer Frame -->
+                <rect x="10" y="10" width="180" height="220" rx="4" fill="#1A100C" stroke="#0F0907" stroke-width="4"/>
+                <rect x="14" y="14" width="172" height="212" rx="2" fill="#22150E"/>
+                
+                <!-- Top Crown Molding -->
+                <path d="M5 10 L195 10 L190 2 L10 2 Z" fill="#2A1D16" stroke="#0F0907" stroke-width="1"/>
+                <!-- Bottom Base -->
+                <path d="M10 230 L190 230 L195 238 L5 238 Z" fill="#2A1D16" stroke="#0F0907" stroke-width="1"/>
+
+                <!-- Grid of 6 Drawers -->
+                <!-- Drawer 1: Struggling -->
+                <g class="drawer-group" transform="translate(20, 20)" onclick="openDrawer('struggling')">
+                    <rect class="drawer-shadow" x="2" y="2" width="76" height="66" rx="2"/>
+                    <rect class="drawer-front" x="0" y="0" width="76" height="66" rx="2"/>
+                    <rect x="5" y="5" width="66" height="56" fill="none" stroke="#1A100C" stroke-width="1" opacity="0.5"/>
+                    <!-- Handle & Label -->
+                    <path class="drawer-handle" d="M30 45 Q38 55 46 45" fill="none" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="30" cy="45" r="2" fill="#B48025"/>
+                    <circle cx="46" cy="45" r="2" fill="#B48025"/>
+                    <rect x="18" y="15" width="40" height="15" fill="#150C08" stroke="#3A281E" stroke-width="1" rx="1"/>
+                    <text x="38" y="25" class="drawer-label" text-anchor="middle">Struggling</text>
+                    <!-- Invisible solid hit area to prevent hover jitter -->
+                    <rect x="0" y="0" width="76" height="66" fill="transparent" />
+                </g>
+
+                <!-- Drawer 2: Tempted -->
+                <g class="drawer-group" transform="translate(104, 20)" onclick="openDrawer('tempted')">
+                    <rect class="drawer-shadow" x="2" y="2" width="76" height="66" rx="2"/>
+                    <rect class="drawer-front" x="0" y="0" width="76" height="66" rx="2"/>
+                    <rect x="5" y="5" width="66" height="56" fill="none" stroke="#1A100C" stroke-width="1" opacity="0.5"/>
+                    <!-- Handle & Label -->
+                    <path class="drawer-handle" d="M30 45 Q38 55 46 45" fill="none" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="30" cy="45" r="2" fill="#B48025"/>
+                    <circle cx="46" cy="45" r="2" fill="#B48025"/>
+                    <rect x="18" y="15" width="40" height="15" fill="#150C08" stroke="#3A281E" stroke-width="1" rx="1"/>
+                    <text x="38" y="25" class="drawer-label" text-anchor="middle">Tempted</text>
+                    <!-- Invisible solid hit area to prevent hover jitter -->
+                    <rect x="0" y="0" width="76" height="66" fill="transparent" />
+                </g>
+
+                <!-- Drawer 3: Peace -->
+                <g class="drawer-group" transform="translate(20, 90)" onclick="openDrawer('peace')">
+                    <rect class="drawer-shadow" x="2" y="2" width="76" height="66" rx="2"/>
+                    <rect class="drawer-front" x="0" y="0" width="76" height="66" rx="2"/>
+                    <rect x="5" y="5" width="66" height="56" fill="none" stroke="#1A100C" stroke-width="1" opacity="0.5"/>
+                    <!-- Handle & Label -->
+                    <path class="drawer-handle" d="M30 45 Q38 55 46 45" fill="none" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="30" cy="45" r="2" fill="#B48025"/>
+                    <circle cx="46" cy="45" r="2" fill="#B48025"/>
+                    <rect x="18" y="15" width="40" height="15" fill="#150C08" stroke="#3A281E" stroke-width="1" rx="1"/>
+                    <text x="38" y="25" class="drawer-label" text-anchor="middle">Peace</text>
+                    <!-- Invisible solid hit area to prevent hover jitter -->
+                    <rect x="0" y="0" width="76" height="66" fill="transparent" />
+                </g>
+
+                <!-- Drawer 4: Courage -->
+                <g class="drawer-group" transform="translate(104, 90)" onclick="openDrawer('courage')">
+                    <rect class="drawer-shadow" x="2" y="2" width="76" height="66" rx="2"/>
+                    <rect class="drawer-front" x="0" y="0" width="76" height="66" rx="2"/>
+                    <rect x="5" y="5" width="66" height="56" fill="none" stroke="#1A100C" stroke-width="1" opacity="0.5"/>
+                    <!-- Handle & Label -->
+                    <path class="drawer-handle" d="M30 45 Q38 55 46 45" fill="none" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="30" cy="45" r="2" fill="#B48025"/>
+                    <circle cx="46" cy="45" r="2" fill="#B48025"/>
+                    <rect x="18" y="15" width="40" height="15" fill="#150C08" stroke="#3A281E" stroke-width="1" rx="1"/>
+                    <text x="38" y="25" class="drawer-label" text-anchor="middle">Courage</text>
+                    <!-- Invisible solid hit area to prevent hover jitter -->
+                    <rect x="0" y="0" width="76" height="66" fill="transparent" />
+                </g>
+
+                <!-- Drawer 5: Identity -->
+                <g class="drawer-group" transform="translate(20, 160)" onclick="openDrawer('identity')">
+                    <rect class="drawer-shadow" x="2" y="2" width="76" height="66" rx="2"/>
+                    <rect class="drawer-front" x="0" y="0" width="76" height="66" rx="2"/>
+                    <rect x="5" y="5" width="66" height="56" fill="none" stroke="#1A100C" stroke-width="1" opacity="0.5"/>
+                    <!-- Handle & Label -->
+                    <path class="drawer-handle" d="M30 45 Q38 55 46 45" fill="none" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="30" cy="45" r="2" fill="#B48025"/>
+                    <circle cx="46" cy="45" r="2" fill="#B48025"/>
+                    <rect x="18" y="15" width="40" height="15" fill="#150C08" stroke="#3A281E" stroke-width="1" rx="1"/>
+                    <text x="38" y="25" class="drawer-label" text-anchor="middle">Identity</text>
+                    <!-- Invisible solid hit area to prevent hover jitter -->
+                    <rect x="0" y="0" width="76" height="66" fill="transparent" />
+                </g>
+
+                <!-- Drawer 6: Loved -->
+                <g class="drawer-group" transform="translate(104, 160)" onclick="openDrawer('loved')">
+                    <rect class="drawer-shadow" x="2" y="2" width="76" height="66" rx="2"/>
+                    <rect class="drawer-front" x="0" y="0" width="76" height="66" rx="2"/>
+                    <rect x="5" y="5" width="66" height="56" fill="none" stroke="#1A100C" stroke-width="1" opacity="0.5"/>
+                    <!-- Handle & Label -->
+                    <path class="drawer-handle" d="M30 45 Q38 55 46 45" fill="none" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="30" cy="45" r="2" fill="#B48025"/>
+                    <circle cx="46" cy="45" r="2" fill="#B48025"/>
+                    <rect x="18" y="15" width="40" height="15" fill="#150C08" stroke="#3A281E" stroke-width="1" rx="1"/>
+                    <text x="38" y="25" class="drawer-label" text-anchor="middle">Loved</text>
+                    <!-- Invisible solid hit area to prevent hover jitter -->
+                    <rect x="0" y="0" width="76" height="66" fill="transparent" />
+                </g>
+
+            </svg>
+        </div>
+
+        <!-- The Prescription Card (Hidden initially) -->
+        <div id="prescriptionCard" class="prescription-card">
+            <div class="card-glow"></div>
+            
+            <div class="w-full flex justify-between items-center mb-6 border-b border-[#3c3529] pb-3">
+                <span id="cardCategory" class="text-[10px] font-bold tracking-widest uppercase text-[#D4AF37]">Category</span>
+                <span id="cardRef" class="text-[10px] font-bold tracking-widest uppercase text-[#A3A3A3]">Reference</span>
+            </div>
+            
+            <div class="flex-1 flex items-center justify-center w-full mb-6 relative">
+                <!-- Large decorative quote marks -->
+                <span class="absolute top-0 left-0 text-5xl text-[#3c3529] font-serif leading-none" style="transform: translate(-10px, -10px);">"</span>
+                
+                <p id="cardVerse" class="serif italic text-[17px] text-[#EDEDED] leading-relaxed text-center z-10 px-2">
+                    Verse text goes here.
+                </p>
+                
+                <span class="absolute bottom-0 right-0 text-5xl text-[#3c3529] font-serif leading-none" style="transform: translate(10px, 20px);">"</span>
+            </div>
+
+            <div class="w-full flex space-x-3 mt-auto shrink-0">
+                <button onclick="closeDrawer()" class="close-btn flex-1 py-3.5 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center">
+                    Close Drawer
+                </button>
+                <button id="drawAnotherBtn" class="action-btn flex-1 py-3.5 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center space-x-1 shadow-lg">
+                    <span>Draw Again</span>
+                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Database of verses aligned with the Notion template's Life Seasons
+        const verseDatabase = {
+            'struggling': [
+                { ref: "Psalm 34:18", text: "The Lord is close to the brokenhearted and saves those who are crushed in spirit." },
+                { ref: "Isaiah 41:10", text: "So do not fear, for I am with you; do not be dismayed, for I am your God. I will strengthen you and help you." },
+                { ref: "Romans 8:28", text: "And we know that in all things God works for the good of those who love him, who have been called according to his purpose." },
+                { ref: "2 Cor 12:9", text: "My grace is sufficient for you, for my power is made perfect in weakness." },
+                { ref: "Psalm 46:1", text: "God is our refuge and strength, an ever-present help in trouble." }
+            ],
+            'tempted': [
+                { ref: "1 Cor 10:13", text: "No temptation has overtaken you except what is common to mankind. And God is faithful; he will not let you be tempted beyond what you can bear." },
+                { ref: "James 4:7", text: "Submit yourselves, then, to God. Resist the devil, and he will flee from you." },
+                { ref: "Psalm 119:11", text: "I have hidden your word in my heart that I might not sin against you." },
+                { ref: "Galatians 5:16", text: "So I say, walk by the Spirit, and you will not gratify the desires of the flesh." },
+                { ref: "Romans 12:2", text: "Do not conform to the pattern of this world, but be transformed by the renewing of your mind." }
+            ],
+            'peace': [
+                { ref: "Phil 4:6-7", text: "Do not be anxious about anything, but in every situation, by prayer and petition, with thanksgiving, present your requests to God." },
+                { ref: "John 14:27", text: "Peace I leave with you; my peace I give you. I do not give to you as the world gives. Do not let your hearts be troubled and do not be afraid." },
+                { ref: "Isaiah 26:3", text: "You will keep in perfect peace those whose minds are steadfast, because they trust in you." },
+                { ref: "Psalm 46:10", text: "He says, 'Be still, and know that I am God; I will be exalted among the nations, I will be exalted in the earth.'" },
+                { ref: "Matt 11:28", text: "Come to me, all you who are weary and burdened, and I will give you rest." }
+            ],
+            'courage': [
+                { ref: "Joshua 1:9", text: "Have I not commanded you? Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go." },
+                { ref: "Isaiah 43:2", text: "When you pass through the waters, I will be with you; and when you pass through the rivers, they will not sweep over you." },
+                { ref: "Phil 4:13", text: "I can do all this through him who gives me strength." },
+                { ref: "Deut 31:6", text: "Be strong and courageous. Do not be afraid or terrified because of them, for the Lord your God goes with you; he will never leave you nor forsake you." },
+                { ref: "Psalm 27:1", text: "The Lord is my light and my salvation—whom shall I fear? The Lord is the stronghold of my life—of whom shall I be afraid?" }
+            ],
+            'identity': [
+                { ref: "Eph 2:10", text: "For we are God’s handiwork, created in Christ Jesus to do good works, which God prepared in advance for us to do." },
+                { ref: "Jer 1:5", text: "Before I formed you in the womb I knew you, before you were born I set you apart." },
+                { ref: "1 Peter 2:9", text: "But you are a chosen people, a royal priesthood, a holy nation, God’s special possession." },
+                { ref: "Gal 2:20", text: "I have been crucified with Christ and I no longer live, but Christ lives in me." },
+                { ref: "2 Cor 5:17", text: "Therefore, if anyone is in Christ, the new creation has come: The old has gone, the new is here!" }
+            ],
+            'loved': [
+                { ref: "Rom 8:38-39", text: "For I am convinced that neither death nor life, neither angels nor demons... will be able to separate us from the love of God." },
+                { ref: "Zeph 3:17", text: "The Lord your God is with you, the Mighty Warrior who saves. He will take great delight in you; in his love he will no longer rebuke you, but will rejoice over you with singing." },
+                { ref: "1 John 3:1", text: "See what great love the Father has lavished on us, that we should be called children of God! And that is what we are!" },
+                { ref: "Psalm 139:14", text: "I praise you because I am fearfully and wonderfully made; your works are wonderful, I know that full well." },
+                { ref: "Jer 31:3", text: "The Lord appeared to us in the past, saying: 'I have loved you with an everlasting love; I have drawn you with unfailing kindness.'" }
+            ]
+        };
+
+        const container = document.getElementById('widgetContainer');
+        const cardCategory = document.getElementById('cardCategory');
+        const cardRef = document.getElementById('cardRef');
+        const cardVerse = document.getElementById('cardVerse');
+        const drawAnotherBtn = document.getElementById('drawAnotherBtn');
+        
+        let currentCategory = null;
+
+        function openDrawer(category) {
+            currentCategory = category;
+            
+            // Randomly select a verse from the chosen category
+            const verses = verseDatabase[category];
+            const randomVerse = verses[Math.floor(Math.random() * verses.length)];
+            
+            // Populate card
+            cardCategory.innerText = `When you are ${category}`;
+            if (category === 'peace') cardCategory.innerText = `When you need peace`;
+            if (category === 'identity') cardCategory.innerText = `Core Identity`;
+            if (category === 'loved') cardCategory.innerText = `When you need to feel loved`;
+
+            cardRef.innerText = randomVerse.ref;
+            cardVerse.innerText = randomVerse.text;
+
+            // Trigger Animation
+            container.classList.add('is-open');
+        }
+
+        function closeDrawer() {
+            container.classList.remove('is-open');
+            setTimeout(() => {
+                currentCategory = null;
+            }, 600); // Wait for animation to finish
+        }
+
+        // Draw another verse from the same category without closing the drawer
+        drawAnotherBtn.addEventListener('click', () => {
+            if (!currentCategory) return;
+            
+            // Button feedback
+            drawAnotherBtn.style.transform = 'scale(0.95)';
+            setTimeout(() => drawAnotherBtn.style.transform = 'scale(1)', 150);
+
+            // Fade out text slightly
+            cardVerse.style.opacity = '0';
+            cardRef.style.opacity = '0';
+            
+            setTimeout(() => {
+                const verses = verseDatabase[currentCategory];
+                const randomVerse = verses[Math.floor(Math.random() * verses.length)];
+                
+                cardRef.innerText = randomVerse.ref;
+                cardVerse.innerText = randomVerse.text;
+                
+                // Fade back in
+                cardVerse.style.opacity = '1';
+                cardRef.style.opacity = '1';
+            }, 300);
+        });
+
+    </script>
+</body>
+</html>
