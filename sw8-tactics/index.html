@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-[#191919]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tactical Counter-Strike</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+    <style>
+        /* Notion Dark Mode Base */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #191919 !important; 
+            color: #D4D4D4; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        .widget-box {
+            background-color: #191919; 
+            border: 1px solid #2d2d2d;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            transition: all 1.5s ease;
+        }
+
+        /* Threat Chips (Scrollable horizontal list) */
+        .threat-chips::-webkit-scrollbar { display: none; }
+        .threat-chips { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .threat-chip {
+            background-color: #111111;
+            border: 1px solid #333333;
+            color: #8B8B8B;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        .threat-chip:hover {
+            background-color: #222222;
+            border-color: #525252;
+            color: #D4D4D4;
+        }
+        .threat-chip.active {
+            background-color: #2d1818;
+            border-color: #7f1d1d;
+            color: #fca5a5;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.1);
+        }
+
+        /* The Combat Arena */
+        .arena {
+            background: linear-gradient(145deg, #151515 0%, #0a0a0a 100%);
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.8), 0 0 0 1px #222;
+            position: relative;
+            overflow: hidden;
+            transition: box-shadow 0.8s ease;
+        }
+
+        /* Arena States (Idle, Lie, Truth) */
+        .arena-state {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform: scale(0.95);
+        }
+        .arena-state.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1);
+        }
+
+        /* The Lie Text (Shaky, unsettling) */
+        .lie-text {
+            color: #fca5a5;
+            text-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+            animation: jitter 0.4s infinite;
+            transform-origin: center;
+        }
+        @keyframes jitter {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(1px, -1px) rotate(0.5deg); }
+            50% { transform: translate(-1px, 0px) rotate(-0.5deg); }
+            75% { transform: translate(0px, 1px) rotate(0deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        /* The Truth Text (Glowing, solid) */
+        .truth-text {
+            color: #FCD34D;
+            text-shadow: 0 0 15px rgba(217, 119, 6, 0.4);
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+        }
+
+        /* Cinematic Slash Animation */
+        .slash-line {
+            position: absolute;
+            top: 50%;
+            left: -20%;
+            width: 140%;
+            height: 3px;
+            background: #ffffff;
+            box-shadow: 0 0 20px #fff, 0 0 40px #D4AF37, 0 0 60px #FCD34D;
+            transform: rotate(-15deg) scaleX(0);
+            transform-origin: left center;
+            z-index: 40;
+            border-radius: 100%;
+        }
+        .is-slashing .slash-line {
+            animation: sliceAnim 0.7s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+        }
+        @keyframes sliceAnim {
+            0% { transform: rotate(-15deg) scaleX(0); opacity: 1; }
+            40% { transform: rotate(-15deg) scaleX(1); opacity: 1; height: 6px; }
+            100% { transform: rotate(-15deg) scaleX(1.1); opacity: 0; height: 1px; }
+        }
+
+        /* Flashbang effect */
+        .flashbang {
+            position: absolute;
+            inset: 0;
+            background: #ffffff;
+            opacity: 0;
+            z-index: 30;
+            pointer-events: none;
+        }
+        .is-slashing .flashbang {
+            animation: flashAnim 0.8s ease-out forwards;
+        }
+        @keyframes flashAnim {
+            0% { opacity: 0; }
+            30% { opacity: 0.9; }
+            100% { opacity: 0; }
+        }
+
+        /* Text Shattering */
+        .is-slashing .lie-text {
+            animation: shatter 0.5s ease-out forwards;
+        }
+        @keyframes shatter {
+            0% { transform: scale(1); filter: blur(0); opacity: 1; }
+            100% { transform: scale(1.1) translateY(-20px) rotate(-5deg); filter: blur(10px); opacity: 0; }
+        }
+
+        /* Background Glows */
+        .arena-glow {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 250px; height: 250px;
+            border-radius: 50%;
+            transition: background 1s ease;
+            pointer-events: none;
+        }
+        .state-lie .arena-glow { background: radial-gradient(circle, rgba(239, 68, 68, 0.1) 0%, transparent 70%); }
+        .state-truth .arena-glow { background: radial-gradient(circle, rgba(217, 119, 6, 0.15) 0%, transparent 70%); }
+
+        /* Buttons */
+        .sword-btn {
+            background-color: #2a1111;
+            color: #fca5a5;
+            border: 1px solid #7f1d1d;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .sword-btn::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(252, 211, 77, 0.2), transparent);
+            transition: transform 0.5s ease;
+        }
+        .sword-btn:hover::after { transform: translateX(100%); }
+        .sword-btn:hover { background-color: #451a1a; box-shadow: 0 0 15px rgba(239, 68, 68, 0.2); }
+        .sword-btn:active { transform: scale(0.96); }
+
+        .reset-btn {
+            background-color: #2D2416;
+            color: #FCD34D;
+            border: 1px solid #5C451A;
+            transition: all 0.3s ease;
+        }
+        .reset-btn:hover { background-color: #3d311d; box-shadow: 0 0 15px rgba(217, 119, 6, 0.15); }
+        .reset-btn:active { transform: scale(0.96); }
+
+        /* SVG Sword Icon */
+        .sword-icon { transition: transform 0.3s ease; }
+        .sword-btn:hover .sword-icon { transform: rotate(45deg) scale(1.2); }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden bg-[#191919]">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-lg rounded-3xl p-6 md:p-8 flex flex-col h-[600px] overflow-hidden">
+        
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-6 shrink-0 z-20">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#737373]">@faithreflects</span>
+            <div class="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider text-[#A3A3A3] border border-[#333] bg-[#1a1a1a] flex items-center space-x-1">
+                <span>Tactical Command</span>
+            </div>
+        </div>
+
+        <h2 class="serif text-2xl text-[#EDEDED] mb-1 shrink-0 z-20">Enemy Tactics</h2>
+        <p class="text-xs text-[#8B8B8B] italic mb-4 shrink-0 z-20">"Select a threat to counter-attack."</p>
+
+        <!-- Threat Selector (Chips) -->
+        <div class="threat-chips w-full overflow-x-auto flex space-x-2 pb-4 mb-2 shrink-0 z-20" id="chipContainer">
+            <!-- Injected via JS -->
+        </div>
+
+        <!-- Combat Arena -->
+        <div class="arena flex-1 w-full rounded-2xl shrink-0 z-10 flex flex-col" id="combatArena">
+            
+            <div class="arena-glow"></div>
+            
+            <!-- Visual Effects layers -->
+            <div class="slash-line"></div>
+            <div class="flashbang"></div>
+
+            <!-- STATE 0: Idle -->
+            <div class="arena-state active text-center" id="state-idle">
+                <span class="text-3xl mb-3 opacity-50">🛡️</span>
+                <p class="text-sm text-[#737373] uppercase tracking-widest font-semibold">Awaiting Engagement</p>
+                <p class="text-[10px] text-[#525252] mt-2 italic max-w-[200px]">Select an enemy tactic from above to reveal the lie and wield the sword.</p>
+            </div>
+
+            <!-- STATE 1: The Lie -->
+            <div class="arena-state text-center" id="state-lie">
+                <span class="text-[9px] font-bold tracking-widest uppercase text-[#EF4444] mb-3">The Enemy's Tactic</span>
+                
+                <h3 class="serif italic text-2xl leading-relaxed lie-text px-4" id="lieTextDisplay">
+                    "The lie goes here."
+                </h3>
+                
+                <button id="wieldBtn" class="sword-btn mt-auto w-full py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest flex items-center justify-center space-x-2">
+                    <svg class="w-4 h-4 sword-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.121 14.121L19 19m-7-7l-7-7m7 7l7-7m-7 7l-7 7"></path></svg>
+                    <span>Wield the Sword</span>
+                </button>
+            </div>
+
+            <!-- STATE 2: The Truth -->
+            <div class="arena-state text-center" id="state-truth">
+                <span class="text-[9px] font-bold tracking-widest uppercase text-[#10B981] mb-2 flex items-center space-x-1">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                    <span>Lie Defeated</span>
+                </span>
+                
+                <h3 class="serif italic text-2xl leading-relaxed truth-text px-2 mb-3" id="truthTextDisplay">
+                    "The Truth goes here."
+                </h3>
+                
+                <span class="text-[11px] font-bold tracking-widest uppercase text-[#D4AF37] border-t border-[#3c3529] pt-3" id="refTextDisplay">
+                    Reference
+                </span>
+
+                <button id="resetBtn" class="reset-btn mt-auto w-full py-3.5 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center">
+                    Engage Another
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Database directly matching user's template text
+        const tactics = [
+            { id: 'doubt', name: 'Doubt', lie: "Did God really say...?", truth: "It is written...", ref: "Matthew 4:4" },
+            { id: 'shame', name: 'Shame', lie: "You're too far gone.", truth: "There is no condemnation for those in Christ.", ref: "Romans 8:1" },
+            { id: 'fear', name: 'Fear', lie: "What if everything falls apart?", truth: "God has not given us a spirit of fear.", ref: "2 Timothy 1:7" },
+            { id: 'isolation', name: 'Isolation', lie: "Nobody understands you.", truth: "I will never leave you nor forsake you.", ref: "Hebrews 13:5" },
+            { id: 'distraction', name: 'Distraction', lie: "You're too busy for God today.", truth: "Seek first the kingdom of God.", ref: "Matthew 6:33" },
+            { id: 'comparison', name: 'Comparison', lie: "Everyone else has it together.", truth: "I am fearfully and wonderfully made.", ref: "Psalm 139:14" },
+            { id: 'condemnation', name: 'Condemnation', lie: "God is disappointed in you.", truth: "Who shall bring any charge? It is God who justifies.", ref: "Romans 8:33" },
+            { id: 'despair', name: 'Despair', lie: "This will never get better.", truth: "Weeping may stay for the night, but rejoicing comes.", ref: "Psalm 30:5" },
+            { id: 'identity', name: 'Identity Attack', lie: "You are what you've done.", truth: "You are a new creation in Christ.", ref: "2 Corinthians 5:17" },
+            { id: 'complacency', name: 'Complacency', lie: "You don't really need God today.", truth: "Apart from Me you can do nothing.", ref: "John 15:5" }
+        ];
+
+        // Elements
+        const chipContainer = document.getElementById('chipContainer');
+        const combatArena = document.getElementById('combatArena');
+        
+        const stateIdle = document.getElementById('state-idle');
+        const stateLie = document.getElementById('state-lie');
+        const stateTruth = document.getElementById('state-truth');
+        
+        const lieTextDisplay = document.getElementById('lieTextDisplay');
+        const truthTextDisplay = document.getElementById('truthTextDisplay');
+        const refTextDisplay = document.getElementById('refTextDisplay');
+        
+        const wieldBtn = document.getElementById('wieldBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        let currentTactic = null;
+        let isAnimating = false;
+
+        // Render Chips
+        function renderChips() {
+            chipContainer.innerHTML = tactics.map(t => `
+                <button id="chip-${t.id}" onclick="selectTactic('${t.id}')" class="threat-chip px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider shadow-sm">
+                    ${t.name}
+                </button>
+            `).join('');
+        }
+
+        // Handle Selection
+        window.selectTactic = function(id) {
+            if (isAnimating) return; // Lock during slash
+            currentTactic = tactics.find(t => t.id === id);
+
+            // Update Chip UI
+            document.querySelectorAll('.threat-chip').forEach(c => c.classList.remove('active'));
+            const activeChip = document.getElementById(`chip-${id}`);
+            activeChip.classList.add('active');
+            
+            // Scroll chip into view
+            activeChip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+
+            // Set Text
+            lieTextDisplay.innerText = `"${currentTactic.lie}"`;
+            truthTextDisplay.innerText = `"${currentTactic.truth}"`;
+            refTextDisplay.innerText = currentTactic.ref;
+
+            // Transition to Lie State
+            combatArena.className = 'arena flex-1 w-full rounded-2xl shrink-0 z-10 flex flex-col state-lie';
+            
+            stateIdle.classList.remove('active');
+            stateTruth.classList.remove('active');
+            stateLie.classList.add('active');
+        };
+
+        // Sword Slash Animation
+        wieldBtn.addEventListener('click', () => {
+            if (isAnimating || !currentTactic) return;
+            isAnimating = true;
+
+            // Button feedback
+            wieldBtn.style.transform = 'scale(0.95)';
+            
+            // Trigger Slash
+            combatArena.classList.add('is-slashing');
+
+            // Mid-animation: Swap states while covered by flashbang
+            setTimeout(() => {
+                stateLie.classList.remove('active');
+                stateTruth.classList.add('active');
+                combatArena.className = 'arena flex-1 w-full rounded-2xl shrink-0 z-10 flex flex-col state-truth';
+                wieldBtn.style.transform = 'scale(1)'; // Reset button for next time
+            }, 400); // 400ms is the peak of the flash and slash
+
+            // Cleanup animation classes
+            setTimeout(() => {
+                combatArena.classList.remove('is-slashing');
+                isAnimating = false;
+            }, 1000); // Wait for full animation to finish
+        });
+
+        // Reset
+        resetBtn.addEventListener('click', () => {
+            if (isAnimating) return;
+            
+            resetBtn.style.transform = 'scale(0.95)';
+            setTimeout(() => resetBtn.style.transform = 'scale(1)', 150);
+
+            document.querySelectorAll('.threat-chip').forEach(c => c.classList.remove('active'));
+            currentTactic = null;
+
+            combatArena.className = 'arena flex-1 w-full rounded-2xl shrink-0 z-10 flex flex-col';
+            stateTruth.classList.remove('active');
+            stateLie.classList.remove('active');
+            stateIdle.classList.add('active');
+        });
+
+        // Init
+        renderChips();
+
+    </script>
+</body>
+</html>

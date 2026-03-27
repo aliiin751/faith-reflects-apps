@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-[#191919]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Armor Stand</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+    <style>
+        /* Notion Dark Mode Base */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #191919 !important; 
+            color: #D4D4D4; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        .widget-box {
+            background-color: #191919; 
+            border: 1px solid #2d2d2d;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            transition: all 1.5s ease;
+        }
+
+        /* Ambient Armory Glow */
+        .armory-glow {
+            position: absolute;
+            top: 25%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(217, 119, 6, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            transition: opacity 1s ease;
+        }
+
+        /* SVG Armor Interactions */
+        .armor-piece {
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: center;
+        }
+        
+        /* Base Iron State */
+        .armor-base {
+            fill: #1A1A1A;
+            stroke: #333333;
+            stroke-width: 1.5;
+            transition: all 0.4s ease;
+        }
+        .armor-highlight {
+            fill: #262626;
+            transition: all 0.4s ease;
+        }
+
+        /* Hover State */
+        .armor-piece:hover .armor-base {
+            stroke: #737373;
+            fill: #222222;
+        }
+
+        /* Active/Illuminated State */
+        .armor-piece.active {
+            transform: scale(1.05);
+            z-index: 20;
+        }
+        .armor-piece.active .armor-base {
+            fill: #2D2416;
+            stroke: #D4AF37;
+            filter: drop-shadow(0 0 12px rgba(217, 119, 6, 0.6));
+        }
+        .armor-piece.active .armor-highlight {
+            fill: #D4AF37;
+        }
+
+        /* The Dark Glass Tactical Panel */
+        .tactical-panel {
+            background: linear-gradient(145deg, #151515 0%, #111111 100%);
+            border: 1px solid #2d2d2d;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.02);
+            transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .panel-hidden {
+            opacity: 0;
+            transform: translateY(20px);
+            pointer-events: none;
+        }
+        
+        .panel-visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        /* Custom Scrollbar for long panel content */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* Detail Lines */
+        .tactic-line { border-left: 2px solid #EF4444; padding-left: 0.75rem; }
+        .truth-line { border-left: 2px solid #10B981; padding-left: 0.75rem; }
+        .prayer-line { border-left: 2px solid #D4AF37; padding-left: 0.75rem; }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden bg-[#191919]">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-md rounded-3xl p-6 md:p-8 flex flex-col h-[600px] overflow-hidden">
+        
+        <div class="armory-glow"></div>
+
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-2 z-10 shrink-0">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#737373]">@faithreflects</span>
+            <div class="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider text-[#A3A3A3] border border-[#333] bg-[#1a1a1a]">
+                Ephesians 6:10-18
+            </div>
+        </div>
+
+        <h2 class="serif text-2xl text-[#EDEDED] mb-1 z-10 text-center shrink-0">The Spiritual Armory</h2>
+        <p class="text-xs text-[#8B8B8B] italic mb-4 z-10 text-center shrink-0 border-b border-[#2d2d2d] pb-4 w-full px-4">
+            "Click each piece to explore its tactical purpose and activate it."
+        </p>
+
+        <!-- Interactive SVG Armory -->
+        <div class="relative w-full h-48 mb-4 z-10 shrink-0 flex justify-center items-center">
+            
+            <svg viewBox="0 0 160 220" class="w-full h-full overflow-visible">
+                
+                <!-- Background Display Arch -->
+                <path d="M 30 50 A 50 50 0 0 1 130 50 L 130 220 L 30 220 Z" fill="#151515" stroke="#222" stroke-width="2"/>
+                <line x1="80" y1="20" x2="80" y2="220" stroke="#1A1A1A" stroke-width="2"/>
+
+                <!-- 1. Helmet of Salvation -->
+                <g id="helmet" class="armor-piece" style="transform-origin: 80px 30px;">
+                    <!-- Crest -->
+                    <path d="M 75 10 C 75 5, 85 5, 85 10 C 95 10, 100 20, 100 25 L 60 25 C 60 20, 65 10, 75 10 Z" class="armor-highlight"/>
+                    <!-- Dome & Visor -->
+                    <path d="M 65 25 C 65 15, 95 15, 95 25 L 95 40 C 85 45, 75 45, 65 40 Z" class="armor-base"/>
+                    <!-- Face opening -->
+                    <path d="M 72 32 L 88 32 L 88 42 L 84 38 L 76 38 L 72 42 Z" fill="#111"/>
+                    <!-- Cheek guards -->
+                    <path d="M 65 40 L 68 50 L 72 45 Z M 95 40 L 92 50 L 88 45 Z" class="armor-base"/>
+                </g>
+
+                <!-- 2. Breastplate of Righteousness -->
+                <g id="breastplate" class="armor-piece" style="transform-origin: 80px 80px;">
+                    <!-- Shoulders -->
+                    <path d="M 55 50 C 65 45, 95 45, 105 50 L 110 60 L 50 60 Z" class="armor-base"/>
+                    <!-- Torso Segments -->
+                    <path d="M 55 60 L 105 60 L 100 100 C 90 105, 70 105, 60 100 Z" class="armor-base"/>
+                    <!-- Musculature/Detail lines -->
+                    <path d="M 80 60 L 80 100 M 65 75 C 70 80, 90 80, 95 75 M 68 85 C 75 90, 85 90, 92 85" stroke="#111" stroke-width="1.5" fill="none"/>
+                    <circle cx="80" cy="70" r="4" class="armor-highlight"/>
+                </g>
+
+                <!-- 3. Belt of Truth -->
+                <g id="belt" class="armor-piece" style="transform-origin: 80px 105px;">
+                    <rect x="55" y="100" width="50" height="12" rx="2" class="armor-base"/>
+                    <!-- Golden Buckle -->
+                    <rect x="75" y="98" width="10" height="16" rx="1" class="armor-highlight"/>
+                    <!-- Hanging Leather Strips (Pteruges) -->
+                    <path d="M 60 112 L 63 130 L 66 112 M 70 112 L 73 135 L 76 112 M 84 112 L 87 135 L 90 112 M 94 112 L 97 130 L 100 112" class="armor-base"/>
+                </g>
+
+                <!-- 4. Sword of the Spirit -->
+                <g id="sword" class="armor-piece" style="transform-origin: 40px 110px;">
+                    <!-- Blade -->
+                    <path d="M 38 60 L 42 60 L 42 140 L 40 145 L 38 140 Z" class="armor-base"/>
+                    <!-- Center groove -->
+                    <line x1="40" y1="60" x2="40" y2="135" stroke="#111" stroke-width="1"/>
+                    <!-- Hilt & Crossguard -->
+                    <rect x="32" y="58" width="16" height="4" rx="1" class="armor-highlight"/>
+                    <rect x="38" y="45" width="4" height="13" class="armor-base"/>
+                    <circle cx="40" cy="43" r="3" class="armor-highlight"/>
+                </g>
+
+                <!-- 5. Shield of Faith -->
+                <g id="shield" class="armor-piece" style="transform-origin: 120px 110px;">
+                    <!-- Kite Shield Base -->
+                    <path d="M 105 60 C 120 55, 120 55, 135 60 L 135 100 C 135 120, 120 140, 120 150 C 120 140, 105 120, 105 100 Z" class="armor-base"/>
+                    <!-- Outer Rim -->
+                    <path d="M 108 63 C 120 59, 120 59, 132 63 L 132 98 C 132 115, 120 132, 120 140 C 120 132, 108 115, 108 98 Z" fill="none" stroke="#111" stroke-width="2"/>
+                    <!-- Center Boss -->
+                    <circle cx="120" cy="90" r="6" class="armor-highlight"/>
+                    <!-- Cross detail -->
+                    <line x1="120" y1="65" x2="120" y2="135" stroke="#111" stroke-width="1.5"/>
+                    <line x1="110" y1="90" x2="130" y2="90" stroke="#111" stroke-width="1.5"/>
+                </g>
+
+                <!-- 6. Shoes of the Gospel of Peace -->
+                <g id="shoes" class="armor-piece" style="transform-origin: 80px 180px;">
+                    <!-- Left Shoe -->
+                    <path d="M 60 170 L 66 170 L 66 185 L 55 185 C 55 180, 60 175, 60 170 Z" class="armor-base"/>
+                    <path d="M 58 175 L 66 175 M 57 180 L 66 180" stroke="#111" stroke-width="1"/> <!-- Straps -->
+                    
+                    <!-- Right Shoe -->
+                    <path d="M 94 170 L 100 170 C 100 175, 105 180, 105 185 L 94 185 Z" class="armor-base"/>
+                    <path d="M 94 175 L 102 175 M 94 180 L 103 180" stroke="#111" stroke-width="1"/> <!-- Straps -->
+                </g>
+
+            </svg>
+        </div>
+
+        <!-- Fixed Panel Wrapper to prevent overflow -->
+        <div class="relative flex-1 w-full min-h-0 z-20">
+            
+            <!-- Default State Panel -->
+            <div id="defaultPanel" class="tactical-panel panel-visible rounded-2xl flex flex-col items-center justify-center p-6 text-center">
+                <span class="text-3xl mb-3">⚔️</span>
+                <p class="text-sm text-[#8B8B8B] leading-relaxed italic">
+                    "You are in a spiritual battle — whether you feel it or not. Select a piece of armor from the stand above to reveal its tactical data."
+                </p>
+            </div>
+
+            <!-- Active Tactical Panel -->
+            <div id="tacticalPanel" class="tactical-panel panel-hidden rounded-2xl flex flex-col overflow-hidden">
+                
+                <div class="px-5 py-4 border-b border-[#2d2d2d] bg-[#1a1a1a] flex justify-between items-start shrink-0">
+                    <div>
+                        <h3 id="panelTitle" class="font-serif text-[#D4AF37] font-bold text-lg mb-1">Helmet of Salvation</h3>
+                        <p id="panelScripture" class="text-[10px] text-[#A3A3A3] italic">"Take the helmet of salvation." — Ephesians 6:17</p>
+                    </div>
+                </div>
+
+                <!-- Scrollable content area -->
+                <div class="p-5 overflow-y-auto custom-scrollbar flex-1 space-y-5">
+                    
+                    <div class="border-l-2 border-[#525252] pl-3">
+                        <span class="text-[9px] font-bold tracking-widest uppercase text-[#8B8B8B] block mb-1">What it protects / does</span>
+                        <p id="panelProtects" class="text-xs text-[#D4D4D4] leading-relaxed">
+                            Your mind — your thoughts, beliefs, and identity in Christ.
+                        </p>
+                    </div>
+
+                    <div class="tactic-line">
+                        <span class="text-[9px] font-bold tracking-widest uppercase text-[#EF4444] block mb-1">The Enemy's Tactic</span>
+                        <p id="panelTactic" class="text-xs text-[#D4D4D4] leading-relaxed">
+                            He attacks your thoughts first. Doubt, shame, condemnation, confusion.
+                        </p>
+                    </div>
+
+                    <div class="truth-line">
+                        <span class="text-[9px] font-bold tracking-widest uppercase text-[#10B981] block mb-1">The Truth</span>
+                        <p id="panelTruth" class="text-xs text-[#D4D4D4] leading-relaxed">
+                            You are saved. You are chosen. You are sealed by the Holy Spirit.
+                        </p>
+                    </div>
+
+                    <div class="prayer-line">
+                        <span class="text-[9px] font-bold tracking-widest uppercase text-[#D4AF37] block mb-1">Activation Prayer</span>
+                        <p id="panelPrayer" class="serif italic text-[13px] text-[#EDEDED] leading-relaxed">
+                            "Father, I put on the helmet of salvation. I declare that my mind belongs to You. I reject every thought that contradicts Your truth about who I am. In Jesus' name, Amen."
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Tactical Database transcribed directly from user's template
+        const armorData = {
+            helmet: {
+                title: "Helmet of Salvation",
+                scripture: "\"Take the helmet of salvation.\" — Ephesians 6:17",
+                purposeTitle: "What it protects",
+                purpose: "Your mind — your thoughts, beliefs, and identity in Christ.",
+                tactic: "He attacks your thoughts first. Doubt, shame, condemnation, confusion.",
+                truth: "You are saved. You are chosen. You are sealed by the Holy Spirit.",
+                prayer: "Father, I put on the helmet of salvation. I declare that my mind belongs to You. I reject every thought that contradicts Your truth about who I am. In Jesus' name, Amen."
+            },
+            breastplate: {
+                title: "Breastplate of Righteousness",
+                scripture: "\"Stand firm then, with the breastplate of righteousness in place.\" — Ephesians 6:14",
+                purposeTitle: "What it protects",
+                purpose: "Your heart — your emotions, desires, and moral center.",
+                tactic: "Guilt, shame, and condemnation. \"You're too far gone.\"",
+                truth: "Your righteousness is not your own — it is Christ's. You stand before God blameless.",
+                prayer: "Lord, I put on the breastplate of righteousness — not my own, but the righteousness of Christ. I reject guilt and shame. In Jesus' name, Amen."
+            },
+            belt: {
+                title: "Belt of Truth",
+                scripture: "\"Stand firm then, with the belt of truth buckled around your waist.\" — Ephesians 6:14",
+                purposeTitle: "What it does",
+                purpose: "The belt holds everything together. Without truth, the rest of the armor falls apart.",
+                tactic: "Lies. Deception. Half-truths. He is the father of lies (John 8:44).",
+                truth: "God's Word is absolute truth. Jesus said \"I am the way, the truth, and the life.\"",
+                prayer: "Father, I buckle the belt of truth around my life. I reject deception in all its forms. Root me deeply in Your Word. In Jesus' name, Amen."
+            },
+            shoes: {
+                title: "Shoes of the Gospel of Peace",
+                scripture: "\"With your feet fitted with the readiness that comes from the gospel of peace.\" — Ephesians 6:15",
+                purposeTitle: "What they do",
+                purpose: "They give you firm footing in battle and readiness to share the gospel.",
+                tactic: "Instability and restlessness. He wants you unsure of where you stand.",
+                truth: "You stand on the solid, unshakable ground of the gospel.",
+                prayer: "Lord, I put on the shoes of the gospel of peace. Give me firm footing in Your truth. Make me ready to share the hope I carry. In Jesus' name, Amen."
+            },
+            shield: {
+                title: "Shield of Faith",
+                scripture: "\"Take up the shield of faith, with which you can extinguish all the flaming arrows.\" — Ephesians 6:16",
+                purposeTitle: "What it protects",
+                purpose: "Your heart — from doubt, discouragement, and despair.",
+                tactic: "Flaming arrows — sudden, intense attacks designed to make you question God.",
+                truth: "Faith is not the absence of doubt. It's choosing to trust God in spite of doubt.",
+                prayer: "Lord, I lift up the shield of faith. When the arrows come, I choose to trust You. My faith is not in what I see — it is in who You are. In Jesus' name, Amen."
+            },
+            sword: {
+                title: "Sword of the Spirit",
+                scripture: "\"The sword of the Spirit, which is the word of God.\" — Ephesians 6:17",
+                purposeTitle: "What it does",
+                purpose: "This is your only offensive weapon. The Word of God is alive, active, and sharper than any two-edged sword.",
+                tactic: "He twists Scripture. He wants you ignorant of God's Word.",
+                truth: "Jesus defeated every temptation by quoting Scripture. \"It is written...\"",
+                prayer: "Father, I take up the Sword of the Spirit — Your living, breathing Word. Write it on my heart. Let me wield it with precision and authority. In Jesus' name, Amen."
+            }
+        };
+
+        const pieces = document.querySelectorAll('.armor-piece');
+        const defaultPanel = document.getElementById('defaultPanel');
+        const tacticalPanel = document.getElementById('tacticalPanel');
+        
+        // Panel Text Elements
+        const pTitle = document.getElementById('panelTitle');
+        const pScripture = document.getElementById('panelScripture');
+        const pProtects = document.getElementById('panelProtects');
+        const pTactic = document.getElementById('panelTactic');
+        const pTruth = document.getElementById('panelTruth');
+        const pPrayer = document.getElementById('panelPrayer');
+        
+        // To update "What it protects" vs "What it does" heading dynamically
+        const pProtectsHeader = pProtects.previousElementSibling; 
+
+        pieces.forEach(piece => {
+            piece.addEventListener('click', () => {
+                // Handle active visual state
+                pieces.forEach(p => p.classList.remove('active'));
+                piece.classList.add('active');
+
+                const data = armorData[piece.id];
+                
+                // Hide panels for transition
+                defaultPanel.classList.remove('panel-visible');
+                defaultPanel.classList.add('panel-hidden');
+                
+                tacticalPanel.classList.remove('panel-visible');
+                tacticalPanel.classList.add('panel-hidden');
+                
+                // Wait for fade out, then populate and fade in
+                setTimeout(() => {
+                    pTitle.innerText = data.title;
+                    pScripture.innerText = data.scripture;
+                    pProtectsHeader.innerText = data.purposeTitle;
+                    pProtects.innerText = data.purpose;
+                    pTactic.innerText = data.tactic;
+                    pTruth.innerText = data.truth;
+                    pPrayer.innerText = `"${data.prayer}"`;
+                    
+                    tacticalPanel.classList.remove('panel-hidden');
+                    tacticalPanel.classList.add('panel-visible');
+                    
+                    // Reset scroll position
+                    tacticalPanel.querySelector('.custom-scrollbar').scrollTop = 0;
+                }, 300); 
+            });
+        });
+    </script>
+</body>
+</html>
