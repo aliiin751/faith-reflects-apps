@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Lightning Jar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        /* Sovereign Light Mode Base - Scholar Aesthetic */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: transparent; 
+            color: #37352f; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* The Widget Container */
+        .widget-box {
+            background-color: #FCFBF9; /* Ivory Parchment */
+            border: 1px solid #E9E5DC;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.03), inset 0 0 20px rgba(255,255,255,0.5);
+            transition: all 1.5s ease;
+        }
+
+        /* Ambient Glow behind the jar */
+        .ambient-glow {
+            position: absolute;
+            top: 25%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 350px;
+            height: 350px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.0) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            transition: background 1.5s ease, opacity 0.5s ease;
+        }
+
+        /* Adjust glow intensity dynamically via JS, but base animation here */
+        .glow-pulse {
+            animation: breathe-glow 4s infinite alternate ease-in-out;
+        }
+        @keyframes breathe-glow {
+            0% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; filter: drop-shadow(0 0 10px rgba(252, 211, 77, 0.2)); }
+        }
+
+        /* SVG Bulb & Lightning Physics */
+        .lightning-bolt {
+            fill: none;
+            stroke: #FFFBEB;
+            stroke-width: 4;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            filter: drop-shadow(0 0 12px #FCD34D) drop-shadow(0 0 24px #F59E0B);
+            opacity: 0;
+            transform-origin: top center;
+        }
+
+        .jar-flash {
+            opacity: 0;
+            fill: #FFFBEB;
+            filter: blur(15px);
+        }
+
+        /* The Strike Animation */
+        .is-striking .lightning-bolt {
+            animation: flashStrike 0.6s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+        }
+        .is-striking .jar-flash {
+            animation: bulbFlash 0.8s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+        }
+
+        @keyframes flashStrike {
+            0% { opacity: 0; transform: translateY(-50px) scaleY(0.5); }
+            10% { opacity: 1; transform: translateY(0) scaleY(1); }
+            20% { opacity: 0; }
+            30% { opacity: 1; }
+            40% { opacity: 0; }
+            100% { opacity: 0; }
+        }
+
+        @keyframes bulbFlash {
+            0% { opacity: 0; }
+            15% { opacity: 0.9; }
+            100% { opacity: 0; }
+        }
+
+        /* Filaments */
+        .filament-line {
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            animation: drawFilament 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        .filament-node {
+            opacity: 0;
+            transform: scale(0);
+            transform-origin: center;
+            animation: popNode 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards 1s;
+        }
+
+        @keyframes drawFilament {
+            to { stroke-dashoffset: 0; }
+        }
+        @keyframes popNode {
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Inputs & Buttons */
+        input[type="text"] {
+            background-color: #FFFFFF;
+            border: 1px solid #E9E5DC;
+            color: #37352f;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #D4AF37;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.1), inset 0 2px 4px rgba(0,0,0,0.01);
+        }
+        input::placeholder { color: #A39F96; font-style: italic; }
+
+        .btn-capture {
+            background: linear-gradient(180deg, #37352f 0%, #1a1a1a 100%);
+            color: #FCD34D;
+            border: 1px solid #2d2d2d;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.05);
+            transition: all 0.4s ease;
+        }
+        .btn-capture:hover:not(:disabled) { 
+            background: linear-gradient(180deg, #1a1a1a 0%, #000000 100%);
+            color: #FFFBEB;
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+        .btn-capture:active:not(:disabled) { transform: translateY(1px) scale(0.98); }
+
+        .btn-reset {
+            background-color: transparent;
+            color: #A39F96;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid transparent;
+        }
+        .btn-reset:hover { color: #EF4444; border-bottom-color: #EF4444; }
+
+        /* List Styling */
+        .spark-row {
+            transition: all 0.3s ease;
+            border: 1px solid #E9E5DC;
+            background-color: #FFFFFF;
+        }
+        .spark-row:hover {
+            border-color: #DCD7CA;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            transform: translateX(2px);
+        }
+        
+        .delete-btn { opacity: 0; transition: opacity 0.2s ease; color: #C4B5B7; }
+        .spark-row:hover .delete-btn { opacity: 1; }
+        .delete-btn:hover { color: #EF4444; }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #DCD7CA; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #B48025; }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(255,255,255,0.8); }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-sm rounded-3xl p-6 md:p-8 flex flex-col h-[650px] overflow-hidden">
+        
+        <div class="ambient-glow glow-pulse" id="ambientGlow"></div>
+
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-2 z-10 shrink-0">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#A39F96]">@faithreflects</span>
+            <div class="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider text-[#8A867D] border border-[#E9E5DC] bg-white flex items-center space-x-1 shadow-sm">
+                <span id="sparkCount" class="text-[#B48025]">0</span>
+                <span>Captured</span>
+            </div>
+        </div>
+
+        <h2 class="serif text-3xl text-[#37352f] mb-1 z-10 shrink-0 text-center">Idea Vault</h2>
+        <p class="text-[11px] text-[#8A867D] italic mb-4 z-10 shrink-0 text-center">"Capture the lightning before it fades."</p>
+
+        <!-- SVG Edison Bulb Area -->
+        <div class="relative w-full h-48 mb-6 z-10 flex justify-center items-end shrink-0" id="bulbArea">
+            <svg viewBox="0 0 200 240" class="w-full h-full overflow-visible z-10">
+                <defs>
+                    <linearGradient id="brassGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#B48025"/>
+                        <stop offset="30%" stop-color="#FDE68A"/>
+                        <stop offset="70%" stop-color="#D4AF37"/>
+                        <stop offset="100%" stop-color="#5C451A"/>
+                    </linearGradient>
+                    <radialGradient id="innerGlow" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#FCD34D"/>
+                        <stop offset="100%" stop-color="transparent"/>
+                    </radialGradient>
+                </defs>
+
+                <!-- Lightning Bolt (Hidden until strike) -->
+                <path class="lightning-bolt" d="M100 -20 L115 20 L95 40 L110 70 L100 100"/>
+
+                <!-- Bulb Glow (Opacity driven by JS) -->
+                <circle cx="100" cy="90" r="70" fill="url(#innerGlow)" id="dynamicGlow" opacity="0"/>
+
+                <!-- Flash Overlay (Triggered on strike) -->
+                <circle cx="100" cy="90" r="80" class="jar-flash"/>
+
+                <!-- Wooden Base -->
+                <path d="M 60 210 L 140 210 L 150 230 L 50 230 Z" fill="#2D2114"/>
+                <rect x="40" y="230" width="120" height="10" rx="2" fill="#1A130B"/>
+                
+                <!-- Brass Socket -->
+                <path d="M 75 180 L 125 180 L 120 210 L 80 210 Z" fill="url(#brassGrad)"/>
+                <line x1="75" y1="187" x2="125" y2="187" stroke="#8B6508" stroke-width="2"/>
+                <line x1="78" y1="197" x2="122" y2="197" stroke="#8B6508" stroke-width="2"/>
+                <line x1="80" y1="207" x2="120" y2="207" stroke="#8B6508" stroke-width="2"/>
+
+                <!-- Glass Bulb Shape -->
+                <path d="M 70 180 C 70 140, 40 120, 40 80 C 40 30, 160 30, 160 80 C 160 120, 130 140, 130 180 Z" fill="rgba(255,255,255,0.4)" stroke="#E9E5DC" stroke-width="2.5" filter="drop-shadow(0 10px 15px rgba(0,0,0,0.05))"/>
+                
+                <!-- Inner Glass Stem -->
+                <rect x="94" y="130" width="12" height="50" rx="4" fill="rgba(255,255,255,0.7)"/>
+                <path d="M 88 130 Q 100 120 112 130" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="3" stroke-linecap="round"/>
+
+                <!-- Filaments Injected Here -->
+                <g id="filamentsGroup"></g>
+
+                <!-- Glass Reflection (Foreground) -->
+                <path d="M 55 80 C 55 50, 90 40, 110 45" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" opacity="0.6"/>
+                <path d="M 145 90 C 145 110, 135 120, 125 140" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.3"/>
+
+            </svg>
+        </div>
+
+        <!-- Input Area -->
+        <div class="w-full flex space-x-2 z-10 shrink-0 mb-4 border-b border-[#E9E5DC] pb-4">
+            <input type="text" id="sparkInput" placeholder="A sudden idea, quote, or thought..." class="flex-1 rounded-xl px-4 py-3 text-sm font-medium" autocomplete="off">
+            
+            <button id="captureBtn" class="btn-capture px-4 py-3 rounded-xl flex items-center justify-center shadow-lg shrink-0">
+                <span class="text-sm mr-1">⚡</span>
+                <span class="text-[10px] font-bold uppercase tracking-widest">Catch</span>
+            </button>
+        </div>
+
+        <!-- The List -->
+        <div class="flex-1 w-full flex flex-col min-h-0 z-10">
+            <div class="flex justify-between items-end mb-2 shrink-0 px-1">
+                <span class="text-[10px] font-bold tracking-widest uppercase text-[#8A867D]">Recent Sparks</span>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2" id="sparksList">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+
+        <!-- Reset Button -->
+        <button id="resetTriggerBtn" class="mt-4 text-[9px] tracking-widest uppercase pb-0.5 z-10 shrink-0 btn-reset self-center">
+            Empty the Jar
+        </button>
+
+        <!-- Custom Reset Modal -->
+        <div id="resetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#FCFBF9] rounded-2xl p-6 w-full max-w-[260px] border border-[#E9E5DC] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#37352f]">Empty the Jar?</h3>
+                <p class="text-xs text-[#8A867D] mb-6">This will permanently release all captured ideas from the vault.</p>
+                <div class="flex space-x-3">
+                    <button id="cancelResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-[#8A867D] hover:bg-gray-100 border border-transparent transition-colors">Cancel</button>
+                    <button id="confirmResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#EF4444] text-white hover:bg-red-600 transition-colors shadow-md">Clear All</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // State
+        let sparks = JSON.parse(localStorage.getItem('faithreflects_lightning_jar')) || [];
+        
+        // Elements
+        const container = document.getElementById('widgetContainer');
+        const sparksList = document.getElementById('sparksList');
+        const filamentsGroup = document.getElementById('filamentsGroup');
+        const dynamicGlow = document.getElementById('dynamicGlow');
+        const ambientGlow = document.getElementById('ambientGlow');
+        const sparkCount = document.getElementById('sparkCount');
+        
+        const sparkInput = document.getElementById('sparkInput');
+        const captureBtn = document.getElementById('captureBtn');
+        
+        const resetModal = document.getElementById('resetModal');
+        const resetTriggerBtn = document.getElementById('resetTriggerBtn');
+        const cancelResetBtn = document.getElementById('cancelResetBtn');
+        const confirmResetBtn = document.getElementById('confirmResetBtn');
+
+        // Math Generator for Organic Filaments
+        function createFilamentData() {
+            // Anchor point on the glass stem
+            const startY = 130 + (Math.random() * 20); 
+            const startX = Math.random() > 0.5 ? 92 : 108; // Left or right side of stem
+            
+            // Random point inside the upper bulb area
+            const endX = 60 + (Math.random() * 80); // 60 to 140
+            const endY = 50 + (Math.random() * 50); // 50 to 100
+            
+            // Control point for a nice organic curve
+            const cx = 100 + ((endX - 100) * 1.5);
+            const cy = startY - 20;
+
+            return { startX, startY, cx, cy, endX, endY };
+        }
+
+        function renderFilaments(animateLast = false) {
+            filamentsGroup.innerHTML = '';
+            
+            sparks.forEach((s, index) => {
+                const isNew = animateLast && (index === sparks.length - 1);
+                const fd = s.filament; // Filament Data
+                
+                const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                
+                // The glowing wire
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("d", `M ${fd.startX} ${fd.startY} Q ${fd.cx} ${fd.cy}, ${fd.endX} ${fd.endY}`);
+                path.setAttribute("fill", "none");
+                path.setAttribute("stroke", "#FCD34D");
+                path.setAttribute("stroke-width", "1.5");
+                path.setAttribute("filter", "drop-shadow(0 0 3px #F59E0B)");
+                if (isNew) path.setAttribute("class", "filament-line");
+
+                // The bright node at the end
+                const node = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                node.setAttribute("cx", fd.endX);
+                node.setAttribute("cy", fd.endY);
+                node.setAttribute("r", "2.5");
+                node.setAttribute("fill", "#FFFBEB");
+                node.setAttribute("filter", "drop-shadow(0 0 6px #FCD34D)");
+                if (isNew) {
+                    node.setAttribute("class", "filament-node");
+                    // Dynamic transform origin required for CSS scale animation
+                    node.style.transformOrigin = `${fd.endX}px ${fd.endY}px`;
+                }
+
+                g.appendChild(path);
+                g.appendChild(node);
+                filamentsGroup.appendChild(g);
+            });
+        }
+
+        function updateGlobals() {
+            sparkCount.innerText = sparks.length;
+            
+            // Cap opacity scaling
+            const intensity = Math.min(1, sparks.length * 0.15); // Reaches max glow at ~7 sparks
+            
+            // Bulb inner glow
+            dynamicGlow.style.opacity = intensity * 0.8;
+            
+            // Ambient background glow
+            if (sparks.length > 0) {
+                ambientGlow.style.background = `radial-gradient(circle, rgba(212, 175, 55, ${intensity * 0.2}) 0%, transparent 70%)`;
+            } else {
+                ambientGlow.style.background = `radial-gradient(circle, rgba(212, 175, 55, 0) 0%, transparent 70%)`;
+            }
+        }
+
+        function renderList() {
+            sparksList.innerHTML = '';
+            
+            if (sparks.length === 0) {
+                sparksList.innerHTML = '<p class="text-xs text-[#A39F96] italic text-center mt-6">The jar is empty. Awaiting inspiration.</p>';
+                return;
+            }
+
+            // Render newest first
+            [...sparks].reverse().forEach(spark => {
+                const row = document.createElement('div');
+                row.className = 'spark-row p-3 rounded-xl flex items-start space-x-3 group relative';
+                row.innerHTML = `
+                    <div class="text-[#D4AF37] mt-1 shrink-0 text-sm">✨</div>
+                    <div class="flex-1 min-w-0 pr-6">
+                        <p class="text-[13px] font-medium text-[#37352f] leading-relaxed break-words">${spark.text}</p>
+                        <span class="text-[9px] uppercase tracking-widest text-[#A39F96] mt-1 block">${spark.date}</span>
+                    </div>
+                    <button onclick="deleteSpark(${spark.id})" class="delete-btn absolute top-3 right-3 p-1" title="Release">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                `;
+                sparksList.appendChild(row);
+            });
+        }
+
+        // Actions
+        window.deleteSpark = function(id) {
+            sparks = sparks.filter(s => s.id !== id);
+            localStorage.setItem('faithreflects_lightning_jar', JSON.stringify(sparks));
+            renderList();
+            renderFilaments(false);
+            updateGlobals();
+        };
+
+        captureBtn.addEventListener('click', () => {
+            const text = sparkInput.value.trim();
+            if (text) {
+                
+                // 1. Start the Strike Animation
+                container.classList.add('is-striking');
+                
+                // Button feedback
+                captureBtn.style.transform = 'scale(0.95)';
+                setTimeout(() => captureBtn.style.transform = 'scale(1)', 150);
+
+                // 2. Wait for the flash peak (300ms) to update data and UI
+                setTimeout(() => {
+                    const newSpark = {
+                        id: Date.now(),
+                        text: text,
+                        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                        filament: createFilamentData()
+                    };
+                    
+                    sparks.push(newSpark);
+                    localStorage.setItem('faithreflects_lightning_jar', JSON.stringify(sparks));
+                    
+                    sparkInput.value = '';
+                    
+                    renderList();
+                    renderFilaments(true);
+                    updateGlobals();
+                    
+                    // Cleanup animation class after it completes
+                    setTimeout(() => container.classList.remove('is-striking'), 500);
+
+                }, 300);
+
+            } else {
+                sparkInput.focus();
+            }
+        });
+
+        sparkInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') captureBtn.click();
+        });
+
+        // Modal Logic
+        resetTriggerBtn.addEventListener('click', () => resetModal.classList.remove('hidden'));
+        cancelResetBtn.addEventListener('click', () => resetModal.classList.add('hidden'));
+        
+        confirmResetBtn.addEventListener('click', () => {
+            sparks = [];
+            localStorage.setItem('faithreflects_lightning_jar', JSON.stringify(sparks));
+            renderList();
+            renderFilaments(false);
+            updateGlobals();
+            resetModal.classList.add('hidden');
+        });
+
+        // Initial Load
+        renderFilaments(false);
+        renderList();
+        updateGlobals();
+
+    </script>
+</body>
+</html>

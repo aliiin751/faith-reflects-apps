@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Tactical Eisenhower Board</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+    <style>
+        /* Sovereign Light Mode Base */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: transparent; 
+            color: #37352f; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* The Widget Container */
+        .widget-box {
+            background-color: #FCFBF9; /* Ivory Parchment */
+            border: 1px solid #E9E5DC;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.03), inset 0 0 20px rgba(255,255,255,0.5);
+            transition: all 1.5s ease;
+        }
+
+        /* Ambient Glow */
+        .ambient-glow {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 350px;
+            height: 350px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* The 2x2 Board - Dark Wood Styling */
+        .eisenhower-board {
+            background-color: #2D2114; /* Dark Wood / Mahogany */
+            border: 4px solid #2D2114;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1), inset 0 2px 4px rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .quadrant {
+            background-color: #FCFBF9;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.02);
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.3s ease;
+            position: relative;
+        }
+
+        /* Subtle quadrant colored tints */
+        #q-execute { background-color: #FFFCF9; } /* Slight warmth */
+        #q-schedule { background-color: #F8FBFF; } /* Slight cool */
+        #q-delegate { background-color: #FCFBF9; } 
+        #q-eliminate { background-color: #FFF9F9; } /* Slight blush */
+
+        /* Target pulse when dragging/routing */
+        .quadrant.is-targeted {
+            background-color: #FFFBEB !important;
+            box-shadow: inset 0 0 0 2px #D4AF37, inset 0 0 20px rgba(212, 175, 55, 0.2);
+        }
+
+        /* Brass Nameplates for Quadrants */
+        .brass-plate {
+            background: linear-gradient(180deg, #FDE68A 0%, #D4AF37 40%, #B48025 100%);
+            border: 1px solid #8B6508;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,0.4);
+            border-radius: 2px;
+            position: relative;
+        }
+        .brass-plate::before, .brass-plate::after {
+            content: ''; position: absolute; top: 50%; transform: translateY(-50%);
+            width: 3px; height: 3px; background: #5C451A; border-radius: 50%;
+            box-shadow: inset 0 1px 1px rgba(0,0,0,0.5);
+        }
+        .brass-plate::before { left: 4px; }
+        .brass-plate::after { right: 4px; }
+
+        .plate-text {
+            color: #372A1D;
+            text-shadow: 1px 1px 0px rgba(255,255,255,0.3);
+        }
+
+        /* Ghost Animation (Routing Tasks) */
+        .ghost-task {
+            position: fixed;
+            background: #FFFFFF;
+            border: 1px solid #D4AF37;
+            box-shadow: 0 10px 25px rgba(212, 175, 55, 0.2);
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #37352f;
+            z-index: 100;
+            pointer-events: none;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Burn/Eliminate Animation */
+        .is-burning {
+            animation: burnAway 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        @keyframes burnAway {
+            0% { filter: brightness(1); transform: scale(1); opacity: 1; }
+            40% { filter: brightness(1.5) sepia(1) hue-rotate(-50deg) saturate(5); transform: scale(1.05); color: #EA580C; background: #FEF3C7;}
+            100% { filter: brightness(0) blur(4px); transform: scale(0.8) translateY(-20px); opacity: 0; background: #000; }
+        }
+
+        .ash-particle {
+            position: absolute;
+            background: #525252;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 101;
+            animation: floatAsh 1s ease-out forwards;
+        }
+        .fire-particle {
+            position: absolute;
+            background: #F59E0B;
+            box-shadow: 0 0 6px #D97706;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 101;
+            animation: floatAsh 0.8s ease-in forwards;
+        }
+        @keyframes floatAsh {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+
+        /* Inputs & Buttons */
+        .holding-zone {
+            background-color: #FFFFFF;
+            border: 2px dashed #DCD7CA;
+            transition: all 0.3s ease;
+        }
+        .holding-zone:focus-within {
+            border-style: solid;
+            border-color: #D4AF37;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.1);
+        }
+
+        input[type="text"] {
+            background-color: transparent;
+            color: #37352f;
+            border: none;
+            outline: none;
+        }
+        input::placeholder { color: #A39F96; font-style: italic; }
+
+        .tactical-btn {
+            background-color: #FCFBF9;
+            border: 1px solid #E9E5DC;
+            color: #8A867D;
+            transition: all 0.3s ease;
+        }
+        .tactical-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .tactical-btn:active { transform: translateY(1px) scale(0.98); }
+        
+        .btn-execute:hover { border-color: #10B981; color: #065F46; background: #ECFDF5; }
+        .btn-schedule:hover { border-color: #3B82F6; color: #1E40AF; background: #EFF6FF; }
+        .btn-delegate:hover { border-color: #F59E0B; color: #92400E; background: #FFFBEB; }
+        .btn-eliminate:hover { border-color: #EF4444; color: #991B1B; background: #FEF2F2; }
+
+        /* Task Items */
+        .task-item {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: 1px solid #f0eee9;
+        }
+        .task-item:hover {
+            background-color: rgba(0,0,0,0.02);
+            border-radius: 6px;
+            border-bottom-color: transparent;
+        }
+        .task-item.completed .task-text {
+            color: #A39F96;
+            text-decoration: line-through;
+        }
+
+        /* Checkbox */
+        .check-box {
+            width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid #DCD7CA;
+            display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;
+            background-color: #fff;
+        }
+        .task-item:hover .check-box { border-color: #B48025; }
+        .task-item.completed .check-box { background-color: #37352f; border-color: #37352f; }
+        
+        .check-mark { stroke-dasharray: 20; stroke-dashoffset: 20; transition: stroke-dashoffset 0.3s ease; stroke: #fff; }
+        .task-item.completed .check-mark { stroke-dashoffset: 0; }
+
+        /* Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #DCD7CA; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #B48025; }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(255,255,255,0.8); }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-4xl rounded-3xl p-6 md:p-8 flex flex-col h-[700px] overflow-hidden">
+        
+        <div class="ambient-glow"></div>
+        <div id="particlesContainer" class="absolute inset-0 pointer-events-none z-50 overflow-hidden"></div>
+
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-4 z-10 shrink-0">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#A39F96]">@faithreflects</span>
+            <div class="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider text-[#8A867D] border border-[#E9E5DC] bg-white shadow-sm flex items-center space-x-1">
+                <span>Total Tasks:</span>
+                <span id="taskCount" class="text-[#37352f]">0</span>
+            </div>
+        </div>
+
+        <h2 class="serif text-3xl text-[#37352f] mb-1 z-10 shrink-0 text-center">Tactical Eisenhower Board</h2>
+        <p class="text-xs text-[#8A867D] italic mb-6 z-10 shrink-0 text-center">"Not everything urgent is important. Not everything important is urgent."</p>
+
+        <!-- Command Bar (Holding Zone & Routing) -->
+        <div class="w-full mb-6 z-20 shrink-0 flex flex-col items-center">
+            
+            <div class="holding-zone w-full max-w-2xl rounded-2xl p-2 flex flex-col shadow-sm relative overflow-hidden" id="holdingZone">
+                <input type="text" id="taskInput" placeholder="Enter a new task here to categorize it..." class="w-full text-base font-medium px-4 py-3" autocomplete="off">
+                
+                <div class="flex space-x-2 mt-2 px-2 pb-2">
+                    <button id="btn-execute" class="tactical-btn btn-execute flex-1 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center justify-center space-x-1">
+                        <span class="text-sm">🔥</span><span>Execute</span>
+                    </button>
+                    <button id="btn-schedule" class="tactical-btn btn-schedule flex-1 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center justify-center space-x-1">
+                        <span class="text-sm">📅</span><span>Schedule</span>
+                    </button>
+                    <button id="btn-delegate" class="tactical-btn btn-delegate flex-1 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center justify-center space-x-1">
+                        <span class="text-sm">🤝</span><span>Delegate</span>
+                    </button>
+                    <button id="btn-eliminate" class="tactical-btn btn-eliminate flex-1 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center justify-center space-x-1">
+                        <span class="text-sm">🗑️</span><span>Eliminate</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- The 2x2 Dark Wood Board -->
+        <div class="eisenhower-board flex-1 w-full grid grid-cols-2 grid-rows-2 gap-1 z-10 min-h-0">
+            
+            <!-- Q1: Execute (Important & Urgent) -->
+            <div class="quadrant" id="q-execute">
+                <div class="brass-plate mx-auto mt-3 px-6 py-1.5 flex flex-col items-center">
+                    <span class="plate-text text-xs font-bold uppercase tracking-widest">Execute</span>
+                    <span class="text-[#5C451A] text-[8px] uppercase tracking-wider font-semibold opacity-80 mt-0.5">Do First</span>
+                </div>
+                <div class="flex-1 overflow-y-auto custom-scrollbar mt-3 px-4 pb-4 space-y-1" id="list-execute">
+                    <!-- JS Injected -->
+                </div>
+            </div>
+
+            <!-- Q2: Schedule (Important & Not Urgent) -->
+            <div class="quadrant" id="q-schedule">
+                <div class="brass-plate mx-auto mt-3 px-6 py-1.5 flex flex-col items-center">
+                    <span class="plate-text text-xs font-bold uppercase tracking-widest">Schedule</span>
+                    <span class="text-[#5C451A] text-[8px] uppercase tracking-wider font-semibold opacity-80 mt-0.5">Decide When</span>
+                </div>
+                <div class="flex-1 overflow-y-auto custom-scrollbar mt-3 px-4 pb-4 space-y-1" id="list-schedule">
+                    <!-- JS Injected -->
+                </div>
+            </div>
+
+            <!-- Q3: Delegate (Not Important & Urgent) -->
+            <div class="quadrant" id="q-delegate">
+                <div class="brass-plate mx-auto mt-3 px-6 py-1.5 flex flex-col items-center">
+                    <span class="plate-text text-xs font-bold uppercase tracking-widest">Delegate</span>
+                    <span class="text-[#5C451A] text-[8px] uppercase tracking-wider font-semibold opacity-80 mt-0.5">Who can do this?</span>
+                </div>
+                <div class="flex-1 overflow-y-auto custom-scrollbar mt-3 px-4 pb-4 space-y-1" id="list-delegate">
+                    <!-- JS Injected -->
+                </div>
+            </div>
+
+            <!-- Q4: Eliminate (Not Important & Not Urgent) -->
+            <div class="quadrant" id="q-eliminate">
+                <div class="brass-plate mx-auto mt-3 px-6 py-1.5 flex flex-col items-center">
+                    <span class="plate-text text-xs font-bold uppercase tracking-widest opacity-60">Eliminate</span>
+                    <span class="text-[#5C451A] text-[8px] uppercase tracking-wider font-semibold opacity-50 mt-0.5">Drop it</span>
+                </div>
+                <div class="flex-1 overflow-y-auto custom-scrollbar mt-3 px-4 pb-4 space-y-1 flex flex-col items-center justify-center opacity-40">
+                    <span class="text-3xl mb-2">🗑️</span>
+                    <span class="text-[10px] text-center uppercase tracking-widest font-bold text-[#8A867D]">Eliminated tasks <br>are burned.</span>
+                </div>
+            </div>
+
+        </div>
+
+        <button id="resetTriggerBtn" class="mt-4 text-[9px] tracking-widest uppercase text-[#A39F96] hover:text-[#37352f] transition-colors pb-0.5 border-b border-transparent hover:border-[#37352f] self-center shrink-0">
+            Clear Board
+        </button>
+
+        <!-- Custom Reset Modal -->
+        <div id="resetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#FCFBF9] rounded-2xl p-6 w-full max-w-[260px] border border-[#E9E5DC] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#37352f]">Clear Board?</h3>
+                <p class="text-xs text-[#8A867D] mb-6">This will permanently delete all tasks across all quadrants.</p>
+                <div class="flex space-x-3">
+                    <button id="cancelResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-[#8A867D] hover:bg-gray-100 border border-transparent transition-colors">Cancel</button>
+                    <button id="confirmResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#EF4444] text-white hover:bg-red-600 transition-colors shadow-md">Clear All</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Data Structure
+        const defaultData = {
+            execute: [{ id: 1, text: "Finish pitch deck", done: false }],
+            schedule: [{ id: 2, text: "Dentist appointment", done: false }],
+            delegate: [{ id: 3, text: "Data entry sorting", done: false }]
+        };
+
+        let state = JSON.parse(localStorage.getItem('faithreflects_eisenhower')) || defaultData;
+        if(!state.execute) state = defaultData; // Migration catch
+
+        // Elements
+        const taskInput = document.getElementById('taskInput');
+        const holdingZone = document.getElementById('holdingZone');
+        const particlesContainer = document.getElementById('particlesContainer');
+        const taskCount = document.getElementById('taskCount');
+        
+        // Modal
+        const resetModal = document.getElementById('resetModal');
+        const cancelResetBtn = document.getElementById('cancelResetBtn');
+        const confirmResetBtn = document.getElementById('confirmResetBtn');
+
+        // Lists
+        const lists = {
+            execute: document.getElementById('list-execute'),
+            schedule: document.getElementById('list-schedule'),
+            delegate: document.getElementById('list-delegate')
+        };
+
+        // Quadrants
+        const quadrants = {
+            execute: document.getElementById('q-execute'),
+            schedule: document.getElementById('q-schedule'),
+            delegate: document.getElementById('q-delegate'),
+            eliminate: document.getElementById('q-eliminate')
+        };
+
+        function renderAll() {
+            let total = 0;
+            Object.keys(lists).forEach(key => {
+                const arr = state[key] || [];
+                total += arr.length;
+                
+                lists[key].innerHTML = arr.map(task => `
+                    <div class="task-item flex items-center justify-between p-2 group ${task.done ? 'completed' : ''}" onclick="toggleTask('${key}', ${task.id})">
+                        <div class="flex items-center space-x-3 min-w-0 flex-1">
+                            <div class="check-box shrink-0">
+                                <svg class="w-3 h-3 check-mark" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <span class="text-xs font-medium text-[#37352f] truncate task-text">${task.text}</span>
+                        </div>
+                        <button class="shrink-0 pl-2 opacity-0 group-hover:opacity-100 text-[#A39F96] hover:text-[#EF4444] transition-all" onclick="deleteTask(event, '${key}', ${task.id})">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                `).join('');
+            });
+            taskCount.innerText = total;
+        }
+
+        window.toggleTask = function(listKey, taskId) {
+            const task = state[listKey].find(t => t.id === taskId);
+            if (task) {
+                task.done = !task.done;
+                localStorage.setItem('faithreflects_eisenhower', JSON.stringify(state));
+                renderAll();
+            }
+        };
+
+        window.deleteTask = function(event, listKey, taskId) {
+            event.stopPropagation();
+            state[listKey] = state[listKey].filter(t => t.id !== taskId);
+            localStorage.setItem('faithreflects_eisenhower', JSON.stringify(state));
+            renderAll();
+        };
+
+        // --- Animations ---
+
+        function createBurnEffect(sourceRect) {
+            const centerX = sourceRect.left + (sourceRect.width / 2);
+            const centerY = sourceRect.top + (sourceRect.height / 2);
+
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => {
+                    const particle = document.createElement('div');
+                    const isFire = Math.random() > 0.5;
+                    particle.className = isFire ? 'fire-particle' : 'ash-particle';
+                    
+                    const size = Math.random() * 4 + 2;
+                    particle.style.width = `${size}px`;
+                    particle.style.height = `${size}px`;
+                    
+                    particle.style.left = `${sourceRect.left + Math.random() * sourceRect.width}px`;
+                    particle.style.top = `${centerY + (Math.random() * 20 - 10)}px`;
+                    
+                    const tx = (Math.random() * 100) - 50;
+                    const ty = -(Math.random() * 100 + 50);
+                    
+                    particle.style.setProperty('--tx', `${tx}px`);
+                    particle.style.setProperty('--ty', `${ty}px`);
+                    
+                    particlesContainer.appendChild(particle);
+                    
+                    setTimeout(() => {
+                        if (particlesContainer.contains(particle)) particle.remove();
+                    }, 1000);
+                }, i * 20);
+            }
+        }
+
+        function routeTask(targetQuadrantId) {
+            const text = taskInput.value.trim();
+            if (!text) {
+                taskInput.focus();
+                return;
+            }
+
+            const isBurn = targetQuadrantId === 'eliminate';
+            const targetQuadElement = quadrants[targetQuadrantId];
+            
+            // 1. Target Pulse
+            targetQuadElement.classList.add('is-targeted');
+            setTimeout(() => targetQuadElement.classList.remove('is-targeted'), 500);
+
+            if (isBurn) {
+                // Burn Animation directly on the holding zone input
+                holdingZone.classList.add('is-burning');
+                createBurnEffect(holdingZone.getBoundingClientRect());
+                
+                setTimeout(() => {
+                    holdingZone.classList.remove('is-burning');
+                    taskInput.value = '';
+                }, 800);
+
+            } else {
+                // Fly Animation
+                const inputRect = taskInput.getBoundingClientRect();
+                const targetRect = targetQuadElement.getBoundingClientRect();
+                
+                // Create Ghost
+                const ghost = document.createElement('div');
+                ghost.className = 'ghost-task flex items-center justify-center';
+                ghost.innerText = text;
+                
+                // Position over input exactly
+                ghost.style.left = `${inputRect.left}px`;
+                ghost.style.top = `${inputRect.top}px`;
+                ghost.style.width = `${inputRect.width}px`;
+                ghost.style.height = `${inputRect.height}px`;
+                
+                document.body.appendChild(ghost);
+                taskInput.value = ''; // clear input immediately to enhance effect
+
+                // Trigger flight
+                requestAnimationFrame(() => {
+                    // Calculate center of target quadrant
+                    const targetX = targetRect.left + (targetRect.width / 2) - (inputRect.width / 2);
+                    const targetY = targetRect.top + (targetRect.height / 2) - (inputRect.height / 2);
+                    
+                    // Convert relative movement based on fixed starting position
+                    const moveX = targetX - inputRect.left;
+                    const moveY = targetY - inputRect.top;
+
+                    ghost.style.transform = `translate(${moveX}px, ${moveY}px) scale(0.5)`;
+                    ghost.style.opacity = '0';
+                });
+
+                // Clean up & Save
+                setTimeout(() => {
+                    if(document.body.contains(ghost)) ghost.remove();
+                    
+                    state[targetQuadrantId].push({
+                        id: Date.now(),
+                        text: text,
+                        done: false
+                    });
+                    localStorage.setItem('faithreflects_eisenhower', JSON.stringify(state));
+                    renderAll();
+                }, 500); // Matches CSS transition duration
+            }
+        }
+
+        // Event Listeners for Routing Buttons
+        document.getElementById('btn-execute').addEventListener('click', () => routeTask('execute'));
+        document.getElementById('btn-schedule').addEventListener('click', () => routeTask('schedule'));
+        document.getElementById('btn-delegate').addEventListener('click', () => routeTask('delegate'));
+        document.getElementById('btn-eliminate').addEventListener('click', () => routeTask('eliminate'));
+
+        // Enter key defaults to Execute
+        taskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('btn-execute').click();
+            }
+        });
+
+        // Reset Modal Logic
+        document.getElementById('resetTriggerBtn').addEventListener('click', () => resetModal.classList.remove('hidden'));
+        cancelResetBtn.addEventListener('click', () => resetModal.classList.add('hidden'));
+        
+        confirmResetBtn.addEventListener('click', () => {
+            state = { execute: [], schedule: [], delegate: [] };
+            localStorage.setItem('faithreflects_eisenhower', JSON.stringify(state));
+            renderAll();
+            resetModal.classList.add('hidden');
+        });
+
+        // Init
+        renderAll();
+
+    </script>
+</body>
+</html>

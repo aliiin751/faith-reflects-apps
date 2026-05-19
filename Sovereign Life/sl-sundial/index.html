@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Sovereign Sundial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        /* Sovereign Light Mode Base */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: transparent; 
+            color: #37352f; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* The Widget Container */
+        .widget-box {
+            background-color: #FCFBF9; /* Ivory Parchment */
+            border: 1px solid #E9E5DC;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.03), inset 0 0 20px rgba(255,255,255,0.5);
+            transition: all 1.5s ease;
+        }
+
+        /* Ambient Glow */
+        .ambient-glow {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* SVG Sundial Physics */
+        .sundial-track {
+            fill: none;
+            stroke: #E9E5DC;
+            stroke-width: 4;
+            stroke-linecap: round;
+        }
+
+        .sundial-progress {
+            fill: none;
+            stroke: url(#brassGrad);
+            stroke-width: 8;
+            stroke-linecap: round;
+            /* Arc length for r=120, semi-circle is approx 377 */
+            stroke-dasharray: 377;
+            stroke-dashoffset: 377; /* Starts empty */
+            transition: stroke-dashoffset 2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            filter: drop-shadow(0 4px 6px rgba(212, 175, 55, 0.2));
+        }
+
+        .sundial-sun {
+            transform-origin: center;
+            transition: transform 2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .sun-core {
+            fill: #FFFBEB;
+            stroke: #D4AF37;
+            stroke-width: 3;
+            filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.6));
+            animation: pulse-sun 3s infinite alternate ease-in-out;
+        }
+
+        @keyframes pulse-sun {
+            0% { filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.4)); transform: scale(0.95); }
+            100% { filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.8)); transform: scale(1.05); }
+        }
+
+        /* Data Tiles */
+        .data-tile {
+            background-color: #FFFFFF;
+            border: 1px solid #E9E5DC;
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            text-align: center;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.01), 0 2px 5px rgba(0,0,0,0.02);
+            transition: all 0.3s ease;
+        }
+        .data-tile:hover {
+            border-color: #D4AF37;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.01), 0 4px 12px rgba(212, 175, 55, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* Inputs & Buttons */
+        input[type="text"], input[type="date"] {
+            background-color: #FFFFFF;
+            border: 1px solid #E9E5DC;
+            color: #37352f;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
+        }
+        input[type="text"]:focus, input[type="date"]:focus {
+            outline: none;
+            border-color: #D4AF37;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.1), inset 0 2px 4px rgba(0,0,0,0.01);
+        }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(255,255,255,0.8); }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-sm rounded-3xl p-8 flex flex-col items-center h-[520px] overflow-hidden">
+        
+        <div class="ambient-glow"></div>
+
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-6 z-10 shrink-0">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#A39F96]">@faithreflects</span>
+            <button id="settingsBtn" class="text-gray-400 hover:text-[#B48025] transition-colors p-1" title="Set Target Date">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            </button>
+        </div>
+
+        <h2 class="serif text-2xl text-[#37352f] mb-1 z-10 shrink-0">Year in View</h2>
+        <p class="text-xs text-[#8A867D] italic mb-6 z-10 shrink-0 text-center">"Time is the only non-renewable resource."</p>
+
+        <!-- SVG Sundial -->
+        <div class="relative w-full h-40 mb-6 z-10 shrink-0 flex justify-center items-end mt-4">
+            
+            <svg viewBox="0 0 300 160" class="w-full h-full overflow-visible absolute inset-0">
+                <defs>
+                    <linearGradient id="brassGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#D97706"/>
+                        <stop offset="50%" stop-color="#FCD34D"/>
+                        <stop offset="100%" stop-color="#B48025"/>
+                    </linearGradient>
+                </defs>
+
+                <!-- Month Tick Marks (Injected by JS) -->
+                <g id="monthTicks"></g>
+
+                <!-- Background Arc -->
+                <path d="M 30 150 A 120 120 0 0 1 270 150" class="sundial-track"/>
+                
+                <!-- Foreground Progress Arc -->
+                <path id="progressArc" d="M 30 150 A 120 120 0 0 1 270 150" class="sundial-progress"/>
+
+                <!-- The Sun Orb -->
+                <g id="sunOrb" class="sundial-sun" transform="translate(30, 150)">
+                    <circle cx="0" cy="0" r="7" class="sun-core"/>
+                </g>
+                
+                <!-- Base horizon line -->
+                <line x1="10" y1="150" x2="290" y2="150" stroke="#E9E5DC" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+
+            <!-- Center Data Display -->
+            <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex flex-col items-center text-center">
+                <span class="text-[10px] font-bold tracking-widest uppercase text-[#8A867D] mb-1" id="weekDisplay">Week 0 of 52</span>
+                <span class="serif text-5xl text-[#37352f] leading-none tracking-tighter" id="percentDisplay">0%</span>
+            </div>
+
+        </div>
+
+        <!-- Data Tiles Grid -->
+        <div class="grid grid-cols-3 gap-3 w-full mt-auto z-10 shrink-0">
+            
+            <div class="data-tile">
+                <span class="text-[8px] font-bold tracking-widest uppercase text-[#8A867D] block mb-1">Days Done</span>
+                <span class="font-serif text-lg text-[#37352f] block leading-none" id="daysDoneText">0</span>
+                <span class="text-[8px] text-[#A39F96] mt-1 block" id="daysTotalText">/ 365</span>
+            </div>
+
+            <div class="data-tile">
+                <span class="text-[8px] font-bold tracking-widest uppercase text-[#8A867D] block mb-1">Days Left</span>
+                <span class="font-serif text-lg text-[#37352f] block leading-none" id="daysLeftText">0</span>
+                <span class="text-[8px] text-[#A39F96] mt-1 block">in the year</span>
+            </div>
+
+            <div class="data-tile">
+                <span id="targetLabel" class="text-[8px] font-bold tracking-widest uppercase text-[#8A867D] block mb-1 truncate">Target</span>
+                <span class="font-serif text-lg text-[#B48025] block leading-none" id="targetDaysText">-</span>
+                <span class="text-[8px] text-[#A39F96] mt-1 block">days away</span>
+            </div>
+
+        </div>
+
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#FCFBF9] rounded-2xl p-6 w-full max-w-[280px] border border-[#E9E5DC] shadow-2xl transform transition-all">
+                
+                <h3 class="font-serif text-xl mb-1 text-[#37352f]">Set Target Date</h3>
+                <p class="text-[10px] text-[#8A867D] mb-5 leading-relaxed">Track days remaining until a specific goal, birthday, or milestone.</p>
+                
+                <div class="space-y-4 mb-6">
+                    <div class="flex flex-col">
+                        <label class="text-[9px] font-bold tracking-widest uppercase text-[#A39F96] mb-1.5 pl-1">Target Name</label>
+                        <input type="text" id="targetNameInput" placeholder="e.g., My Birthday" class="w-full rounded-xl px-3 py-2.5 text-sm font-medium">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[9px] font-bold tracking-widest uppercase text-[#A39F96] mb-1.5 pl-1">Target Date</label>
+                        <input type="date" id="targetDateInput" class="w-full rounded-xl px-3 py-2.5 text-sm font-medium text-[#5C451A]">
+                    </div>
+                </div>
+
+                <div class="flex space-x-3">
+                    <button id="cancelSettingsBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-[#8A867D] hover:bg-gray-100 border border-transparent transition-colors">Cancel</button>
+                    <button id="saveSettingsBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#37352f] text-white hover:bg-black transition-colors shadow-md">Save</button>
+                </div>
+                
+                <button id="clearTargetBtn" class="w-full mt-3 text-[9px] text-[#EF4444] uppercase tracking-widest hover:underline text-center">
+                    Clear Target
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // State
+        let state = JSON.parse(localStorage.getItem('sovereign_sundial')) || {
+            targetName: 'Birthday',
+            targetDate: null // 'YYYY-MM-DD'
+        };
+
+        // DOM Elements
+        const progressArc = document.getElementById('progressArc');
+        const sunOrb = document.getElementById('sunOrb');
+        const monthTicks = document.getElementById('monthTicks');
+        
+        const weekDisplay = document.getElementById('weekDisplay');
+        const percentDisplay = document.getElementById('percentDisplay');
+        const daysDoneText = document.getElementById('daysDoneText');
+        const daysTotalText = document.getElementById('daysTotalText');
+        const daysLeftText = document.getElementById('daysLeftText');
+        
+        const targetLabel = document.getElementById('targetLabel');
+        const targetDaysText = document.getElementById('targetDaysText');
+        
+        // Modal Elements
+        const settingsModal = document.getElementById('settingsModal');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const cancelSettingsBtn = document.getElementById('cancelSettingsBtn');
+        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+        const clearTargetBtn = document.getElementById('clearTargetBtn');
+        const targetNameInput = document.getElementById('targetNameInput');
+        const targetDateInput = document.getElementById('targetDateInput');
+
+        // Math Constants
+        const ARC_LENGTH = 377; // roughly 120 * PI
+        const CX = 150;
+        const CY = 150;
+        const R = 120;
+
+        function isLeapYear(year) {
+            return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+        }
+
+        function calculateDateData() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const totalDays = isLeapYear(year) ? 366 : 365;
+            
+            const start = new Date(year, 0, 1);
+            const diff = now - start;
+            
+            // Days passed (floor ensures it counts completed days, plus current day)
+            const daysPassed = Math.floor(diff / (1000 * 60 * 60 * 24)) + 1; 
+            const daysLeft = totalDays - daysPassed;
+            
+            const percentage = daysPassed / totalDays;
+            const weekNumber = Math.ceil(daysPassed / 7);
+
+            return { year, totalDays, daysPassed, daysLeft, percentage, weekNumber, now, start };
+        }
+
+        function calculateTargetDays(now) {
+            if (!state.targetDate) return null;
+
+            // Parse saved date
+            const [tYear, tMonth, tDay] = state.targetDate.split('-');
+            
+            // Create a date object for the target in the CURRENT year
+            let targetDateThisYear = new Date(now.getFullYear(), parseInt(tMonth) - 1, parseInt(tDay));
+            
+            // Ensure we only compare dates, ignoring times
+            targetDateThisYear.setHours(0,0,0,0);
+            const todayClean = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+            // If the target has already passed this year, look to next year
+            if (targetDateThisYear < todayClean) {
+                targetDateThisYear = new Date(now.getFullYear() + 1, parseInt(tMonth) - 1, parseInt(tDay));
+            }
+
+            const diff = targetDateThisYear - todayClean;
+            return Math.ceil(diff / (1000 * 60 * 60 * 24));
+        }
+
+        function drawMonthTicks(year, start, totalDays) {
+            monthTicks.innerHTML = '';
+            
+            for(let m = 0; m < 12; m++) {
+                const monthStart = new Date(year, m, 1);
+                const dayOfYear = Math.floor((monthStart - start) / (1000 * 60 * 60 * 24));
+                const p = dayOfYear / totalDays;
+                
+                // Angle from PI (left) to 0 (right)
+                const angle = Math.PI * (1 - p);
+                
+                // Tick dimensions
+                const innerR = 112;
+                const outerR = 128;
+                
+                const x1 = CX + innerR * Math.cos(angle);
+                const y1 = CY - innerR * Math.sin(angle);
+                const x2 = CX + outerR * Math.cos(angle);
+                const y2 = CY - outerR * Math.sin(angle);
+                
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', x1);
+                line.setAttribute('y1', y1);
+                line.setAttribute('x2', x2);
+                line.setAttribute('y2', y2);
+                line.setAttribute('stroke', '#E9E5DC');
+                line.setAttribute('stroke-width', '2');
+                line.setAttribute('stroke-linecap', 'round');
+                
+                monthTicks.appendChild(line);
+            }
+        }
+
+        function updateUI() {
+            const data = calculateDateData();
+            
+            // Text Updates
+            weekDisplay.innerText = `Week ${data.weekNumber} of 52`;
+            percentDisplay.innerText = `${Math.round(data.percentage * 100)}%`;
+            daysDoneText.innerText = data.daysPassed;
+            daysTotalText.innerText = `/ ${data.totalDays}`;
+            daysLeftText.innerText = data.daysLeft;
+
+            // SVG Arc Animation
+            // offset = ARC_LENGTH means empty. offset = 0 means full.
+            const offset = ARC_LENGTH - (ARC_LENGTH * data.percentage);
+            progressArc.style.strokeDashoffset = offset;
+
+            // Sun Orb Position Animation
+            const angle = Math.PI * (1 - data.percentage);
+            const sunX = CX + R * Math.cos(angle);
+            const sunY = CY - R * Math.sin(angle);
+            sunOrb.style.transform = `translate(${sunX}px, ${sunY}px)`;
+
+            // Month Ticks (Only need to draw once, but safe to redraw here)
+            drawMonthTicks(data.year, data.start, data.totalDays);
+
+            // Target Logic
+            if (state.targetDate) {
+                targetLabel.innerText = state.targetName;
+                const daysToTarget = calculateTargetDays(data.now);
+                targetDaysText.innerText = daysToTarget;
+                targetDaysText.classList.remove('text-[#A39F96]');
+                targetDaysText.classList.add('text-[#B48025]');
+            } else {
+                targetLabel.innerText = "Target";
+                targetDaysText.innerText = "-";
+                targetDaysText.classList.remove('text-[#B48025]');
+                targetDaysText.classList.add('text-[#A39F96]');
+            }
+        }
+
+        // --- Modal Interactions ---
+
+        settingsBtn.addEventListener('click', () => {
+            targetNameInput.value = state.targetName || '';
+            targetDateInput.value = state.targetDate || '';
+            settingsModal.classList.remove('hidden');
+        });
+
+        cancelSettingsBtn.addEventListener('click', () => {
+            settingsModal.classList.add('hidden');
+        });
+
+        clearTargetBtn.addEventListener('click', () => {
+            state.targetName = '';
+            state.targetDate = null;
+            localStorage.setItem('sovereign_sundial', JSON.stringify(state));
+            updateUI();
+            settingsModal.classList.add('hidden');
+        });
+
+        saveSettingsBtn.addEventListener('click', () => {
+            const name = targetNameInput.value.trim() || 'Target';
+            const dateStr = targetDateInput.value; // YYYY-MM-DD
+
+            if (dateStr) {
+                state.targetName = name;
+                state.targetDate = dateStr;
+                localStorage.setItem('sovereign_sundial', JSON.stringify(state));
+                updateUI();
+                settingsModal.classList.add('hidden');
+            } else {
+                targetDateInput.focus();
+            }
+        });
+
+        // Initialize
+        // Add tiny delay for SVG transitions to fire
+        setTimeout(updateUI, 100);
+
+    </script>
+</body>
+</html>

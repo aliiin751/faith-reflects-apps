@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Quarterly Monument</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+    <style>
+        /* Sovereign Light Mode Base */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: transparent; 
+            color: #37352f; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* The Widget Container */
+        .widget-box {
+            background-color: #FCFBF9; /* Ivory Parchment */
+            border: 1px solid #E9E5DC;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.03), inset 0 0 20px rgba(255,255,255,0.5);
+            transition: all 1.5s ease;
+        }
+
+        /* Ambient Glow (Activated on Completion) */
+        .ambient-glow {
+            position: absolute;
+            top: 50%;
+            left: 30%;
+            transform: translate(-50%, -50%);
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.0) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            transition: background 2s ease;
+        }
+        .is-conquered .ambient-glow {
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 70%);
+            animation: breathe-glow 4s infinite alternate ease-in-out;
+        }
+        
+        @keyframes breathe-glow {
+            0% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; }
+        }
+
+        /* SVG Monument Elements & Physics */
+        .monument-base {
+            fill: #E9E5DC;
+            stroke: #DCD7CA;
+            stroke-width: 1;
+        }
+
+        .monument-block {
+            transform: translateY(-250px);
+            opacity: 0;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        /* Placed State (Static visible) */
+        .monument-block.is-placed {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Dropping Animation (Heavy Thud) */
+        .monument-block.is-dropping {
+            animation: heavyDrop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes heavyDrop {
+            0% { transform: translateY(-250px); opacity: 0; filter: drop-shadow(0 20px 10px rgba(0,0,0,0.2)); }
+            60% { transform: translateY(0); opacity: 1; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1)); }
+            75% { transform: translateY(-6px); }
+            90% { transform: translateY(2px); }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Obelisk Faces */
+        .block-left { fill: #FDFCFB; }
+        .block-right { fill: #E9E5DC; }
+        .block-top { fill: #FFFFFF; }
+        
+        .capstone-left { fill: #FCD34D; transition: fill 1.5s ease; }
+        .capstone-right { fill: #D97706; transition: fill 1.5s ease; }
+        
+        .is-conquered .capstone-left { fill: #FFFBEB; filter: drop-shadow(0 0 10px #FCD34D); }
+        .is-conquered .capstone-right { fill: #F59E0B; filter: drop-shadow(0 0 10px #D97706); }
+
+        /* The Impact Shake applied to the entire SVG */
+        .impact-shake {
+            animation: shake 0.4s cubic-bezier(0.36, 0, 0.66, -0.56) forwards;
+        }
+        @keyframes shake {
+            0% { transform: translateY(0); }
+            20% { transform: translateY(4px); }
+            40% { transform: translateY(-2px); }
+            60% { transform: translateY(2px); }
+            80% { transform: translateY(-1px); }
+            100% { transform: translateY(0); }
+        }
+
+        /* Dust Particles */
+        .dust-cloud {
+            position: absolute;
+            background-color: #DCD7CA;
+            border-radius: 50%;
+            pointer-events: none;
+            filter: blur(2px);
+            z-index: 20;
+            opacity: 0;
+            animation: dustPuff 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+        @keyframes dustPuff {
+            0% { transform: translate(0, 0) scale(0.5); opacity: 0.8; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(3); opacity: 0; }
+        }
+
+        /* Victory Banner */
+        .victory-banner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scaleX(0);
+            background: linear-gradient(90deg, #B48025, #D4AF37, #B48025);
+            color: #FFFFFF;
+            padding: 4px 20px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            box-shadow: 0 4px 15px rgba(217, 119, 6, 0.4);
+            border: 1px solid #FCD34D;
+            white-space: nowrap;
+            opacity: 0;
+            z-index: 30;
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.6s ease;
+        }
+        .is-conquered .victory-banner {
+            transform: translate(-50%, -50%) scaleX(1);
+            opacity: 1;
+            transition-delay: 0.8s; /* Wait for capstone to drop */
+        }
+
+        /* Checklist & Input Styling */
+        .kr-row {
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        .kr-row:hover:not(.completed) {
+            background-color: #fcfbf9;
+            border-color: #E9E5DC;
+        }
+        
+        input[type="text"] {
+            background-color: transparent;
+            color: #37352f;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid #E9E5DC;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-bottom-color: #D4AF37;
+        }
+        input::placeholder { color: #A39F96; font-style: italic; }
+
+        .kr-row.completed input[type="text"] {
+            color: #A39F96;
+            text-decoration: line-through;
+            border-bottom-color: transparent;
+            pointer-events: none;
+        }
+
+        .check-box {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            border: 2px solid #E9E5DC;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            background-color: #fff;
+            cursor: pointer;
+        }
+        .check-box:hover { border-color: #D4AF37; }
+        
+        .kr-row.completed .check-box {
+            background-color: #37352f;
+            border-color: #37352f;
+        }
+
+        .check-mark {
+            stroke-dasharray: 20;
+            stroke-dashoffset: 20;
+            transition: stroke-dashoffset 0.4s ease-in-out 0.1s;
+            stroke: #fff;
+        }
+        .kr-row.completed .check-mark { stroke-dashoffset: 0; }
+
+        /* Buttons */
+        .reset-btn {
+            background-color: transparent;
+            color: #A39F96;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid transparent;
+        }
+        .reset-btn:hover { 
+            color: #37352f; 
+            border-bottom-color: #37352f;
+        }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(255,255,255,0.8); }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-2xl rounded-3xl p-6 md:p-10 flex flex-col md:flex-row h-auto min-h-[460px] overflow-hidden gap-8">
+        
+        <div class="ambient-glow"></div>
+
+        <!-- Left Side: The Monument -->
+        <div class="flex-shrink-0 flex flex-col items-center w-full md:w-[220px] h-full relative z-20">
+            
+            <div class="w-full flex justify-between items-center mb-2">
+                <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#A39F96]">@faithreflects</span>
+            </div>
+            
+            <h2 class="serif text-2xl text-[#37352f] mb-1 text-center w-full">The Monument</h2>
+            <p class="text-[10px] text-[#8A867D] italic mb-4 text-center w-full">"Build it block by block."</p>
+
+            <!-- SVG Obelisk Area -->
+            <div class="relative w-full h-64 flex justify-center items-end" id="svgContainer">
+                
+                <svg viewBox="0 0 200 250" class="w-full h-full overflow-visible" id="monumentSvg">
+                    
+                    <!-- Base Pedestal (Always visible) -->
+                    <g id="base-group">
+                        <path d="M 40 230 L 160 230 L 160 240 L 40 240 Z" class="monument-base" fill="#DCD7CA"/>
+                        <path d="M 50 220 L 150 220 L 150 230 L 50 230 Z" class="monument-base"/>
+                        <path d="M 60 210 L 140 210 L 140 220 L 60 220 Z" class="monument-base" fill="#FDFCFB"/>
+                    </g>
+
+                    <!-- Block 1 (Bottom) -->
+                    <g id="block-1" class="monument-block">
+                        <path d="M 100 160 L 74 160 L 70 210 L 100 210 Z" class="block-left"/>
+                        <path d="M 100 160 L 126 160 L 130 210 L 100 210 Z" class="block-right"/>
+                        <line x1="74" y1="160" x2="126" y2="160" stroke="#DCD7CA" stroke-width="1.5"/>
+                    </g>
+
+                    <!-- Block 2 (Middle) -->
+                    <g id="block-2" class="monument-block">
+                        <path d="M 100 108 L 78 108 L 74 158 L 100 158 Z" class="block-left"/>
+                        <path d="M 100 108 L 122 108 L 126 158 L 100 158 Z" class="block-right"/>
+                        <line x1="78" y1="108" x2="122" y2="108" stroke="#DCD7CA" stroke-width="1.5"/>
+                    </g>
+
+                    <!-- Block 3 (Top) -->
+                    <g id="block-3" class="monument-block">
+                        <path d="M 100 56 L 82 56 L 78 106 L 100 106 Z" class="block-left"/>
+                        <path d="M 100 56 L 118 56 L 122 106 L 100 106 Z" class="block-right"/>
+                        <line x1="82" y1="56" x2="118" y2="56" stroke="#DCD7CA" stroke-width="1.5"/>
+                    </g>
+
+                    <!-- Capstone (Golden Pyramidion) -->
+                    <g id="capstone" class="monument-block">
+                        <path d="M 100 20 L 82 54 L 100 54 Z" class="capstone-left"/>
+                        <path d="M 100 20 L 118 54 L 100 54 Z" class="capstone-right"/>
+                    </g>
+                </svg>
+
+                <div class="victory-banner">QUARTER CONQUERED</div>
+                
+                <!-- Particle injection container -->
+                <div id="particlesArea" class="absolute inset-0 pointer-events-none z-20 overflow-visible"></div>
+
+            </div>
+        </div>
+
+        <!-- Right Side: The Key Results Inputs -->
+        <div class="flex-1 w-full flex flex-col justify-center z-20 min-h-0 pl-2 md:pl-0 border-t md:border-t-0 md:border-l border-[#E9E5DC] pt-6 md:pt-0 md:pl-8">
+            
+            <div class="flex justify-between items-end mb-6 shrink-0">
+                <span class="text-[11px] font-bold tracking-widest uppercase text-[#B48025]">This Quarter's Focus</span>
+                <span class="text-[10px] font-semibold text-[#8A867D]" id="countDisplay">0 / 3 Conquered</span>
+            </div>
+
+            <div class="flex flex-col space-y-5 flex-1 justify-center">
+                
+                <!-- KR 1 -->
+                <div class="kr-row flex items-start space-x-4 p-2 rounded-xl" id="row-kr1">
+                    <div class="check-box shadow-sm shrink-0 mt-1" onclick="toggleKR('kr1')">
+                        <svg class="w-4 h-4 check-mark" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <div class="flex-1">
+                        <span class="text-[9px] font-bold tracking-widest uppercase text-[#A39F96] block mb-1">Key Result 1</span>
+                        <input type="text" id="input-kr1" placeholder="Launch the new flagship product..." class="w-full text-sm font-medium pb-1" autocomplete="off">
+                    </div>
+                </div>
+
+                <!-- KR 2 -->
+                <div class="kr-row flex items-start space-x-4 p-2 rounded-xl" id="row-kr2">
+                    <div class="check-box shadow-sm shrink-0 mt-1" onclick="toggleKR('kr2')">
+                        <svg class="w-4 h-4 check-mark" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <div class="flex-1">
+                        <span class="text-[9px] font-bold tracking-widest uppercase text-[#A39F96] block mb-1">Key Result 2</span>
+                        <input type="text" id="input-kr2" placeholder="Grow email list to 5,000..." class="w-full text-sm font-medium pb-1" autocomplete="off">
+                    </div>
+                </div>
+
+                <!-- KR 3 -->
+                <div class="kr-row flex items-start space-x-4 p-2 rounded-xl" id="row-kr3">
+                    <div class="check-box shadow-sm shrink-0 mt-1" onclick="toggleKR('kr3')">
+                        <svg class="w-4 h-4 check-mark" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <div class="flex-1">
+                        <span class="text-[9px] font-bold tracking-widest uppercase text-[#A39F96] block mb-1">Key Result 3</span>
+                        <input type="text" id="input-kr3" placeholder="Complete 12-week strength cycle..." class="w-full text-sm font-medium pb-1" autocomplete="off">
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Reset Button -->
+            <button id="resetTriggerBtn" class="mt-8 text-[9px] tracking-widest uppercase pb-0.5 z-10 shrink-0 reset-btn self-start">
+                Reset Quarter
+            </button>
+
+        </div>
+
+        <!-- Custom Reset Modal -->
+        <div id="resetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#FCFBF9] rounded-2xl p-6 w-full max-w-[260px] border border-[#E9E5DC] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#37352f]">Dismantle Monument?</h3>
+                <p class="text-xs text-[#8A867D] mb-6">This clears your current goals so you can architect a new quarter.</p>
+                <div class="flex space-x-3">
+                    <button id="cancelResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-[#8A867D] hover:bg-gray-100 border border-transparent transition-colors">Cancel</button>
+                    <button id="confirmResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#37352f] text-white hover:bg-black transition-colors shadow-md">Reset</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // State
+        let state = JSON.parse(localStorage.getItem('sovereign_quarter')) || {
+            kr1: { text: '', done: false },
+            kr2: { text: '', done: false },
+            kr3: { text: '', done: false }
+        };
+
+        let previousCount = 0; // Tracks previous completed count to detect when a new one is added
+
+        // Elements
+        const container = document.getElementById('widgetContainer');
+        const monumentSvg = document.getElementById('monumentSvg');
+        const particlesArea = document.getElementById('particlesArea');
+        const countDisplay = document.getElementById('countDisplay');
+        
+        // Modal
+        const resetModal = document.getElementById('resetModal');
+        const resetTriggerBtn = document.getElementById('resetTriggerBtn');
+        const cancelResetBtn = document.getElementById('cancelResetBtn');
+        const confirmResetBtn = document.getElementById('confirmResetBtn');
+
+        // Initial setup for inputs
+        ['kr1', 'kr2', 'kr3'].forEach(id => {
+            const input = document.getElementById(`input-${id}`);
+            input.value = state[id].text;
+            
+            input.addEventListener('input', (e) => {
+                state[id].text = e.target.value;
+                localStorage.setItem('sovereign_quarter', JSON.stringify(state));
+            });
+        });
+
+        function spawnDust(yLevel) {
+            // yLevel is the Y coordinate where the block lands on the SVG
+            // SVG is viewBox 0 0 200 250, mapped to height ~256px
+            // We'll calculate relative to container
+            
+            const rect = document.getElementById('svgContainer').getBoundingClientRect();
+            
+            // Roughly map SVG coordinates to pixel heights (assuming container aspect ratio matches SVG closely)
+            const pixelY = (yLevel / 250) * rect.height;
+            const centerX = rect.width / 2;
+
+            for(let i=0; i<8; i++) {
+                const dust = document.createElement('div');
+                dust.className = 'dust-cloud';
+                
+                const size = 10 + Math.random() * 20;
+                dust.style.width = `${size}px`;
+                dust.style.height = `${size}px`;
+                
+                dust.style.left = `${centerX - (size/2)}px`;
+                dust.style.top = `${pixelY - (size/2)}px`;
+                
+                // Explode outwards horizontally
+                const travelX = (Math.random() * 80) - 40;
+                const travelY = (Math.random() * -20); // slightly up
+                
+                dust.style.setProperty('--tx', `${travelX}px`);
+                dust.style.setProperty('--ty', `${travelY}px`);
+                
+                particlesArea.appendChild(dust);
+                
+                setTimeout(() => {
+                    if(particlesArea.contains(dust)) dust.remove();
+                }, 800);
+            }
+        }
+
+        function triggerImpactShake() {
+            monumentSvg.classList.remove('impact-shake');
+            void monumentSvg.offsetWidth; // Reflow
+            monumentSvg.classList.add('impact-shake');
+        }
+
+        function renderUI() {
+            const currentCount = [state.kr1.done, state.kr2.done, state.kr3.done].filter(Boolean).length;
+            countDisplay.innerText = `${currentCount} / 3 Conquered`;
+
+            // Update Input Rows
+            ['kr1', 'kr2', 'kr3'].forEach(id => {
+                const row = document.getElementById(`row-${id}`);
+                if (state[id].done) {
+                    row.classList.add('completed');
+                } else {
+                    row.classList.remove('completed');
+                }
+            });
+
+            // Update Monument Blocks
+            const blocks = [
+                document.getElementById('block-1'), // Level 1
+                document.getElementById('block-2'), // Level 2
+                document.getElementById('block-3'), // Level 3
+                document.getElementById('capstone') // Capstone (comes with Level 3)
+            ];
+
+            // Landing Y coordinates in SVG for the dust effect
+            const landingY = [210, 160, 110, 56]; 
+
+            for(let i = 0; i < 3; i++) {
+                const block = blocks[i];
+                const isRequired = currentCount > i;
+                const wasRequired = previousCount > i;
+
+                if (isRequired && !wasRequired) {
+                    // It's a new block! Drop it.
+                    block.classList.remove('is-placed');
+                    block.classList.add('is-dropping');
+                    
+                    // Capstone logic: If it's the 3rd block (index 2), drop capstone too
+                    if (i === 2) {
+                        blocks[3].classList.remove('is-placed');
+                        blocks[3].classList.add('is-dropping');
+                    }
+
+                    // Trigger impact effects when animation finishes (0.7s)
+                    setTimeout(() => {
+                        triggerImpactShake();
+                        spawnDust(landingY[i]);
+                        
+                        // If it was the 3rd block, spawn dust for capstone too and trigger victory state
+                        if (i === 2) {
+                            spawnDust(landingY[3]);
+                            container.classList.add('is-conquered');
+                        }
+                    }, 650); 
+                    
+                } else if (isRequired && wasRequired) {
+                    // Already there from previous load
+                    block.classList.remove('is-dropping');
+                    block.classList.add('is-placed');
+                    if (i === 2) blocks[3].classList.add('is-placed');
+                } else {
+                    // Not required yet, hide it smoothly
+                    block.classList.remove('is-dropping', 'is-placed');
+                    if (i === 2) blocks[3].classList.remove('is-dropping', 'is-placed');
+                }
+            }
+
+            // Remove conquered state if they unchecked something
+            if (currentCount < 3) {
+                container.classList.remove('is-conquered');
+            }
+
+            previousCount = currentCount;
+        }
+
+        window.toggleKR = function(id) {
+            // Don't allow checking if input is empty
+            const input = document.getElementById(`input-${id}`);
+            if (!state[id].done && input.value.trim() === '') {
+                input.focus();
+                return;
+            }
+
+            state[id].done = !state[id].done;
+            localStorage.setItem('sovereign_quarter', JSON.stringify(state));
+            renderUI();
+        };
+
+        // Modal Logic
+        resetTriggerBtn.addEventListener('click', () => resetModal.classList.remove('hidden'));
+        cancelResetBtn.addEventListener('click', () => resetModal.classList.add('hidden'));
+        
+        confirmResetBtn.addEventListener('click', () => {
+            state = {
+                kr1: { text: '', done: false },
+                kr2: { text: '', done: false },
+                kr3: { text: '', done: false }
+            };
+            localStorage.setItem('sovereign_quarter', JSON.stringify(state));
+            
+            ['kr1', 'kr2', 'kr3'].forEach(id => document.getElementById(`input-${id}`).value = '');
+            
+            previousCount = 0;
+            renderUI();
+            
+            resetModal.classList.add('hidden');
+        });
+
+        // Initial Load (Make blocks appear static without dropping animation)
+        const initialCount = [state.kr1.done, state.kr2.done, state.kr3.done].filter(Boolean).length;
+        previousCount = initialCount; // Trick the render engine into thinking they were already there
+        renderUI();
+        
+        // If loaded already conquered
+        if (initialCount === 3) container.classList.add('is-conquered');
+
+    </script>
+</body>
+</html>

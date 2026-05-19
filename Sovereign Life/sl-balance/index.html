@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Architect's Balance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        /* Sovereign Light Mode Base */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: transparent; 
+            color: #37352f; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* The Widget Container */
+        .widget-box {
+            background-color: #FCFBF9; /* Ivory Parchment */
+            border: 1px solid #E9E5DC;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.03), inset 0 0 20px rgba(255,255,255,0.5);
+            transition: all 1.5s ease;
+            --tilt-angle: 0deg; /* Drives the physics engine */
+        }
+
+        /* Ambient Glow (Activates on Harmony) */
+        .ambient-glow {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            transition: background 2s ease;
+        }
+        .is-balanced .ambient-glow {
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 70%);
+            animation: breathe-glow 4s infinite alternate ease-in-out;
+        }
+        
+        @keyframes breathe-glow {
+            0% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; }
+        }
+
+        /* SVG Scale Physics Engine */
+        .scale-beam {
+            transform-origin: 150px 70px;
+            transform: rotate(var(--tilt-angle));
+            transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .scale-bowl {
+            transform-origin: 0px 0px;
+            /* Counter-rotates exactly inverse to the beam to remain level */
+            transform: rotate(calc(-1 * var(--tilt-angle)));
+            transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Weights */
+        .weight-item {
+            animation: dropWeight 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            opacity: 0;
+        }
+        @keyframes dropWeight {
+            0% { transform: translateY(-40px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Lists & Checkboxes */
+        .task-row {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+        }
+        .task-row:hover {
+            background-color: #f7f6f3;
+        }
+        
+        .check-box {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            border: 1.5px solid #DCD7CA;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            background-color: #fff;
+        }
+        
+        .task-row.active.output-row .check-box {
+            background-color: #37352f;
+            border-color: #37352f;
+        }
+        .task-row.active.input-row .check-box {
+            background-color: #D4AF37;
+            border-color: #B48025;
+            box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+        }
+
+        .check-mark {
+            stroke-dasharray: 20;
+            stroke-dashoffset: 20;
+            transition: stroke-dashoffset 0.3s ease-in-out 0.1s;
+            stroke: #fff;
+        }
+        .task-row.active .check-mark { stroke-dashoffset: 0; }
+
+        .task-label {
+            font-size: 11px;
+            color: #525252;
+            transition: color 0.3s ease;
+            font-weight: 500;
+        }
+        .task-row.active .task-label {
+            color: #A3A3A3;
+            text-decoration: line-through;
+        }
+
+        /* Add Input Styling */
+        .add-input {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #E9E5DC;
+            font-size: 10px;
+            color: #525252;
+            transition: border-color 0.3s ease;
+        }
+        .add-input:focus {
+            outline: none;
+            border-color: #D4AF37;
+        }
+        .add-input::placeholder { color: #A3A3A3; }
+        
+        .delete-task-btn {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            color: #A3A3A3;
+        }
+        .task-row:hover .delete-task-btn {
+            opacity: 1;
+        }
+        .delete-task-btn:hover { color: #EF4444; }
+
+        /* Status Label */
+        .status-label {
+            opacity: 0;
+            transform: translateY(5px);
+            transition: all 0.8s ease;
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            pointer-events: none;
+        }
+        .status-label.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Buttons */
+        .reset-btn {
+            background-color: transparent;
+            color: #A39F96;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid transparent;
+        }
+        .reset-btn:hover { 
+            color: #37352f; 
+            border-bottom-color: #37352f;
+        }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(255,255,255,0.8); }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-lg rounded-3xl p-6 md:p-8 flex flex-col h-[650px] overflow-hidden">
+        
+        <div class="ambient-glow"></div>
+
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-6 z-10 shrink-0">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#A39F96]">@faithreflects</span>
+            <div class="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider text-[#8A867D] border border-[#E9E5DC] bg-white flex items-center shadow-sm">
+                Harmony Tracker
+            </div>
+        </div>
+
+        <h2 class="serif text-2xl text-[#37352f] mb-1 z-10 shrink-0 text-center">The Architect's Balance</h2>
+        
+        <!-- Status Text Overlay Area -->
+        <div class="relative w-full h-6 z-10 shrink-0 mb-4">
+            <p id="status-default" class="text-xs text-[#8A867D] italic text-center status-label visible">
+                "Match your output with equal renewal."
+            </p>
+            <p id="status-drained" class="text-xs text-[#B45309] font-medium tracking-wide text-center status-label">
+                Warning: Output exceeds renewal. Rest required.
+            </p>
+            <p id="status-harmony" class="text-[11px] uppercase tracking-[0.2em] text-[#D4AF37] font-bold text-center status-label">
+                ✦ Harmony Achieved ✦
+            </p>
+        </div>
+
+        <!-- SVG Scale Physics Engine -->
+        <div class="relative w-full h-[240px] mb-6 z-10 shrink-0 flex justify-center items-end">
+            <svg viewBox="0 0 300 240" class="w-full h-full overflow-visible">
+                
+                <defs>
+                    <linearGradient id="brassGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#B48025"/>
+                        <stop offset="50%" stop-color="#FCD34D"/>
+                        <stop offset="100%" stop-color="#D97706"/>
+                    </linearGradient>
+                    <linearGradient id="ironGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#525252"/>
+                        <stop offset="100%" stop-color="#111111"/>
+                    </linearGradient>
+                    <linearGradient id="marbleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#FFFFFF"/>
+                        <stop offset="100%" stop-color="#E9E5DC"/>
+                    </linearGradient>
+                </defs>
+
+                <!-- Base & Pillar (Fixed) -->
+                <path d="M 120 220 L 180 220 L 170 200 L 130 200 Z" fill="url(#marbleGrad)" stroke="#DCD7CA" stroke-width="2"/>
+                <rect x="110" y="220" width="80" height="10" rx="2" fill="#DCD7CA" stroke="#A39F96" stroke-width="1"/>
+                
+                <!-- Pillar -->
+                <path d="M 143 200 L 157 200 L 152 70 L 148 70 Z" fill="url(#brassGrad)" stroke="#B48025" stroke-width="1"/>
+                <!-- Pillar Base Ring -->
+                <ellipse cx="150" cy="200" rx="15" ry="4" fill="#FCD34D" stroke="#D97706" stroke-width="1"/>
+
+                <!-- The Pivot Point -->
+                <circle cx="150" cy="70" r="6" fill="#FFFBEB" stroke="#B48025" stroke-width="2"/>
+
+                <!-- The Dynamic Balancing Beam & Bowls -->
+                <g class="scale-beam">
+                    
+                    <!-- Beam -->
+                    <line x1="50" y1="70" x2="250" y2="70" stroke="url(#brassGrad)" stroke-width="6" stroke-linecap="round"/>
+                    <line x1="55" y1="70" x2="245" y2="70" stroke="#FFFBEB" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+
+                    <!-- Left Bowl Group (Outputs / Iron) -->
+                    <g transform="translate(50, 70)">
+                        <g class="scale-bowl">
+                            <!-- Chains -->
+                            <line x1="0" y1="0" x2="-25" y2="70" stroke="#B48025" stroke-width="1.5"/>
+                            <line x1="0" y1="0" x2="25" y2="70" stroke="#B48025" stroke-width="1.5"/>
+                            <line x1="0" y1="0" x2="0" y2="75" stroke="#D97706" stroke-width="1" opacity="0.5"/>
+                            
+                            <!-- Weights generated here by JS -->
+                            <g id="leftWeights"></g>
+
+                            <!-- Glass/Brass Bowl -->
+                            <path d="M -30 65 Q 0 95 30 65 Z" fill="rgba(255,255,255,0.7)" stroke="url(#brassGrad)" stroke-width="3" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.1))"/>
+                            <ellipse cx="0" cy="65" rx="30" ry="6" fill="none" stroke="#D4AF37" stroke-width="2"/>
+                            
+                            <!-- Pivot Ring -->
+                            <circle cx="0" cy="0" r="3" fill="#111"/>
+                        </g>
+                    </g>
+
+                    <!-- Right Bowl Group (Inputs / Gold) -->
+                    <g transform="translate(250, 70)">
+                        <g class="scale-bowl">
+                            <!-- Chains -->
+                            <line x1="0" y1="0" x2="-25" y2="70" stroke="#B48025" stroke-width="1.5"/>
+                            <line x1="0" y1="0" x2="25" y2="70" stroke="#B48025" stroke-width="1.5"/>
+                            <line x1="0" y1="0" x2="0" y2="75" stroke="#D97706" stroke-width="1" opacity="0.5"/>
+                            
+                            <!-- Weights generated here by JS -->
+                            <g id="rightWeights"></g>
+
+                            <!-- Glass/Brass Bowl -->
+                            <path d="M -30 65 Q 0 95 30 65 Z" fill="rgba(255,255,255,0.7)" stroke="url(#brassGrad)" stroke-width="3" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.1))"/>
+                            <ellipse cx="0" cy="65" rx="30" ry="6" fill="none" stroke="#D4AF37" stroke-width="2"/>
+                            
+                            <!-- Pivot Ring -->
+                            <circle cx="0" cy="0" r="3" fill="#111"/>
+                        </g>
+                    </g>
+
+                </g>
+
+            </svg>
+        </div>
+
+        <!-- The Two Checklists -->
+        <div class="flex-1 w-full grid grid-cols-2 gap-6 z-10 min-h-0 mb-2">
+            
+            <!-- Output (Drain) -->
+            <div class="flex flex-col min-h-0">
+                <div class="border-b border-[#E9E5DC] pb-2 mb-3 shrink-0">
+                    <span class="text-[9px] font-bold tracking-widest uppercase text-[#37352f]">Output</span>
+                    <span class="text-[9px] text-[#A39F96] uppercase ml-1 block">(Energy Spent)</span>
+                </div>
+                <div class="space-y-1 overflow-y-auto custom-scrollbar flex-1 pr-1 pb-2" id="outputList">
+                    <!-- Injected via JS -->
+                </div>
+                <div class="mt-2 flex items-center space-x-2 shrink-0">
+                    <input type="text" id="newOutputInput" placeholder="Add custom..." class="add-input flex-1 py-1 w-full" autocomplete="off">
+                    <button id="addOutputBtn" class="text-[#D4AF37] hover:text-[#B48025] transition-colors shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Input (Renew) -->
+            <div class="flex flex-col min-h-0">
+                <div class="border-b border-[#E9E5DC] pb-2 mb-3 shrink-0">
+                    <span class="text-[9px] font-bold tracking-widest uppercase text-[#B48025]">Renewal</span>
+                    <span class="text-[9px] text-[#A39F96] uppercase ml-1 block">(Energy Restored)</span>
+                </div>
+                <div class="space-y-1 overflow-y-auto custom-scrollbar flex-1 pr-1 pb-2" id="inputList">
+                    <!-- Injected via JS -->
+                </div>
+                <div class="mt-2 flex items-center space-x-2 shrink-0">
+                    <input type="text" id="newInputInput" placeholder="Add custom..." class="add-input flex-1 py-1 w-full" autocomplete="off">
+                    <button id="addInputBtn" class="text-[#D4AF37] hover:text-[#B48025] transition-colors shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Reset Button -->
+        <button id="resetTriggerBtn" class="mt-3 text-[9px] tracking-widest uppercase pb-0.5 z-10 shrink-0 reset-btn self-center">
+            Clear Scale (New Day)
+        </button>
+
+        <!-- Custom Reset Modal -->
+        <div id="resetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#FCFBF9] rounded-2xl p-6 w-full max-w-[260px] border border-[#E9E5DC] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#37352f]">Reset Balance?</h3>
+                <p class="text-xs text-[#8A867D] mb-6">This will empty the scale to begin charting a new day.</p>
+                <div class="flex space-x-3">
+                    <button id="cancelResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-[#8A867D] hover:bg-gray-100 border border-transparent transition-colors">Cancel</button>
+                    <button id="confirmResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#37352f] text-white hover:bg-black transition-colors shadow-md">Clear</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Data Structures
+        const defaultOutputs = [
+            { id: 'o1', label: 'Deep Work Block' },
+            { id: 'o2', label: 'Meetings / Calls' },
+            { id: 'o3', label: 'Admin / Chores' },
+            { id: 'o4', label: 'Errands' },
+            { id: 'o5', label: 'Social Event' }
+        ];
+
+        const defaultInputs = [
+            { id: 'i1', label: '8 Hrs Sleep' },
+            { id: 'i2', label: 'Selah / Prayer' },
+            { id: 'i3', label: 'Reading' },
+            { id: 'i4', label: 'Exercise / Walk' },
+            { id: 'i5', label: 'Creative Play' }
+        ];
+
+        // State Management
+        const today = new Date().toDateString();
+        let state = JSON.parse(localStorage.getItem('sovereign_balance')) || {
+            date: today,
+            outputs: defaultOutputs,
+            inputs: defaultInputs,
+            checkedOutputs: [],
+            checkedInputs: []
+        };
+
+        // Migration for users who have the old version cached
+        if (!state.outputs) state.outputs = [...defaultOutputs];
+        if (!state.inputs) state.inputs = [...defaultInputs];
+
+        // Auto-reset on new day (Keep custom tasks, reset checkboxes)
+        if (state.date !== today) {
+            state = { 
+                date: today, 
+                outputs: state.outputs, 
+                inputs: state.inputs, 
+                checkedOutputs: [], 
+                checkedInputs: [] 
+            };
+            localStorage.setItem('sovereign_balance', JSON.stringify(state));
+        }
+
+        // Elements
+        const container = document.getElementById('widgetContainer');
+        const outputList = document.getElementById('outputList');
+        const inputList = document.getElementById('inputList');
+        const leftWeightsGroup = document.getElementById('leftWeights');
+        const rightWeightsGroup = document.getElementById('rightWeights');
+        
+        const statusDefault = document.getElementById('status-default');
+        const statusDrained = document.getElementById('status-drained');
+        const statusHarmony = document.getElementById('status-harmony');
+
+        // Modals
+        const resetModal = document.getElementById('resetModal');
+        const resetTriggerBtn = document.getElementById('resetTriggerBtn');
+        const cancelResetBtn = document.getElementById('cancelResetBtn');
+        const confirmResetBtn = document.getElementById('confirmResetBtn');
+
+        function toggleTask(id, type) {
+            const list = type === 'out' ? state.checkedOutputs : state.checkedInputs;
+            const index = list.indexOf(id);
+            
+            if (index > -1) list.splice(index, 1);
+            else list.push(id);
+            
+            localStorage.setItem('sovereign_balance', JSON.stringify(state));
+            updatePhysics();
+            renderLists();
+        }
+
+        function updatePhysics() {
+            const outCount = state.checkedOutputs.length;
+            const inCount = state.checkedInputs.length;
+            
+            // Render Iron Weights (Outputs) in left bowl
+            // Stack them organically
+            leftWeightsGroup.innerHTML = '';
+            for(let i=0; i<outCount; i++) {
+                const yPos = 65 - (i * 12);
+                const xPos = (i % 2 === 0) ? -8 : 2;
+                leftWeightsGroup.innerHTML += `
+                    <rect x="${xPos}" y="${yPos}" width="16" height="12" fill="url(#ironGrad)" stroke="#333" stroke-width="1" class="weight-item" rx="1"/>
+                `;
+            }
+
+            // Render Golden Weights (Inputs) in right bowl
+            rightWeightsGroup.innerHTML = '';
+            for(let i=0; i<inCount; i++) {
+                const yPos = 65 - (i * 12);
+                const xPos = (i % 2 === 0) ? -5 : 5;
+                rightWeightsGroup.innerHTML += `
+                    <circle cx="${xPos}" cy="${yPos}" r="8" fill="url(#brassGrad)" stroke="#D97706" stroke-width="1" class="weight-item"/>
+                    <circle cx="${xPos - 2}" cy="${yPos - 2}" r="2" fill="#FFFBEB" opacity="0.6" class="weight-item"/>
+                `;
+            }
+
+            // Physics Calculation: Each difference in weight = 4 degrees of tilt (max 5 difference = 20 deg)
+            const difference = outCount - inCount;
+            // Negative difference means inputs > outputs, so it tilts right (positive degrees in SVG rotation)
+            // Positive difference means outputs > inputs, tilts left (negative degrees)
+            const angle = difference * -4;
+            
+            container.style.setProperty('--tilt-angle', `${angle}deg`);
+
+            // Harmony/Status Logic
+            statusDefault.classList.remove('visible');
+            statusDrained.classList.remove('visible');
+            statusHarmony.classList.remove('visible');
+            container.classList.remove('is-balanced');
+
+            if (outCount === inCount && outCount > 0) {
+                statusHarmony.classList.add('visible');
+                container.classList.add('is-balanced');
+            } else if (outCount > inCount + 1) {
+                statusDrained.classList.add('visible');
+            } else {
+                statusDefault.classList.add('visible');
+            }
+        }
+
+        function renderLists() {
+            outputList.innerHTML = state.outputs.map(item => {
+                const isActive = state.checkedOutputs.includes(item.id);
+                return `
+                    <div class="task-row output-row flex items-center justify-between group ${isActive ? 'active' : ''}" onclick="toggleTask('${item.id}', 'out')">
+                        <div class="flex items-center space-x-3 min-w-0">
+                            <div class="check-box shadow-sm shrink-0">
+                                <svg class="w-3 h-3 check-mark" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <span class="task-label truncate">${item.label}</span>
+                        </div>
+                        <button class="delete-task-btn shrink-0 pl-2" onclick="deleteTask(event, '${item.id}', 'out')" title="Remove">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+
+            inputList.innerHTML = state.inputs.map(item => {
+                const isActive = state.checkedInputs.includes(item.id);
+                return `
+                    <div class="task-row input-row flex items-center justify-between group ${isActive ? 'active' : ''}" onclick="toggleTask('${item.id}', 'in')">
+                        <div class="flex items-center space-x-3 min-w-0">
+                            <div class="check-box shadow-sm shrink-0">
+                                <svg class="w-3 h-3 check-mark" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <span class="task-label truncate">${item.label}</span>
+                        </div>
+                        <button class="delete-task-btn shrink-0 pl-2" onclick="deleteTask(event, '${item.id}', 'in')" title="Remove">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function addTask(type) {
+            const inputEl = type === 'out' ? document.getElementById('newOutputInput') : document.getElementById('newInputInput');
+            const text = inputEl.value.trim();
+            if (!text) return;
+
+            const newItem = { id: Date.now().toString(), label: text };
+            if (type === 'out') state.outputs.push(newItem);
+            else state.inputs.push(newItem);
+
+            localStorage.setItem('sovereign_balance', JSON.stringify(state));
+            inputEl.value = '';
+            renderLists();
+        }
+
+        function deleteTask(event, id, type) {
+            event.stopPropagation(); // Prevent toggling the task when deleting
+
+            if (type === 'out') {
+                state.outputs = state.outputs.filter(o => o.id !== id);
+                state.checkedOutputs = state.checkedOutputs.filter(oId => oId !== id);
+            } else {
+                state.inputs = state.inputs.filter(i => i.id !== id);
+                state.checkedInputs = state.checkedInputs.filter(iId => iId !== id);
+            }
+
+            localStorage.setItem('sovereign_balance', JSON.stringify(state));
+            updatePhysics();
+            renderLists();
+        }
+
+        // Setup new task listeners
+        document.getElementById('addOutputBtn').addEventListener('click', () => addTask('out'));
+        document.getElementById('newOutputInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addTask('out');
+        });
+        
+        document.getElementById('addInputBtn').addEventListener('click', () => addTask('in'));
+        document.getElementById('newInputInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addTask('in');
+        });
+
+        // Modal Logic
+        resetTriggerBtn.addEventListener('click', () => resetModal.classList.remove('hidden'));
+        cancelResetBtn.addEventListener('click', () => resetModal.classList.add('hidden'));
+        
+        confirmResetBtn.addEventListener('click', () => {
+            state = { 
+                date: today, 
+                outputs: state.outputs, 
+                inputs: state.inputs, 
+                checkedOutputs: [], 
+                checkedInputs: [] 
+            };
+            localStorage.setItem('sovereign_balance', JSON.stringify(state));
+            
+            updatePhysics();
+            renderLists();
+            
+            resetModal.classList.add('hidden');
+        });
+
+        // Initialize
+        renderLists();
+        
+        // Small timeout ensures CSS variables exist before transitions trigger on load
+        setTimeout(updatePhysics, 50);
+
+    </script>
+</body>
+</html>

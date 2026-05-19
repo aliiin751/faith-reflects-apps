@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Firstfruits Harvest</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+    <style>
+        /* Sovereign Light Mode Base */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: transparent; 
+            color: #37352f; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* The Widget Container */
+        .widget-box {
+            background-color: #FCFBF9; /* Ivory Parchment */
+            border: 1px solid #E9E5DC;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.03), inset 0 0 20px rgba(255,255,255,0.5);
+            transition: all 1.5s ease;
+        }
+
+        /* Ambient Glow */
+        .ambient-glow {
+            position: absolute;
+            top: 25%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 250px;
+            border-radius: 50%;
+            background: radial-gradient(ellipse, rgba(212, 175, 55, var(--glow-opacity, 0)) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            transition: background 1.5s ease;
+        }
+
+        /* SVG Visuals & Animations */
+        .wheat-stalk {
+            transform-origin: 150px 200px; /* Grow from the base */
+            transform: scaleY(0) scaleX(0.8);
+            opacity: 0;
+            transition: transform 1.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 1s ease;
+            filter: drop-shadow(0 2px 4px rgba(212, 175, 55, 0.2));
+        }
+
+        .wheat-stalk.grown {
+            transform: scaleY(1) scaleX(1);
+            opacity: 1;
+        }
+        
+        /* Slight gentle sway for grown wheat */
+        .wheat-stalk.grown.sway-1 { animation: sway 6s infinite alternate ease-in-out; }
+        .wheat-stalk.grown.sway-2 { animation: sway 7s infinite alternate ease-in-out 1s; }
+        .wheat-stalk.grown.sway-3 { animation: sway 5s infinite alternate ease-in-out 2s; }
+        .wheat-stalk.grown.sway-4 { animation: sway 8s infinite alternate ease-in-out 0.5s; }
+        .wheat-stalk.grown.sway-5 { animation: sway 6.5s infinite alternate ease-in-out 1.5s; }
+
+        @keyframes sway {
+            0% { transform: scaleY(1) scaleX(1) rotate(-2deg); }
+            100% { transform: scaleY(1) scaleX(1) rotate(2deg); }
+        }
+
+        /* Coin Drop Animation */
+        .falling-coin {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: radial-gradient(circle at 30% 30%, #FDE68A, #D4AF37, #B48025);
+            border-radius: 50%;
+            border: 1px solid #FCD34D;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1), inset 0 -2px 4px rgba(180, 128, 37, 0.5);
+            pointer-events: none;
+            z-index: 20;
+            opacity: 0;
+            animation: coinDrop 0.8s cubic-bezier(0.4, 0, 1, 1) forwards;
+        }
+
+        @keyframes coinDrop {
+            0% { transform: translate(var(--start-x), -50px) rotateY(0deg); opacity: 0; }
+            15% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translate(var(--end-x), 150px) rotateY(360deg); opacity: 0; }
+        }
+
+        /* Ledger List */
+        .ledger-row {
+            transition: all 0.3s ease;
+            border-bottom: 1px solid #E9E5DC;
+            background-color: transparent;
+        }
+        .ledger-row:last-child { border-bottom: none; }
+        .ledger-row:hover {
+            background-color: #FFFFFF;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            transform: translateX(2px);
+            border-radius: 0.5rem;
+            border-color: transparent;
+        }
+
+        /* Inputs & Buttons */
+        input[type="text"], input[type="number"] {
+            background-color: #FFFFFF;
+            border: 1px solid #E9E5DC;
+            color: #37352f;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
+        }
+        input:focus {
+            outline: none;
+            border-color: #D4AF37;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.1), inset 0 2px 4px rgba(0,0,0,0.01);
+        }
+        input::placeholder { color: #A39F96; font-style: italic; font-weight: 300; }
+
+        .btn-primary {
+            background: linear-gradient(180deg, #2D2416 0%, #1a140b 100%);
+            color: #FCD34D;
+            border: 1px solid #5C451A;
+            box-shadow: 0 4px 15px rgba(217, 119, 6, 0.15), inset 0 1px 0 rgba(252, 211, 77, 0.2);
+            transition: all 0.4s ease;
+        }
+        .btn-primary:hover { 
+            background: linear-gradient(180deg, #1a140b 0%, #000000 100%);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.2), inset 0 1px 0 rgba(255,255,255,0.05);
+            transform: translateY(-2px);
+        }
+        .btn-primary:active { transform: translateY(1px) scale(0.98); }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #DCD7CA; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #B48025; }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(255,255,255,0.8); }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-2xl rounded-3xl p-6 md:p-8 flex flex-col md:flex-row h-auto min-h-[600px] overflow-hidden gap-6 md:gap-8">
+        
+        <div class="ambient-glow" id="ambientGlow"></div>
+
+        <!-- Left Side: Visual Harvest & Inputs -->
+        <div class="flex-shrink-0 flex flex-col items-center w-full md:w-[280px] h-full relative z-20">
+            
+            <div class="w-full flex justify-between items-center mb-2">
+                <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#A39F96]">@faithreflects</span>
+            </div>
+            
+            <h2 class="serif text-2xl text-[#37352f] mb-1 text-center w-full">Giving Ledger</h2>
+            <p class="text-[10px] text-[#8A867D] italic mb-4 text-center w-full">"Honor the Lord with your wealth."</p>
+
+            <!-- SVG Visualizer -->
+            <div class="relative w-full h-48 flex justify-center items-end shrink-0" id="visualContainer">
+                
+                <!-- Particle Area for Coins -->
+                <div id="coinArea" class="absolute inset-0 pointer-events-none z-30"></div>
+
+                <svg viewBox="0 0 300 200" class="w-full h-full overflow-visible z-10">
+                    <defs>
+                        <!-- Brass Gradient -->
+                        <linearGradient id="brassGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#B48025"/>
+                            <stop offset="30%" stop-color="#FDE68A"/>
+                            <stop offset="70%" stop-color="#D4AF37"/>
+                            <stop offset="100%" stop-color="#5C451A"/>
+                        </linearGradient>
+                        <linearGradient id="wheatGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                            <stop offset="0%" stop-color="#8A9D92"/>
+                            <stop offset="100%" stop-color="#D4AF37"/>
+                        </linearGradient>
+                    </defs>
+
+                    <!-- Wheat Stalks (Background) -->
+                    <!-- 1. Far Left (20%) -->
+                    <g class="wheat-stalk sway-1" id="wheat-1" transform-origin="100 200">
+                        <path d="M 120 160 Q 80 100 60 40" fill="none" stroke="url(#wheatGrad)" stroke-width="2.5" stroke-linecap="round"/>
+                        <!-- Grains -->
+                        <path d="M 58 45 Q 50 40 60 40" fill="#FCD34D"/>
+                        <path d="M 62 55 Q 70 50 62 45" fill="#FCD34D"/>
+                        <path d="M 62 65 Q 52 60 64 55" fill="#FCD34D"/>
+                        <path d="M 66 75 Q 75 70 66 65" fill="#FCD34D"/>
+                        <circle cx="60" cy="40" r="1.5" fill="#D97706"/>
+                    </g>
+
+                    <!-- 2. Mid Left (40%) -->
+                    <g class="wheat-stalk sway-2" id="wheat-2" transform-origin="120 200">
+                        <path d="M 130 160 Q 110 80 90 20" fill="none" stroke="url(#wheatGrad)" stroke-width="3" stroke-linecap="round"/>
+                        <path d="M 88 25 Q 80 20 90 20" fill="#FCD34D"/>
+                        <path d="M 92 35 Q 100 30 92 25" fill="#FCD34D"/>
+                        <path d="M 92 45 Q 82 40 94 35" fill="#FCD34D"/>
+                        <path d="M 96 55 Q 105 50 96 45" fill="#FCD34D"/>
+                        <path d="M 98 65 Q 88 60 100 55" fill="#FCD34D"/>
+                        <circle cx="90" cy="20" r="1.5" fill="#D97706"/>
+                    </g>
+
+                    <!-- 3. Center Tall (100%) -->
+                    <g class="wheat-stalk sway-3" id="wheat-3" transform-origin="150 200">
+                        <path d="M 150 160 Q 155 80 150 5" fill="none" stroke="url(#wheatGrad)" stroke-width="3.5" stroke-linecap="round"/>
+                        <path d="M 148 10 Q 140 5 150 5" fill="#FCD34D"/>
+                        <path d="M 152 20 Q 160 15 152 10" fill="#FCD34D"/>
+                        <path d="M 152 30 Q 142 25 154 20" fill="#FCD34D"/>
+                        <path d="M 154 40 Q 165 35 154 30" fill="#FCD34D"/>
+                        <path d="M 156 50 Q 146 45 158 40" fill="#FCD34D"/>
+                        <path d="M 158 60 Q 170 55 158 50" fill="#FCD34D"/>
+                        <circle cx="150" cy="5" r="2" fill="#D97706"/>
+                    </g>
+
+                    <!-- 4. Mid Right (80%) -->
+                    <g class="wheat-stalk sway-4" id="wheat-4" transform-origin="170 200">
+                        <path d="M 170 160 Q 190 80 200 30" fill="none" stroke="url(#wheatGrad)" stroke-width="3" stroke-linecap="round"/>
+                        <path d="M 198 35 Q 190 30 200 30" fill="#FCD34D"/>
+                        <path d="M 202 45 Q 210 40 202 35" fill="#FCD34D"/>
+                        <path d="M 200 55 Q 190 50 204 45" fill="#FCD34D"/>
+                        <path d="M 204 65 Q 215 60 204 55" fill="#FCD34D"/>
+                        <circle cx="200" cy="30" r="1.5" fill="#D97706"/>
+                    </g>
+
+                    <!-- 5. Far Right (60%) -->
+                    <g class="wheat-stalk sway-5" id="wheat-5" transform-origin="200 200">
+                        <path d="M 180 160 Q 230 110 240 50" fill="none" stroke="url(#wheatGrad)" stroke-width="2.5" stroke-linecap="round"/>
+                        <path d="M 238 55 Q 230 50 240 50" fill="#FCD34D"/>
+                        <path d="M 242 65 Q 250 60 242 55" fill="#FCD34D"/>
+                        <path d="M 240 75 Q 230 70 244 65" fill="#FCD34D"/>
+                        <path d="M 244 85 Q 255 80 244 75" fill="#FCD34D"/>
+                        <circle cx="240" cy="50" r="1.5" fill="#D97706"/>
+                    </g>
+
+                    <!-- The Brass Bowl (Foreground) -->
+                    <!-- Shadow -->
+                    <ellipse cx="150" cy="190" rx="60" ry="8" fill="rgba(0,0,0,0.08)"/>
+                    
+                    <!-- Base/Pedestal -->
+                    <path d="M 130 185 L 170 185 L 160 160 L 140 160 Z" fill="url(#brassGrad)"/>
+                    <ellipse cx="150" cy="185" rx="30" ry="4" fill="#B48025"/>
+                    <ellipse cx="150" cy="160" rx="15" ry="3" fill="#5C451A"/>
+
+                    <!-- Bowl Body -->
+                    <path d="M 70 110 C 70 180, 230 180, 230 110 Z" fill="url(#brassGrad)"/>
+                    
+                    <!-- Bowl Interior/Opening -->
+                    <ellipse cx="150" cy="110" rx="80" ry="15" fill="#2A1D16" stroke="#D4AF37" stroke-width="2"/>
+                    <!-- Slight highlight on front rim -->
+                    <path d="M 70 110 C 70 130, 230 130, 230 110" fill="none" stroke="#FDE68A" stroke-width="1.5" opacity="0.6"/>
+                    
+                </svg>
+            </div>
+
+            <!-- Input Form -->
+            <div class="w-full flex flex-col space-y-3 mt-4 z-20">
+                <div class="flex space-x-2">
+                    <input type="text" id="recipientInput" placeholder="Recipient (e.g., Church)" class="w-[60%] rounded-xl px-3 py-2.5 text-xs font-medium" autocomplete="off">
+                    <input type="number" id="amountInput" placeholder="$ Amount" class="w-[40%] rounded-xl px-3 py-2.5 text-xs font-medium" autocomplete="off">
+                </div>
+                <input type="text" id="noteInput" placeholder="Optional note..." class="w-full rounded-xl px-3 py-2.5 text-xs font-light" autocomplete="off">
+                
+                <button id="giveBtn" class="btn-primary w-full py-3 mt-2 rounded-xl text-xs font-bold uppercase tracking-widest flex items-center justify-center space-x-2 shadow-lg">
+                    <span class="text-sm">🤲</span>
+                    <span>Honor the Lord</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Side: The Ledger -->
+        <div class="flex-1 w-full flex flex-col z-20 min-h-0 pl-2 md:pl-0 border-t md:border-t-0 md:border-l border-[#E9E5DC] pt-6 md:pt-0 md:pl-8 h-full">
+            
+            <!-- Goal & Progress Header -->
+            <div class="bg-[#FFFFFF] border border-[#E9E5DC] rounded-2xl p-4 mb-4 shadow-sm shrink-0 flex justify-between items-center relative overflow-hidden group">
+                <div class="flex flex-col z-10">
+                    <span class="text-[9px] font-bold tracking-widest uppercase text-[#8A867D] mb-1">YTD Harvest</span>
+                    <span class="serif text-2xl text-[#B48025] font-semibold" id="totalGivenDisplay">$0</span>
+                </div>
+                <div class="flex flex-col items-end z-10">
+                    <span class="text-[9px] font-bold tracking-widest uppercase text-[#8A867D] mb-1">Goal</span>
+                    <span class="serif text-lg text-[#37352f] cursor-pointer hover:text-[#D4AF37] transition-colors" id="goalDisplay" title="Click to edit goal">$10,000</span>
+                </div>
+                
+                <!-- Progress Bar Base -->
+                <div class="absolute bottom-0 left-0 w-full h-1 bg-[#f5f4f2]">
+                    <div id="goalProgressBar" class="h-full bg-[#D4AF37] transition-all duration-1000" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-end mb-3 shrink-0 px-1">
+                <span class="text-[11px] font-bold tracking-widest uppercase text-[#37352f]">Giving Ledger</span>
+            </div>
+
+            <!-- Scrollable List -->
+            <div class="flex-1 flex flex-col overflow-y-auto custom-scrollbar pr-2 min-h-[150px]" id="ledgerList">
+                <!-- Injected via JS -->
+            </div>
+
+            <!-- Reset Button -->
+            <button id="resetTriggerBtn" class="mt-4 text-[9px] tracking-widest uppercase pb-0.5 z-10 shrink-0 text-[#A39F96] hover:text-[#37352f] transition-colors self-center border-b border-transparent hover:border-[#37352f]">
+                Clear Ledger (New Year)
+            </button>
+
+        </div>
+
+        <!-- Goal Edit Modal -->
+        <div id="goalModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#FCFBF9] rounded-2xl p-6 w-full max-w-[260px] border border-[#E9E5DC] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#37352f]">Set Annual Goal</h3>
+                <p class="text-xs text-[#8A867D] mb-4">Set your faith target for generosity this year.</p>
+                
+                <input type="number" id="goalInput" placeholder="e.g. 10000" class="w-full rounded-xl px-4 py-3 text-sm font-bold text-center text-[#B48025] mb-6">
+
+                <div class="flex space-x-3">
+                    <button id="cancelGoalBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-[#8A867D] hover:bg-gray-100 border border-transparent transition-colors">Cancel</button>
+                    <button id="saveGoalBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#37352f] text-white hover:bg-black transition-colors shadow-md">Save</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reset Modal -->
+        <div id="resetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#FCFBF9] rounded-2xl p-6 w-full max-w-[260px] border border-[#E9E5DC] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#37352f]">Harvest Completed?</h3>
+                <p class="text-xs text-[#8A867D] mb-6">This will clear your ledger to begin planting seeds for a new year.</p>
+                <div class="flex space-x-3">
+                    <button id="cancelResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-[#8A867D] hover:bg-gray-100 border border-transparent transition-colors">Cancel</button>
+                    <button id="confirmResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#37352f] text-white hover:bg-black transition-colors shadow-md">Clear All</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Data Structure
+        let state = JSON.parse(localStorage.getItem('sovereign_firstfruits')) || {
+            goal: 10000,
+            ledger: [
+                { id: 1, date: "Jan 15", recipient: "Home Church", amount: 800, note: "Tithe" },
+                { id: 2, date: "Feb 02", recipient: "Missionary Fund", amount: 250, note: "Monthly support" }
+            ]
+        };
+
+        // Elements
+        const container = document.getElementById('widgetContainer');
+        const visualContainer = document.getElementById('visualContainer');
+        const coinArea = document.getElementById('coinArea');
+        const wheatStalks = [
+            document.getElementById('wheat-1'),
+            document.getElementById('wheat-2'),
+            document.getElementById('wheat-3'),
+            document.getElementById('wheat-4'),
+            document.getElementById('wheat-5')
+        ];
+        
+        const recipientInput = document.getElementById('recipientInput');
+        const amountInput = document.getElementById('amountInput');
+        const noteInput = document.getElementById('noteInput');
+        const giveBtn = document.getElementById('giveBtn');
+        const ledgerList = document.getElementById('ledgerList');
+        
+        const totalGivenDisplay = document.getElementById('totalGivenDisplay');
+        const goalDisplay = document.getElementById('goalDisplay');
+        const goalProgressBar = document.getElementById('goalProgressBar');
+
+        // Modals
+        const goalModal = document.getElementById('goalModal');
+        const goalInput = document.getElementById('goalInput');
+        const cancelGoalBtn = document.getElementById('cancelGoalBtn');
+        const saveGoalBtn = document.getElementById('saveGoalBtn');
+
+        const resetModal = document.getElementById('resetModal');
+        const resetTriggerBtn = document.getElementById('resetTriggerBtn');
+        const cancelResetBtn = document.getElementById('cancelResetBtn');
+        const confirmResetBtn = document.getElementById('confirmResetBtn');
+
+        // Utilities
+        const formatCurrency = (num) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num);
+
+        function triggerCoinAnimation() {
+            const rect = visualContainer.getBoundingClientRect();
+            
+            // Drop 8-12 coins rapidly
+            const coinCount = 8 + Math.floor(Math.random() * 5);
+            
+            for(let i=0; i<coinCount; i++) {
+                setTimeout(() => {
+                    const coin = document.createElement('div');
+                    coin.className = 'falling-coin';
+                    
+                    // Start anywhere horizontally, fall into the center of the bowl
+                    const startX = Math.random() * rect.width;
+                    const endX = (rect.width / 2) + (Math.random() * 60 - 30); // Center +/- 30px
+                    
+                    coin.style.setProperty('--start-x', `${startX}px`);
+                    coin.style.setProperty('--end-x', `${endX}px`);
+                    
+                    coinArea.appendChild(coin);
+                    
+                    // Cleanup
+                    setTimeout(() => {
+                        if (coinArea.contains(coin)) coin.remove();
+                    }, 800);
+                }, i * 50); // Stagger
+            }
+        }
+
+        function updateVisuals() {
+            // Math
+            const total = state.ledger.reduce((sum, item) => sum + item.amount, 0);
+            const progressRaw = total / state.goal;
+            const progress = Math.min(1, Math.max(0, progressRaw)); // Clamp 0-1
+
+            // Text & Bar
+            totalGivenDisplay.innerText = formatCurrency(total);
+            goalDisplay.innerText = formatCurrency(state.goal);
+            goalProgressBar.style.width = `${progress * 100}%`;
+
+            // Ambient Glow (intensifies with progress)
+            container.style.setProperty('--glow-opacity', progress * 0.2);
+
+            // Wheat Growth Logic (Unlock stalks at 20%, 40%, 60%, 80%, 100%)
+            const thresholds = [0.2, 0.4, 1.0, 0.8, 0.6]; // Ordered to match DOM elements: Left(1), MidL(2), Center(3), MidR(4), FarR(5)
+            
+            wheatStalks.forEach((stalk, index) => {
+                if (progress >= thresholds[index]) {
+                    stalk.classList.add('grown');
+                } else {
+                    stalk.classList.remove('grown');
+                }
+            });
+        }
+
+        window.deleteEntry = function(id) {
+            state.ledger = state.ledger.filter(item => item.id !== id);
+            localStorage.setItem('sovereign_firstfruits', JSON.stringify(state));
+            renderLedger();
+            updateVisuals();
+        };
+
+        function renderLedger() {
+            ledgerList.innerHTML = '';
+            
+            if (state.ledger.length === 0) {
+                ledgerList.innerHTML = '<p class="text-xs text-[#A39F96] italic text-center mt-4">No seeds planted yet.</p>';
+                return;
+            }
+
+            // Reverse to show newest at top
+            [...state.ledger].reverse().forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'ledger-row p-3 flex justify-between items-start group relative';
+                
+                row.innerHTML = `
+                    <div class="flex flex-col min-w-0 flex-1 pr-2">
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span class="text-[9px] font-bold tracking-widest uppercase text-[#D4AF37]">${item.date}</span>
+                            <span class="text-xs font-semibold text-[#37352f] truncate">${item.recipient}</span>
+                        </div>
+                        ${item.note ? `<p class="text-[10px] text-[#8A867D] truncate">${item.note}</p>` : ''}
+                    </div>
+                    <div class="flex flex-col items-end shrink-0">
+                        <span class="serif font-semibold text-[#5C451A]">${formatCurrency(item.amount)}</span>
+                        <button onclick="deleteEntry(${item.id})" class="opacity-0 group-hover:opacity-100 text-[#A39F96] hover:text-[#EF4444] transition-opacity mt-1" title="Remove entry">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                `;
+                
+                ledgerList.appendChild(row);
+            });
+        }
+
+        // Add Logic
+        giveBtn.addEventListener('click', () => {
+            const recipient = recipientInput.value.trim();
+            const amount = parseFloat(amountInput.value);
+            const note = noteInput.value.trim();
+
+            if (recipient && amount > 0) {
+                // Button feedback
+                giveBtn.style.transform = 'scale(0.95)';
+                setTimeout(() => giveBtn.style.transform = 'scale(1)', 150);
+
+                // Play animation
+                triggerCoinAnimation();
+
+                // Save Data
+                state.ledger.push({
+                    id: Date.now(),
+                    date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                    recipient: recipient,
+                    amount: amount,
+                    note: note
+                });
+                
+                localStorage.setItem('sovereign_firstfruits', JSON.stringify(state));
+
+                // Reset inputs
+                recipientInput.value = '';
+                amountInput.value = '';
+                noteInput.value = '';
+                recipientInput.focus();
+
+                // Wait for coin animation before updating progress to make it feel responsive
+                setTimeout(() => {
+                    renderLedger();
+                    updateVisuals();
+                }, 500);
+
+            } else {
+                if (!recipient) recipientInput.focus();
+                else amountInput.focus();
+            }
+        });
+
+        // Modals
+        goalDisplay.addEventListener('click', () => {
+            goalInput.value = state.goal;
+            goalModal.classList.remove('hidden');
+            goalInput.focus();
+        });
+        
+        cancelGoalBtn.addEventListener('click', () => goalModal.classList.add('hidden'));
+        
+        saveGoalBtn.addEventListener('click', () => {
+            const newGoal = parseFloat(goalInput.value);
+            if (newGoal > 0) {
+                state.goal = newGoal;
+                localStorage.setItem('sovereign_firstfruits', JSON.stringify(state));
+                updateVisuals();
+                goalModal.classList.add('hidden');
+            }
+        });
+
+        resetTriggerBtn.addEventListener('click', () => resetModal.classList.remove('hidden'));
+        cancelResetBtn.addEventListener('click', () => resetModal.classList.add('hidden'));
+        
+        confirmResetBtn.addEventListener('click', () => {
+            state.ledger = [];
+            localStorage.setItem('sovereign_firstfruits', JSON.stringify(state));
+            renderLedger();
+            updateVisuals();
+            resetModal.classList.add('hidden');
+        });
+
+        // Initialize
+        renderLedger();
+        
+        // Small delay to allow CSS transitions to engage for wheat sprouting on load
+        setTimeout(updateVisuals, 100);
+
+    </script>
+</body>
+</html>

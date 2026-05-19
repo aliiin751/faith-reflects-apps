@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Sacred Six</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        /* Sovereign Light Mode Base */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: transparent; 
+            color: #37352f; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* The Widget Container */
+        .widget-box {
+            background-color: #FCFBF9; /* Ivory Parchment */
+            border: 1px solid #E9E5DC;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.03), inset 0 0 20px rgba(255,255,255,0.5);
+            transition: all 1.5s ease;
+        }
+
+        /* Ambient Glow (Activated on Completion) */
+        .ambient-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.0) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            transition: background 2s ease;
+        }
+        .is-complete .ambient-glow {
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 70%);
+            animation: breathe-glow 4s infinite alternate ease-in-out;
+        }
+        
+        @keyframes breathe-glow {
+            0% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; }
+        }
+
+        /* Hexagon SVG Styling */
+        .hex-group {
+            cursor: pointer;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .hex-group:hover {
+            transform: scale(1.05);
+        }
+        .hex-group:active {
+            transform: scale(0.95);
+        }
+
+        /* The Polygon Shape */
+        .hex-shape {
+            fill: #FFFFFF;
+            stroke: #E9E5DC;
+            stroke-width: 1.5;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.02));
+        }
+        
+        /* Hover State */
+        .hex-group:hover .hex-shape {
+            stroke: #D4AF37;
+            fill: #FFFAF0; /* Extremely faint warm tint */
+            filter: drop-shadow(0 4px 8px rgba(212, 175, 55, 0.1));
+        }
+
+        /* Active (Completed) State */
+        .hex-group.active .hex-shape {
+            fill: rgba(212, 175, 55, 0.15); /* Translucent Champagne */
+            stroke: #B48025; /* Polished Brass */
+            stroke-width: 2;
+            filter: drop-shadow(0 4px 12px rgba(212, 175, 55, 0.2));
+        }
+
+        /* Text inside Hexagons */
+        .hex-icon {
+            font-size: 14px;
+            transition: transform 0.4s ease, filter 0.4s ease;
+        }
+        .hex-text {
+            font-size: 8px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            fill: #A39F96;
+            transition: fill 0.4s ease;
+        }
+        
+        .hex-group.active .hex-icon {
+            transform: scale(1.1);
+            filter: drop-shadow(0 2px 2px rgba(212, 175, 55, 0.3));
+        }
+        .hex-group.active .hex-text {
+            fill: #5C451A; /* Deep brass text */
+        }
+
+        /* The Central Crown */
+        .crown-group {
+            transition: all 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: 0 0;
+        }
+        .crown-shape {
+            fill: transparent;
+            stroke: #DCD7CA;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: all 1.5s ease;
+        }
+        .crown-jewel {
+            fill: #DCD7CA;
+            transition: all 1.5s ease;
+        }
+
+        /* Crown Illuminated State */
+        .is-complete .crown-group {
+            transform: scale(1.1);
+            animation: sovereign-pulse 3s infinite alternate ease-in-out 1s;
+        }
+        .is-complete .crown-shape {
+            fill: #D4AF37;
+            stroke: #B48025;
+            stroke-width: 1.5;
+            filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.6));
+        }
+        .is-complete .crown-jewel {
+            fill: #FFFBEB;
+            filter: drop-shadow(0 0 4px #FCD34D);
+        }
+
+        @keyframes sovereign-pulse {
+            0% { filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.4)); transform: scale(1.1); }
+            100% { filter: drop-shadow(0 0 16px rgba(212, 175, 55, 0.8)); transform: scale(1.15); }
+        }
+
+        /* Status Text Fading */
+        .status-text {
+            opacity: 0;
+            transform: translateY(5px);
+            transition: all 0.8s ease;
+            position: absolute;
+            width: 100%;
+            text-align: center;
+        }
+        .status-text.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Buttons */
+        .reset-btn {
+            background-color: transparent;
+            color: #A39F96;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid transparent;
+        }
+        .reset-btn:hover { 
+            color: #37352f; 
+            border-bottom-color: #37352f;
+        }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(255,255,255,0.8); }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-sm rounded-3xl p-8 flex flex-col items-center h-[520px] overflow-hidden">
+        
+        <div class="ambient-glow"></div>
+
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-6 z-10 shrink-0">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#A39F96]">@faithreflects</span>
+            <div class="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider text-[#8A867D] border border-[#E9E5DC] bg-white flex items-center space-x-1">
+                <span id="activeCount" class="text-[#B48025]">0</span>
+                <span>/ 6 Complete</span>
+            </div>
+        </div>
+
+        <h2 class="serif text-2xl text-[#37352f] mb-1 z-10 shrink-0">The Sacred Six</h2>
+        <p class="text-xs text-[#8A867D] italic mb-6 z-10 shrink-0 text-center">"Master your life by mastering your days."</p>
+
+        <!-- Geometric Hex-Grid SVG -->
+        <!-- ViewBox is 300x300. Center is 150,150. Flat-topped hexes. -->
+        <div class="relative w-full h-64 mb-6 z-10 shrink-0 flex justify-center items-center" id="gridArea">
+            <svg viewBox="0 0 300 300" class="w-full h-full overflow-visible">
+                
+                <!-- Center Empty Hex (Holds the Crown) -->
+                <g class="center-hex" transform="translate(150, 150)">
+                    <polygon points="-18,-31.18 18,-31.18 36,0 18,31.18 -18,31.18 -36,0" fill="transparent" stroke="#E9E5DC" stroke-width="1" stroke-dasharray="2 4"/>
+                    
+                    <!-- The Sovereign Crown SVG -->
+                    <g class="crown-group">
+                        <path class="crown-shape" d="M -16,8 L 16,8 L 22,-8 L 10,0 L 0,-16 L -10,0 L -22,-8 Z"/>
+                        <circle class="crown-jewel" cx="-22" cy="-10" r="1.5"/>
+                        <circle class="crown-jewel" cx="0" cy="-18" r="2"/>
+                        <circle class="crown-jewel" cx="22" cy="-10" r="1.5"/>
+                        <line x1="-10" y1="12" x2="10" y2="12" class="crown-shape" stroke-width="2"/>
+                    </g>
+                </g>
+
+                <!-- Hex 0: Pray (Top) -->
+                <g transform="translate(150, 89.28)">
+                    <g id="hex-0" class="hex-group" onclick="toggleHabit(0)">
+                        <polygon points="-18,-31.18 18,-31.18 36,0 18,31.18 -18,31.18 -36,0" class="hex-shape"/>
+                        <text x="0" y="-3" class="hex-icon" text-anchor="middle" dominant-baseline="middle">🙏</text>
+                        <text x="0" y="12" class="hex-text" text-anchor="middle" dominant-baseline="middle">Pray</text>
+                    </g>
+                </g>
+
+                <!-- Hex 1: Move (Top Right) -->
+                <g transform="translate(202.5, 119.69)">
+                    <g id="hex-1" class="hex-group" onclick="toggleHabit(1)">
+                        <polygon points="-18,-31.18 18,-31.18 36,0 18,31.18 -18,31.18 -36,0" class="hex-shape"/>
+                        <text x="0" y="-3" class="hex-icon" text-anchor="middle" dominant-baseline="middle">🏃</text>
+                        <text x="0" y="12" class="hex-text" text-anchor="middle" dominant-baseline="middle">Move</text>
+                    </g>
+                </g>
+
+                <!-- Hex 2: Connect (Bottom Right) -->
+                <g transform="translate(202.5, 180.31)">
+                    <g id="hex-2" class="hex-group" onclick="toggleHabit(2)">
+                        <polygon points="-18,-31.18 18,-31.18 36,0 18,31.18 -18,31.18 -36,0" class="hex-shape"/>
+                        <text x="0" y="-3" class="hex-icon" text-anchor="middle" dominant-baseline="middle">❤️</text>
+                        <text x="0" y="12" class="hex-text" text-anchor="middle" dominant-baseline="middle">Connect</text>
+                    </g>
+                </g>
+
+                <!-- Hex 3: Read (Bottom) -->
+                <g transform="translate(150, 210.72)">
+                    <g id="hex-3" class="hex-group" onclick="toggleHabit(3)">
+                        <polygon points="-18,-31.18 18,-31.18 36,0 18,31.18 -18,31.18 -36,0" class="hex-shape"/>
+                        <text x="0" y="-3" class="hex-icon" text-anchor="middle" dominant-baseline="middle">📚</text>
+                        <text x="0" y="12" class="hex-text" text-anchor="middle" dominant-baseline="middle">Read</text>
+                    </g>
+                </g>
+
+                <!-- Hex 4: Create (Bottom Left) -->
+                <g transform="translate(97.5, 180.31)">
+                    <g id="hex-4" class="hex-group" onclick="toggleHabit(4)">
+                        <polygon points="-18,-31.18 18,-31.18 36,0 18,31.18 -18,31.18 -36,0" class="hex-shape"/>
+                        <text x="0" y="-3" class="hex-icon" text-anchor="middle" dominant-baseline="middle">✍️</text>
+                        <text x="0" y="12" class="hex-text" text-anchor="middle" dominant-baseline="middle">Create</text>
+                    </g>
+                </g>
+
+                <!-- Hex 5: Rest (Top Left) -->
+                <g transform="translate(97.5, 119.69)">
+                    <g id="hex-5" class="hex-group" onclick="toggleHabit(5)">
+                        <polygon points="-18,-31.18 18,-31.18 36,0 18,31.18 -18,31.18 -36,0" class="hex-shape"/>
+                        <text x="0" y="-3" class="hex-icon" text-anchor="middle" dominant-baseline="middle">🌙</text>
+                        <text x="0" y="12" class="hex-text" text-anchor="middle" dominant-baseline="middle">Rest</text>
+                    </g>
+                </g>
+
+            </svg>
+        </div>
+
+        <!-- Dynamic Status Text Area -->
+        <div class="relative w-full h-12 flex items-center justify-center z-10 shrink-0 mb-2">
+            <div id="status-incomplete" class="status-text visible">
+                <span class="text-[10px] uppercase tracking-widest font-semibold text-[#8A867D]">Touch every one, every day.</span>
+            </div>
+            <div id="status-complete" class="status-text">
+                <span class="text-[11px] uppercase tracking-[0.2em] font-bold text-[#D4AF37] border-b border-[#E9E5DC] pb-1">Sovereignty Established</span>
+            </div>
+        </div>
+
+        <button id="resetTriggerBtn" class="mt-auto text-[9px] tracking-widest text-[#A39F96] uppercase hover:text-[#37352f] transition-colors pb-0.5 z-10 shrink-0">
+            Clear Grid (New Day)
+        </button>
+
+        <!-- Custom Reset Modal -->
+        <div id="resetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#FCFBF9] rounded-2xl p-6 w-full max-w-[260px] border border-[#E9E5DC] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#37352f]">A New Dawn?</h3>
+                <p class="text-xs text-[#8A867D] mb-6">This will clear your Sacred Six grid to begin a new day.</p>
+                <div class="flex space-x-3">
+                    <button id="cancelResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-[#8A867D] hover:bg-gray-100 border border-transparent transition-colors">Cancel</button>
+                    <button id="confirmResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#37352f] text-white hover:bg-black transition-colors shadow-md">Clear</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // State Management
+        const today = new Date().toDateString();
+        let state = JSON.parse(localStorage.getItem('sovereign_sacred_six')) || {
+            date: today,
+            habits: [false, false, false, false, false, false]
+        };
+
+        // Auto-reset if it's a new day
+        if (state.date !== today) {
+            state = { date: today, habits: [false, false, false, false, false, false] };
+            localStorage.setItem('sovereign_sacred_six', JSON.stringify(state));
+        }
+
+        // Elements
+        const container = document.getElementById('widgetContainer');
+        const activeCountText = document.getElementById('activeCount');
+        const statusIncomplete = document.getElementById('status-incomplete');
+        const statusComplete = document.getElementById('status-complete');
+        
+        // Modal Elements
+        const resetModal = document.getElementById('resetModal');
+        const resetTriggerBtn = document.getElementById('resetTriggerBtn');
+        const cancelResetBtn = document.getElementById('cancelResetBtn');
+        const confirmResetBtn = document.getElementById('confirmResetBtn');
+
+        function updateVisuals() {
+            let activeCount = 0;
+            
+            // Update individual hexes
+            for(let i=0; i<6; i++) {
+                const hexGroup = document.getElementById(`hex-${i}`);
+                if (state.habits[i]) {
+                    hexGroup.classList.add('active');
+                    activeCount++;
+                } else {
+                    hexGroup.classList.remove('active');
+                }
+            }
+
+            activeCountText.innerText = activeCount;
+
+            // Handle Completion State
+            if (activeCount === 6) {
+                container.classList.add('is-complete');
+                statusIncomplete.classList.remove('visible');
+                statusComplete.classList.add('visible');
+            } else {
+                container.classList.remove('is-complete');
+                statusComplete.classList.remove('visible');
+                statusIncomplete.classList.add('visible');
+            }
+        }
+
+        window.toggleHabit = function(index) {
+            state.habits[index] = !state.habits[index];
+            localStorage.setItem('sovereign_sacred_six', JSON.stringify(state));
+            
+            // Interaction physical feedback (handled by CSS active state, but JS ensures instant re-render)
+            updateVisuals();
+        };
+
+        // Modal Logic
+        resetTriggerBtn.addEventListener('click', () => resetModal.classList.remove('hidden'));
+        cancelResetBtn.addEventListener('click', () => resetModal.classList.add('hidden'));
+        
+        confirmResetBtn.addEventListener('click', () => {
+            state = { date: today, habits: [false, false, false, false, false, false] };
+            localStorage.setItem('sovereign_sacred_six', JSON.stringify(state));
+            
+            updateVisuals();
+            resetModal.classList.add('hidden');
+        });
+
+        // Initialize on load
+        updateVisuals();
+
+    </script>
+</body>
+</html>

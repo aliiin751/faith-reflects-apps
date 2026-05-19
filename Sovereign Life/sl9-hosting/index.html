@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Host's Table</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        /* Sovereign Light Mode Base - Home & Lifestyle Vibe */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: transparent; 
+            color: #37352f; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* The Widget Container */
+        .widget-box {
+            background-color: #FCFBF9; /* Ivory Parchment */
+            border: 1px solid #E9E5DC;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.03), inset 0 0 20px rgba(255,255,255,0.5);
+            transition: all 1.5s ease;
+        }
+
+        /* Ambient Glow (Activates when candles are lit) */
+        .ambient-glow {
+            position: absolute;
+            top: 50%;
+            left: 30%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.0) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            transition: background 1.5s ease;
+        }
+        .is-ready .ambient-glow {
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, transparent 70%);
+            animation: breathe-glow 4s infinite alternate ease-in-out;
+        }
+
+        @keyframes breathe-glow {
+            0% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.2)); }
+        }
+
+        /* --- SVG Table Physics & Transitions --- */
+        .table-item {
+            opacity: 0;
+            transform-origin: center;
+            transform: scale(1.2) translateY(-20px);
+            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+        }
+        
+        .table-item.is-placed {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            pointer-events: auto;
+        }
+        
+        /* Subtle hover bump for placed food */
+        .table-item.is-placed:hover {
+            transform: scale(1.03) translateY(-2px);
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+        }
+
+        /* Candle Flames */
+        .candle-flame {
+            transform-origin: 50% 100%;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .is-ready .candle-flame {
+            opacity: 1;
+            transform: scale(1);
+            animation: flicker 2s infinite alternate ease-in-out 0.5s;
+        }
+
+        .is-ready .candle-glow {
+            animation: pulse-light 3s infinite alternate ease-in-out;
+        }
+
+        @keyframes flicker {
+            0% { transform: scale(1) rotate(-3deg); }
+            50% { transform: scale(1.1) rotate(2deg); }
+            100% { transform: scale(0.95) rotate(-1deg); }
+        }
+
+        @keyframes pulse-light {
+            0% { opacity: 0.4; transform: scale(1); }
+            100% { opacity: 0.7; transform: scale(1.2); }
+        }
+
+        /* Celebration Banner */
+        .ready-banner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scaleX(0);
+            background: linear-gradient(90deg, #B48025, #D4AF37, #B48025);
+            color: #FFFFFF;
+            padding: 6px 20px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            box-shadow: 0 4px 15px rgba(217, 119, 6, 0.4);
+            border: 1px solid #FCD34D;
+            white-space: nowrap;
+            opacity: 0;
+            z-index: 40;
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .is-ready .ready-banner {
+            transform: translate(-50%, -50%) scaleX(1);
+            opacity: 1;
+            transition-delay: 0.5s;
+        }
+
+        /* Checklist Items */
+        .course-row {
+            transition: all 0.3s ease;
+            cursor: default;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            background-color: #FFFFFF;
+            border-color: #E9E5DC;
+            margin-bottom: 8px;
+        }
+        .course-row:hover:not(.completed) {
+            border-color: #DCD7CA;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            transform: translateX(4px);
+        }
+        .course-row.completed {
+            background-color: #FCFBF9;
+            border-color: transparent;
+        }
+        
+        .check-box {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            border: 2px solid #DCD7CA;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            background-color: #fff;
+            cursor: pointer;
+        }
+        .course-row:hover .check-box { border-color: #B48025; background-color: #FFFAF0; }
+        
+        .course-row.completed .check-box {
+            background-color: #37352f;
+            border-color: #37352f;
+        }
+
+        .check-mark {
+            stroke-dasharray: 20;
+            stroke-dashoffset: 20;
+            transition: stroke-dashoffset 0.3s ease-in-out 0.1s;
+            stroke: #fff;
+        }
+        .course-row.completed .check-mark { stroke-dashoffset: 0; }
+
+        /* Inline Editing */
+        .course-input { 
+            outline: none; 
+            border: none;
+            background: transparent;
+            border-bottom: 1px dashed transparent; 
+            transition: all 0.2s; 
+            font-size: 13px;
+            color: #37352f;
+            font-weight: 500;
+            width: 100%;
+        }
+        .course-input:focus { border-bottom-color: #D4AF37; }
+
+        .course-row.completed .course-input {
+            color: #A39F96;
+            text-decoration: line-through;
+            pointer-events: none;
+            border-color: transparent;
+        }
+
+        .course-label {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: #A39F96;
+            margin-bottom: 2px;
+            display: block;
+        }
+        .course-row.completed .course-label { opacity: 0.5; }
+
+        /* Buttons */
+        .btn-reset {
+            background-color: transparent;
+            color: #A39F96;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid transparent;
+        }
+        .btn-reset:hover { 
+            color: #37352f; 
+            border-bottom-color: #37352f;
+        }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #DCD7CA; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #B48025; }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(255,255,255,0.8); }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-4xl rounded-3xl p-6 md:p-10 flex flex-col md:flex-row h-auto min-h-[580px] overflow-hidden gap-8">
+        
+        <div class="ambient-glow"></div>
+
+        <!-- Left Side: The Top-Down Table -->
+        <div class="flex-shrink-0 flex flex-col items-center w-full md:w-[400px] h-full relative z-20">
+            
+            <div class="w-full flex justify-between items-center mb-6">
+                <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#A39F96]">@faithreflects</span>
+            </div>
+            
+            <h2 class="serif text-3xl text-[#37352f] mb-1 text-center w-full">Signature Hosting</h2>
+            <p class="text-[11px] text-[#8A867D] italic mb-8 text-center w-full">"The menu for when people come over."</p>
+
+            <!-- SVG Table Area -->
+            <div class="relative w-full h-[320px] flex justify-center items-center" id="tableVisualizer">
+                
+                <svg viewBox="0 0 400 320" class="w-full h-full overflow-visible drop-shadow-md">
+                    <defs>
+                        <!-- Wood Textures & Gradients -->
+                        <linearGradient id="woodGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#A06B44"/>
+                            <stop offset="50%" stop-color="#8B5A2B"/>
+                            <stop offset="100%" stop-color="#6B4226"/>
+                        </linearGradient>
+                        <linearGradient id="runnerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#FCFBF9"/>
+                            <stop offset="50%" stop-color="#F4F1EB"/>
+                            <stop offset="100%" stop-color="#E9E5DC"/>
+                        </linearGradient>
+                        <radialGradient id="candleGlow" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stop-color="#FCD34D" stop-opacity="0.8"/>
+                            <stop offset="100%" stop-color="#F59E0B" stop-opacity="0"/>
+                        </radialGradient>
+                    </defs>
+
+                    <!-- The Wooden Table Base -->
+                    <rect x="20" y="10" width="360" height="300" rx="20" fill="url(#woodGrad)" stroke="#5C3A21" stroke-width="3"/>
+                    <!-- Wood Planks Detail -->
+                    <line x1="80" y1="10" x2="80" y2="310" stroke="#5C3A21" stroke-width="1.5" opacity="0.4"/>
+                    <line x1="140" y1="10" x2="140" y2="310" stroke="#5C3A21" stroke-width="1.5" opacity="0.4"/>
+                    <line x1="200" y1="10" x2="200" y2="310" stroke="#5C3A21" stroke-width="2" opacity="0.5"/>
+                    <line x1="260" y1="10" x2="260" y2="310" stroke="#5C3A21" stroke-width="1.5" opacity="0.4"/>
+                    <line x1="320" y1="10" x2="320" y2="310" stroke="#5C3A21" stroke-width="1.5" opacity="0.4"/>
+
+                    <!-- Linen Table Runner -->
+                    <rect x="140" y="10" width="120" height="300" fill="url(#runnerGrad)" opacity="0.95" stroke="#DCD7CA" stroke-width="1"/>
+                    <line x1="145" y1="10" x2="145" y2="310" stroke="#DCD7CA" stroke-width="1" stroke-dasharray="4 4" opacity="0.5"/>
+                    <line x1="255" y1="10" x2="255" y2="310" stroke="#DCD7CA" stroke-width="1" stroke-dasharray="4 4" opacity="0.5"/>
+
+                    <!-- Base Settings (Always visible) -->
+                    <!-- Left Setting -->
+                    <circle cx="90" cy="160" r="35" fill="#E9E5DC" stroke="#DCD7CA" stroke-width="1"/>
+                    <circle cx="90" cy="160" r="25" fill="#FCFBF9" stroke="#E9E5DC" stroke-width="1"/>
+                    <!-- Right Setting -->
+                    <circle cx="310" cy="160" r="35" fill="#E9E5DC" stroke="#DCD7CA" stroke-width="1"/>
+                    <circle cx="310" cy="160" r="25" fill="#FCFBF9" stroke="#E9E5DC" stroke-width="1"/>
+                    
+                    <!-- Center Candles (Always visible, unlit) -->
+                    <!-- Top Candle -->
+                    <circle cx="200" cy="65" r="14" fill="#DCD7CA" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.1))"/>
+                    <circle cx="200" cy="65" r="10" fill="#FCFBF9"/>
+                    <circle cx="200" cy="65" r="2" fill="#525252"/> <!-- Wick -->
+                    <!-- Bottom Candle -->
+                    <circle cx="200" cy="255" r="14" fill="#DCD7CA" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.1))"/>
+                    <circle cx="200" cy="255" r="10" fill="#FCFBF9"/>
+                    <circle cx="200" cy="255" r="2" fill="#525252"/> <!-- Wick -->
+
+                    <!-- ================= THE 5 COURSES (Animated via JS) ================= -->
+                    
+                    <!-- 1. Appetizer (Wooden Charcuterie Board - Bottom Left) -->
+                    <g id="item-appetizer" class="table-item" style="transform-origin: 100px 240px;">
+                        <rect x="50" y="210" width="100" height="60" rx="8" fill="#C19A6B" stroke="#8B5A2B" stroke-width="1.5" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.2))"/>
+                        <circle cx="135" cy="240" r="4" fill="#8B5A2B"/> <!-- Handle hole -->
+                        <!-- Cheese Wheel -->
+                        <circle cx="80" cy="240" r="18" fill="#FFFBEB" stroke="#FDE68A" stroke-width="2"/>
+                        <path d="M 80 222 L 80 240 L 98 240 A 18 18 0 0 0 80 222" fill="#FCD34D"/> <!-- Cut wedge -->
+                        <!-- Grapes -->
+                        <circle cx="105" cy="225" r="5" fill="#9F1239"/>
+                        <circle cx="112" cy="230" r="5" fill="#881337"/>
+                        <circle cx="108" cy="235" r="5" fill="#BE123C"/>
+                        <circle cx="100" cy="230" r="5" fill="#9F1239"/>
+                        <!-- Crackers -->
+                        <rect x="60" y="220" width="12" height="12" rx="1" fill="#D4AF37" transform="rotate(15 60 220)"/>
+                        <rect x="55" y="235" width="12" height="12" rx="1" fill="#D4AF37" transform="rotate(-10 55 235)"/>
+                        <rect x="65" y="250" width="12" height="12" rx="1" fill="#D4AF37" transform="rotate(5 65 250)"/>
+                    </g>
+
+                    <!-- 2. Main Course (Large Ceramic Dish - Center) -->
+                    <g id="item-main" class="table-item" style="transform-origin: 200px 160px;">
+                        <ellipse cx="200" cy="160" rx="55" ry="35" fill="#FCFBF9" stroke="#DCD7CA" stroke-width="3" filter="drop-shadow(0 6px 10px rgba(0,0,0,0.15))"/>
+                        <ellipse cx="200" cy="160" rx="45" ry="25" fill="#E9E5DC"/>
+                        <!-- Roasted Chicken -->
+                        <ellipse cx="200" cy="160" rx="35" ry="20" fill="#C2410C" stroke="#9A3412" stroke-width="1.5"/>
+                        <path d="M 170 160 C 160 145, 150 155, 165 170 Z" fill="#EA580C"/> <!-- Leg left -->
+                        <path d="M 230 160 C 240 145, 250 155, 235 170 Z" fill="#EA580C"/> <!-- Leg right -->
+                        <!-- Herb Garnish -->
+                        <path d="M 195 155 Q 200 145 205 155" fill="none" stroke="#4A5D23" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M 190 165 Q 200 170 210 165" fill="none" stroke="#4A5D23" stroke-width="2" stroke-linecap="round"/>
+                    </g>
+
+                    <!-- 3. Side Dish (Salad Bowl - Top Left) -->
+                    <g id="item-side" class="table-item" style="transform-origin: 100px 80px;">
+                        <circle cx="100" cy="80" r="30" fill="#FCFBF9" stroke="#DCD7CA" stroke-width="2" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.1))"/>
+                        <circle cx="100" cy="80" r="24" fill="#E9E5DC"/>
+                        <!-- Salad Greens -->
+                        <path d="M 85 80 C 85 65, 115 65, 115 80 C 115 95, 85 95, 85 80 Z" fill="#4A5D23"/>
+                        <path d="M 80 85 C 80 70, 105 60, 110 75 C 120 90, 90 100, 80 85 Z" fill="#6B8E23"/>
+                        <!-- Tomatoes -->
+                        <circle cx="95" cy="75" r="3" fill="#EF4444"/>
+                        <circle cx="105" cy="85" r="3" fill="#EF4444"/>
+                        <circle cx="90" cy="88" r="3" fill="#EF4444"/>
+                    </g>
+
+                    <!-- 4. Dessert (Tiramisu Plate - Bottom Right) -->
+                    <g id="item-dessert" class="table-item" style="transform-origin: 290px 240px;">
+                        <circle cx="290" cy="240" r="25" fill="#FCFBF9" stroke="#DCD7CA" stroke-width="2" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.1))"/>
+                        <circle cx="290" cy="240" r="18" fill="#E9E5DC"/>
+                        <!-- Cake Slice -->
+                        <rect x="275" y="230" width="30" height="20" fill="#4A3018" rx="2" transform="rotate(-15 290 240)"/>
+                        <rect x="275" y="230" width="30" height="8" fill="#FDE68A" rx="1" transform="rotate(-15 290 240)"/> <!-- Cream layer -->
+                        <!-- Cocoa Dusting -->
+                        <circle cx="280" cy="235" r="1" fill="#2D1A0A"/>
+                        <circle cx="295" cy="232" r="1" fill="#2D1A0A"/>
+                        <circle cx="288" cy="242" r="1" fill="#2D1A0A"/>
+                    </g>
+
+                    <!-- 5. Drink (Wine Glasses - Top Right) -->
+                    <g id="item-drink" class="table-item" style="transform-origin: 300px 70px;">
+                        <!-- Glass 1 (Wine) -->
+                        <ellipse cx="290" cy="70" r="14" fill="rgba(255,255,255,0.6)" stroke="#DCD7CA" stroke-width="1" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.1))"/>
+                        <circle cx="290" cy="70" r="11" fill="#9F1239" opacity="0.85"/>
+                        <path d="M 285 65 C 285 75, 295 75, 295 65" fill="none" stroke="#FFF" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+                        <!-- Glass 2 (Water) -->
+                        <ellipse cx="315" cy="60" r="12" fill="rgba(255,255,255,0.6)" stroke="#DCD7CA" stroke-width="1" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.1))"/>
+                        <circle cx="315" cy="60" r="9" fill="#BAE6FD" opacity="0.5"/>
+                        <path d="M 311 56 C 311 64, 319 64, 319 56" fill="none" stroke="#FFF" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+                    </g>
+
+                    <!-- ================= THE LIT CANDLES (Shown when is-ready) ================= -->
+                    <g class="candle-flame">
+                        <circle cx="200" cy="65" r="25" fill="url(#candleGlow)" class="candle-glow"/>
+                        <path d="M 200 64 C 203 55, 205 50, 200 45 C 195 50, 197 55, 200 64 Z" fill="#F59E0B"/>
+                        <path d="M 200 64 C 201.5 58, 202.5 55, 200 50 C 197.5 55, 198.5 58, 200 64 Z" fill="#FEF3C7"/>
+                    </g>
+
+                    <g class="candle-flame">
+                        <circle cx="200" cy="255" r="25" fill="url(#candleGlow)" class="candle-glow"/>
+                        <path d="M 200 254 C 203 245, 205 240, 200 235 C 195 240, 197 245, 200 254 Z" fill="#F59E0B"/>
+                        <path d="M 200 254 C 201.5 248, 202.5 245, 200 240 C 197.5 245, 198.5 248, 200 254 Z" fill="#FEF3C7"/>
+                    </g>
+
+                </svg>
+
+                <div class="ready-banner">READY TO HOST</div>
+
+            </div>
+        </div>
+
+        <!-- Right Side: The Menu Editor -->
+        <div class="flex-1 w-full flex flex-col justify-center z-20 min-h-0 pl-2 md:pl-0 border-t md:border-t-0 md:border-l border-[#E9E5DC] pt-6 md:pt-0 md:pl-8">
+            
+            <div class="flex justify-between items-end mb-4 shrink-0 px-1">
+                <span class="text-[11px] font-bold tracking-widest uppercase text-[#B48025]">Menu Prep</span>
+                <span class="text-[10px] font-semibold text-[#8A867D]" id="countDisplay">0 / 5 Set</span>
+            </div>
+
+            <!-- Dynamic Courses List -->
+            <div class="flex-1 flex flex-col space-y-2 overflow-y-auto custom-scrollbar pr-2 min-h-0" id="coursesList">
+                <!-- Injected via JS to ensure logic matches IDs -->
+            </div>
+
+            <!-- Reset Button -->
+            <button id="resetTriggerBtn" class="mt-4 text-[9px] tracking-widest uppercase pb-0.5 z-10 shrink-0 btn-reset self-start">
+                Clear Table
+            </button>
+
+        </div>
+
+        <!-- Custom Reset Modal -->
+        <div id="resetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#FCFBF9] rounded-2xl p-6 w-full max-w-[260px] border border-[#E9E5DC] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#37352f]">Clear Table?</h3>
+                <p class="text-xs text-[#8A867D] mb-6">This will uncheck all courses and clear the table for your next gathering.</p>
+                <div class="flex space-x-3">
+                    <button id="cancelResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-[#8A867D] hover:bg-gray-100 border border-transparent transition-colors">Cancel</button>
+                    <button id="confirmResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#37352f] text-white hover:bg-black transition-colors shadow-md">Clear</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Data Structure mapping the menu to the SVG visual items
+        const menuData = [
+            { id: 'appetizer', label: 'Appetizer', default: 'Burrata + peach + basil' },
+            { id: 'main', label: 'Main Course', default: 'Herb-roasted whole chicken' },
+            { id: 'side', label: 'Side Dish', default: 'Rosemary potatoes + salad' },
+            { id: 'dessert', label: 'Dessert', default: 'Tiramisu (grandma\'s recipe)' },
+            { id: 'drink', label: 'Drinks', default: 'Italian red + sparkling water' }
+        ];
+
+        // State Management
+        let state = JSON.parse(localStorage.getItem('faithreflects_host_table')) || {
+            appetizer: { text: '', done: false },
+            main: { text: '', done: false },
+            side: { text: '', done: false },
+            dessert: { text: '', done: false },
+            drink: { text: '', done: false }
+        };
+
+        // Migration/Fill Empty
+        menuData.forEach(item => {
+            if (!state[item.id] || state[item.id].text === '') {
+                state[item.id] = { text: item.default, done: state[item.id] ? state[item.id].done : false };
+            }
+        });
+
+        // Elements
+        const container = document.getElementById('widgetContainer');
+        const coursesList = document.getElementById('coursesList');
+        const countDisplay = document.getElementById('countDisplay');
+        
+        // Modal Elements
+        const resetModal = document.getElementById('resetModal');
+        const resetTriggerBtn = document.getElementById('resetTriggerBtn');
+        const cancelResetBtn = document.getElementById('cancelResetBtn');
+        const confirmResetBtn = document.getElementById('confirmResetBtn');
+
+        function renderChecklist() {
+            coursesList.innerHTML = menuData.map(item => {
+                const isCompleted = state[item.id].done;
+                return `
+                    <div class="course-row flex items-start space-x-3 p-2 rounded-xl ${isCompleted ? 'completed' : ''}" id="row-${item.id}">
+                        <div class="check-box shadow-sm shrink-0 mt-1" onclick="toggleCourse('${item.id}')">
+                            <svg class="w-4 h-4 check-mark" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <div class="flex-1 w-full min-w-0">
+                            <span class="course-label">${item.label}</span>
+                            <input type="text" id="input-${item.id}" class="course-input" value="${state[item.id].text}" 
+                                oninput="updateText('${item.id}', this.value)" autocomplete="off">
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateVisuals() {
+            let completedCount = 0;
+
+            menuData.forEach(item => {
+                const svgElement = document.getElementById(`item-${item.id}`);
+                const rowElement = document.getElementById(`row-${item.id}`);
+                
+                if (state[item.id].done) {
+                    completedCount++;
+                    svgElement.classList.add('is-placed');
+                    if (rowElement) rowElement.classList.add('completed');
+                } else {
+                    svgElement.classList.remove('is-placed');
+                    if (rowElement) rowElement.classList.remove('completed');
+                }
+            });
+
+            countDisplay.innerText = `${completedCount} / 5 Set`;
+
+            // Ready to Host State
+            if (completedCount === 5) {
+                container.classList.add('is-ready');
+                countDisplay.classList.add('text-[#B48025]');
+            } else {
+                container.classList.remove('is-ready');
+                countDisplay.classList.remove('text-[#B48025]');
+            }
+        }
+
+        window.toggleCourse = function(id) {
+            state[id].done = !state[id].done;
+            localStorage.setItem('faithreflects_host_table', JSON.stringify(state));
+            updateVisuals();
+            renderChecklist();
+        };
+
+        window.updateText = function(id, text) {
+            state[id].text = text;
+            localStorage.setItem('faithreflects_host_table', JSON.stringify(state));
+        };
+
+        // Modal Logic
+        resetTriggerBtn.addEventListener('click', () => resetModal.classList.remove('hidden'));
+        cancelResetBtn.addEventListener('click', () => resetModal.classList.add('hidden'));
+        
+        confirmResetBtn.addEventListener('click', () => {
+            // Keep the text, just uncheck everything
+            menuData.forEach(item => {
+                state[item.id].done = false;
+            });
+            localStorage.setItem('faithreflects_host_table', JSON.stringify(state));
+            
+            updateVisuals();
+            renderChecklist();
+            resetModal.classList.add('hidden');
+        });
+
+        // Initialize
+        renderChecklist();
+        
+        // Small delay to allow SVG to render before applying CSS transition classes to placed items
+        setTimeout(updateVisuals, 100);
+
+    </script>
+</body>
+</html>

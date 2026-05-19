@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Sovereign Vault Dial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        /* Sovereign Light Mode Base */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: transparent; 
+            color: #37352f; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* The Widget Container */
+        .widget-box {
+            background-color: #FCFBF9; /* Ivory Parchment */
+            border: 1px solid #E9E5DC;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.03), inset 0 0 20px rgba(255,255,255,0.5);
+            transition: all 1.5s ease;
+        }
+
+        /* Ambient Glow */
+        .ambient-glow {
+            position: absolute;
+            top: 25%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            transition: background 1s ease;
+        }
+        .is-balanced .ambient-glow {
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 70%);
+            animation: breathe-glow 4s infinite alternate ease-in-out;
+        }
+        
+        @keyframes breathe-glow {
+            0% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; }
+        }
+
+        /* Vault SVG Animations */
+        .vault-segment {
+            fill: none;
+            stroke-width: 28;
+            stroke-linecap: butt;
+            /* Heavy mechanical transitions */
+            transition: stroke-dasharray 0.8s cubic-bezier(0.25, 1, 0.5, 1), transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));
+        }
+        
+        .vault-segment:hover {
+            stroke-width: 32;
+            filter: drop-shadow(0 4px 8px rgba(212, 175, 55, 0.4));
+            z-index: 20;
+        }
+
+        .center-dial {
+            transform-origin: 100px 100px;
+            transform: rotate(90deg); /* Counteracts the SVG's -90deg rotation */
+            transition: transform 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        /* When user saves/locks */
+        .is-locking .center-dial {
+            animation: lockSpin 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes lockSpin {
+            0% { transform: rotate(90deg); }
+            100% { transform: rotate(450deg); }
+        }
+
+        /* Custom Sliders */
+        .asset-row {
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: background 0.3s ease;
+            border: 1px solid transparent;
+        }
+        .asset-row:hover {
+            background-color: #fcfbf9;
+            border-color: #E9E5DC;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 14px;
+            width: 14px;
+            border-radius: 50%;
+            background: #FFFFFF;
+            border: 2px solid var(--track-color, #D4AF37);
+            cursor: pointer;
+            margin-top: -5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.1s, background 0.2s;
+        }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+        
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #E9E5DC;
+            border-radius: 2px;
+        }
+        input[type=range]:focus { outline: none; }
+
+        /* Buttons */
+        .btn-primary {
+            background-color: #37352f;
+            color: #FFFFFF;
+            border: 1px solid #2d2d2d;
+            transition: all 0.4s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .btn-primary:hover { 
+            background-color: #000000; 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+        .btn-primary:active { transform: translateY(1px) scale(0.98); }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #DCD7CA; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #B48025; }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(255,255,255,0.8); }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-sm rounded-3xl p-6 md:p-8 flex flex-col h-[600px] overflow-hidden">
+        
+        <div class="ambient-glow" id="ambientGlow"></div>
+
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-6 z-10 shrink-0">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#A39F96]">@faithreflects</span>
+            <div id="statusBadge" class="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider text-[#8A867D] border border-[#E9E5DC] bg-white flex items-center space-x-1 shadow-sm transition-colors duration-500">
+                <span id="totalDisplay" class="text-[#B48025]">100%</span>
+                <span>Allocated</span>
+            </div>
+        </div>
+
+        <h2 class="serif text-2xl text-[#37352f] mb-1 z-10 shrink-0">Asset Holdings</h2>
+        <p class="text-xs text-[#8A867D] italic mb-4 z-10 shrink-0 text-center">"Stewardship over scarcity."</p>
+
+        <!-- SVG Vault Dial -->
+        <div class="relative w-full h-48 mb-4 z-10 flex justify-center items-center shrink-0">
+            <!-- Rotated -90deg so the donut chart starts at the 12 o'clock position -->
+            <svg viewBox="0 0 200 200" class="w-full h-full overflow-visible" style="transform: rotate(-90deg);">
+                
+                <defs>
+                    <linearGradient id="brassGradOuter" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#FDE68A"/>
+                        <stop offset="30%" stop-color="#D4AF37"/>
+                        <stop offset="70%" stop-color="#B48025"/>
+                        <stop offset="100%" stop-color="#5C451A"/>
+                    </linearGradient>
+                    <linearGradient id="brassGradInner" x1="0%" y1="100%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#FDE68A"/>
+                        <stop offset="50%" stop-color="#FCD34D"/>
+                        <stop offset="100%" stop-color="#D4AF37"/>
+                    </linearGradient>
+                </defs>
+
+                <!-- Outer Vault Rim -->
+                <circle cx="100" cy="100" r="95" fill="#FCFBF9" stroke="#E9E5DC" stroke-width="4"/>
+                <circle cx="100" cy="100" r="88" fill="none" stroke="#DCD7CA" stroke-width="1" stroke-dasharray="2 6"/>
+                <circle cx="100" cy="100" r="40" fill="none" stroke="#E9E5DC" stroke-width="1"/>
+
+                <!-- Dynamic Data Segments -->
+                <g id="segmentsGroup">
+                    <!-- Segments injected by JS -->
+                </g>
+
+                <!-- Center Vault Mechanism -->
+                <g class="center-dial">
+                    <circle cx="100" cy="100" r="30" fill="#FCFBF9" stroke="#E9E5DC" stroke-width="2" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.05))"/>
+                    
+                    <!-- Premium Brass Knob -->
+                    <circle cx="100" cy="100" r="23" fill="url(#brassGradOuter)" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.1))"/>
+                    <circle cx="100" cy="100" r="19" fill="url(#brassGradInner)" stroke="#D4AF37" stroke-width="0.5"/>
+                    
+                    <!-- Elegant Indent/Engraving ring -->
+                    <circle cx="100" cy="100" r="15" fill="none" stroke="#B48025" stroke-width="0.5" opacity="0.5"/>
+                    
+                    <!-- Tiny Elegant Rivets -->
+                    <circle cx="100" cy="79" r="1.5" fill="#5C451A"/>
+                    <circle cx="100" cy="121" r="1.5" fill="#5C451A"/>
+                    <circle cx="79" cy="100" r="1.5" fill="#5C451A"/>
+                    <circle cx="121" cy="100" r="1.5" fill="#5C451A"/>
+
+                    <!-- Engraved Text -->
+                    <text x="101" y="102.5" font-family="'Inter', sans-serif" font-size="7" font-weight="700" fill="#5C451A" text-anchor="middle" style="letter-spacing: 0.25em; filter: drop-shadow(0px 1px 0px rgba(255,255,255,0.6));">VAULT</text>
+                </g>
+            </svg>
+        </div>
+
+        <!-- Sliders Container -->
+        <div class="flex-1 w-full overflow-y-auto custom-scrollbar pr-2 z-10 flex flex-col space-y-2 mb-4" id="slidersContainer">
+            <!-- Injected via JS -->
+        </div>
+
+        <!-- Actions -->
+        <div class="w-full shrink-0 z-10 mt-auto border-t border-[#E9E5DC] pt-4">
+            <button id="lockBtn" class="btn-primary w-full py-3.5 rounded-xl text-xs font-bold uppercase tracking-widest flex items-center justify-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                <span>Lock Allocation</span>
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // Curated Brass/Gold Palette for a cohesive luxury look
+        const colors = [
+            '#B48025', // Deep Brass
+            '#D4AF37', // Classic Gold
+            '#FCD34D', // Light Gold/Yellow
+            '#8A6B22', // Antique Bronze
+            '#D97706', // Copper/Amber
+            '#5C451A'  // Dark Bronze
+        ];
+
+        // Default Data
+        const defaultAssets = [
+            { id: 'index', name: 'Index Funds', val: 55 },
+            { id: 'stocks', name: 'Stocks', val: 15 },
+            { id: 'bonds', name: 'Bonds', val: 10 },
+            { id: 'realestate', name: 'Real Estate', val: 10 },
+            { id: 'crypto', name: 'Crypto', val: 5 },
+            { id: 'cash', name: 'Cash', val: 5 }
+        ];
+
+        // State
+        let state = JSON.parse(localStorage.getItem('sovereign_vault_holdings')) || defaultAssets;
+
+        // Math Constants for Donut Chart
+        const R = 60; // Radius of the donut segments
+        const C = 2 * Math.PI * R; // Circumference (~377)
+
+        // Elements
+        const container = document.getElementById('widgetContainer');
+        const segmentsGroup = document.getElementById('segmentsGroup');
+        const slidersContainer = document.getElementById('slidersContainer');
+        const totalDisplay = document.getElementById('totalDisplay');
+        const statusBadge = document.getElementById('statusBadge');
+        const lockBtn = document.getElementById('lockBtn');
+
+        function renderSliders() {
+            slidersContainer.innerHTML = state.map((asset, index) => {
+                const color = colors[index % colors.length];
+                return `
+                    <div class="asset-row" style="--track-color: ${color};">
+                        <div class="flex justify-between items-end mb-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="w-2 h-2 rounded-full" style="background-color: ${color};"></span>
+                                <span class="text-[10px] font-bold tracking-widest uppercase text-[#525252]">${asset.name}</span>
+                            </div>
+                            <span class="text-[10px] font-semibold text-[#37352f]" id="val-${asset.id}">${asset.val}%</span>
+                        </div>
+                        <input type="range" min="0" max="100" value="${asset.val}" 
+                               oninput="updateAsset('${asset.id}', this.value)">
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.updateAsset = function(id, value) {
+            const asset = state.find(a => a.id === id);
+            if (asset) {
+                asset.val = parseInt(value);
+                document.getElementById(`val-${id}`).innerText = `${value}%`;
+                
+                // Real-time update of chart without saving to DB yet (save happens on lock)
+                updateChart();
+            }
+        };
+
+        function updateChart() {
+            // Calculate sum to normalize the chart to 100% visual circle
+            const total = state.reduce((sum, asset) => sum + asset.val, 0);
+            
+            // Visual feedback on the total
+            totalDisplay.innerText = `${total}%`;
+            if (total === 100) {
+                statusBadge.classList.replace('border-[#E9E5DC]', 'border-[#D4AF37]');
+                statusBadge.classList.replace('bg-white', 'bg-[#FFFBEB]');
+                totalDisplay.classList.replace('text-[#EF4444]', 'text-[#B48025]');
+                container.classList.add('is-balanced');
+            } else {
+                statusBadge.classList.replace('border-[#D4AF37]', 'border-[#E9E5DC]');
+                statusBadge.classList.replace('bg-[#FFFBEB]', 'bg-white');
+                container.classList.remove('is-balanced');
+                
+                if (total > 100) {
+                    totalDisplay.classList.replace('text-[#B48025]', 'text-[#EF4444]'); // Red if over
+                } else {
+                    totalDisplay.classList.replace('text-[#EF4444]', 'text-[#B48025]');
+                }
+            }
+
+            // Draw SVG Segments
+            segmentsGroup.innerHTML = '';
+            let cumulativePercentage = 0;
+
+            state.forEach((asset, index) => {
+                if (asset.val === 0) return; // Skip empty
+                
+                const color = colors[index % colors.length];
+                
+                // We map the values to fit inside the circle.
+                // Even if total > 100 or < 100, we normalize so it fills the circle visually.
+                // If you prefer strict 100% filling, replace `total` below with `100`.
+                // Strict 100% mapping:
+                const drawTotal = Math.max(total, 100); // If less than 100, leaves a gap. If more, it normalizes to fit.
+                
+                const percentage = (asset.val / drawTotal) * 100;
+                
+                // SVG dasharray: [dash length, gap length]
+                const dashLength = (percentage / 100) * C;
+                
+                // Rotation angle for this segment
+                const rotation = (cumulativePercentage / drawTotal) * 360;
+
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("cx", "100");
+                circle.setAttribute("cy", "100");
+                circle.setAttribute("r", R);
+                circle.setAttribute("class", "vault-segment");
+                circle.setAttribute("stroke", color);
+                circle.setAttribute("stroke-dasharray", `${dashLength} ${C}`);
+                
+                // Apply rotation, but set origin to center
+                circle.style.transformOrigin = "100px 100px";
+                circle.style.transform = `rotate(${rotation}deg)`;
+
+                segmentsGroup.appendChild(circle);
+                
+                cumulativePercentage += asset.val;
+            });
+        }
+
+        lockBtn.addEventListener('click', () => {
+            // Save to local storage
+            localStorage.setItem('sovereign_vault_holdings', JSON.stringify(state));
+            
+            // Interaction feedback
+            lockBtn.style.transform = 'scale(0.95)';
+            container.classList.add('is-locking');
+            
+            setTimeout(() => {
+                lockBtn.style.transform = 'scale(1)';
+                container.classList.remove('is-locking');
+            }, 1500);
+        });
+
+        // Initialize
+        renderSliders();
+        // Slight delay to allow CSS transitions to engage for the initial draw
+        setTimeout(updateChart, 50);
+
+    </script>
+</body>
+</html>
