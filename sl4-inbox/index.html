@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Architect's Capture Tray</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        /* Sovereign Light Mode Base */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: transparent; 
+            color: #37352f; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* The Widget Container */
+        .widget-box {
+            background-color: #FCFBF9; /* Ivory Parchment */
+            border: 1px solid #E9E5DC;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.03), inset 0 0 20px rgba(255,255,255,0.5);
+            transition: all 1.5s ease;
+        }
+
+        /* Ambient Glow */
+        .ambient-glow {
+            position: absolute;
+            top: 25%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Brass & Leather Tray Visuals */
+        .tray-container {
+            position: relative;
+            width: 220px;
+            height: 140px;
+            perspective: 800px;
+        }
+
+        .tray-base {
+            fill: #2A1C11; /* Dark Leather */
+            stroke: #1A100A;
+            stroke-width: 2;
+            filter: drop-shadow(inset 0 10px 20px rgba(0,0,0,0.8));
+        }
+
+        .tray-rim {
+            fill: none;
+            stroke: url(#brassGrad);
+            stroke-width: 8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            filter: drop-shadow(0 8px 15px rgba(0,0,0,0.15));
+        }
+
+        .tray-inner-rim {
+            fill: none;
+            stroke: #FDE68A;
+            stroke-width: 1.5;
+            opacity: 0.6;
+        }
+
+        /* Physical Paper Slips */
+        .paper-slip {
+            position: absolute;
+            width: 110px;
+            height: 60px;
+            background-color: #FFFAF0;
+            border: 1px solid #E9E5DC;
+            border-radius: 2px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1), inset 0 0 10px rgba(212, 175, 55, 0.05);
+            /* Centered in tray */
+            top: 50%;
+            left: 50%;
+            margin-left: -55px;
+            margin-top: -30px;
+            display: flex;
+            flex-direction: column;
+            padding: 6px 8px;
+            z-index: 10;
+        }
+
+        /* Lines on the paper to make it look like a note */
+        .paper-line {
+            width: 100%;
+            height: 2px;
+            background-color: #DCD7CA;
+            margin-bottom: 6px;
+            border-radius: 1px;
+        }
+        .paper-line.short { width: 60%; }
+        .paper-line.header { width: 40%; background-color: #B48025; margin-bottom: 8px; height: 3px; }
+
+        /* Drop Animation */
+        .falling-paper {
+            animation: drop-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes drop-in {
+            0% { 
+                transform: translateY(-150px) translateX(var(--tx)) scale(1.1) rotate(calc(var(--rot) - 15deg)); 
+                opacity: 0; 
+                filter: drop-shadow(0 30px 15px rgba(0,0,0,0.2)); 
+            }
+            60% { 
+                transform: translateY(5px) translateX(var(--tx)) scale(0.98) rotate(var(--rot)); 
+                opacity: 1; 
+                filter: drop-shadow(0 2px 3px rgba(0,0,0,0.1)); 
+            }
+            100% { 
+                transform: translateY(var(--ty)) translateX(var(--tx)) scale(1) rotate(var(--rot)); 
+                opacity: 1; 
+                filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08)); 
+            }
+        }
+
+        /* Process Animation (Flying away) */
+        .processing-paper {
+            animation: fly-away 0.5s cubic-bezier(0.5, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes fly-away {
+            0% { transform: translateY(var(--ty)) translateX(var(--tx)) scale(1) rotate(var(--rot)); opacity: 1; }
+            100% { transform: translateY(-50px) translateX(150px) scale(0.5) rotate(45deg); opacity: 0; }
+        }
+
+        /* List Items */
+        .inbox-row {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            background-color: #FFFFFF;
+            border-color: #E9E5DC;
+            margin-bottom: 8px;
+        }
+        .inbox-row:hover {
+            border-color: #DCD7CA;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            transform: translateX(4px);
+        }
+        
+        .check-box {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            border: 2px solid #DCD7CA;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            background-color: #fff;
+        }
+        
+        .inbox-row:hover .check-box {
+            border-color: #B48025;
+            background-color: #FFFAF0;
+        }
+
+        .check-mark {
+            stroke-dasharray: 20;
+            stroke-dashoffset: 20;
+            transition: stroke-dashoffset 0.3s ease-in-out;
+            stroke: #B48025;
+        }
+
+        .inbox-row.processing {
+            opacity: 0;
+            transform: translateX(20px);
+            pointer-events: none;
+        }
+        .inbox-row.processing .check-box {
+            border-color: #B48025;
+            background-color: #FFFAF0;
+        }
+        .inbox-row.processing .check-mark { stroke-dashoffset: 0; }
+
+        .task-label {
+            font-size: 13px;
+            color: #37352f;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        .inbox-row.processing .task-label {
+            color: #A39F96;
+            text-decoration: line-through;
+        }
+
+        /* Inputs & Buttons */
+        input[type="text"] {
+            background-color: #FFFFFF;
+            border: 1px solid #E9E5DC;
+            color: #37352f;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
+        }
+        input:focus {
+            outline: none;
+            border-color: #D4AF37;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.1), inset 0 2px 4px rgba(0,0,0,0.01);
+        }
+        input::placeholder { color: #A39F96; font-style: italic; }
+
+        .btn-primary {
+            background-color: #37352f;
+            color: #FFFFFF;
+            border: 1px solid #2d2d2d;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-primary:hover { 
+            background-color: #1a1a1a; 
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+        .btn-primary:active { 
+            transform: translateY(2px) scale(0.97); /* The mechanical clack */
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            background-color: #000;
+        }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #DCD7CA; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #B48025; }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(255,255,255,0.8); }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-md rounded-3xl p-6 md:p-8 flex flex-col h-[650px] overflow-hidden">
+        
+        <div class="ambient-glow"></div>
+
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-6 z-10 shrink-0">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#A39F96]">@faithreflects</span>
+            <div class="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider text-[#8A867D] border border-[#E9E5DC] bg-white flex items-center space-x-1 shadow-sm">
+                <span id="itemCount" class="text-[#B48025]">3</span>
+                <span>Unprocessed</span>
+            </div>
+        </div>
+
+        <h2 class="serif text-2xl text-[#37352f] mb-1 z-10 shrink-0">Capture Inbox</h2>
+        <p class="text-[11px] text-[#8A867D] italic mb-6 z-10 shrink-0">"Everything that's on your mind — out of your head, into the system."</p>
+
+        <!-- SVG Brass Tray Area -->
+        <div class="relative w-full h-[160px] mb-4 z-10 shrink-0 flex justify-center items-center">
+            
+            <div class="tray-container">
+                <!-- SVG Base -->
+                <svg viewBox="0 0 220 140" class="w-full h-full absolute inset-0 overflow-visible">
+                    <defs>
+                        <linearGradient id="brassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#FCD34D"/>
+                            <stop offset="40%" stop-color="#D4AF37"/>
+                            <stop offset="80%" stop-color="#B48025"/>
+                            <stop offset="100%" stop-color="#8B6508"/>
+                        </linearGradient>
+                    </defs>
+                    
+                    <!-- Shadow -->
+                    <rect x="15" y="25" width="190" height="110" rx="12" fill="rgba(0,0,0,0.05)" filter="blur(4px)"/>
+                    
+                    <!-- Inner Leather Pad -->
+                    <rect x="15" y="15" width="190" height="110" rx="8" class="tray-base"/>
+                    
+                    <!-- Outer Brass Rim -->
+                    <rect x="10" y="10" width="200" height="120" rx="12" class="tray-rim"/>
+                    <rect x="14" y="14" width="192" height="112" rx="10" class="tray-inner-rim"/>
+                </svg>
+
+                <!-- Papers injected here -->
+                <div id="trayPapers" class="absolute inset-0 z-10"></div>
+            </div>
+
+        </div>
+
+        <!-- Scrollable List of Inbox Items -->
+        <div class="flex-1 w-full overflow-y-auto custom-scrollbar pr-2 z-10 min-h-0 relative mb-4" id="inboxList">
+            <!-- Items injected by JS -->
+        </div>
+
+        <!-- Input Area (Fixed at bottom) -->
+        <div class="w-full z-10 shrink-0 border-t border-[#E9E5DC] pt-4 mt-auto">
+            <p class="text-[9px] font-bold tracking-widest uppercase text-[#A39F96] mb-2 pl-1">New Capture</p>
+            <div class="flex space-x-2">
+                <input type="text" id="taskInput" placeholder="A fleeting thought or task..." class="flex-1 rounded-xl px-4 py-3.5 text-sm font-medium" autocomplete="off">
+                <button id="captureBtn" class="btn-primary px-5 rounded-xl text-xs font-bold uppercase tracking-widest flex items-center justify-center space-x-1 shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    <span>Drop</span>
+                </button>
+            </div>
+            <div class="w-full flex justify-between items-center mt-3 px-1">
+                <p class="text-[9px] text-[#A39F96] uppercase tracking-widest">Process daily into projects or trash.</p>
+                <button id="clearAllBtn" class="text-[9px] text-[#EF4444] uppercase tracking-widest hover:underline transition-all">Empty Tray</button>
+            </div>
+        </div>
+
+        <!-- Empty Tray Confirmation Modal -->
+        <div id="clearModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#FCFBF9] rounded-2xl p-6 w-full max-w-[280px] border border-[#E9E5DC] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#37352f]">Empty the Tray?</h3>
+                <p class="text-xs text-[#8A867D] mb-6">Are you sure you want to permanently delete all unprocessed items?</p>
+                <div class="flex space-x-3">
+                    <button id="cancelClearBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-[#8A867D] hover:bg-gray-100 border border-transparent transition-colors">Cancel</button>
+                    <button id="confirmClearBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#EF4444] text-white hover:bg-red-600 transition-colors shadow-md">Empty All</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Default Data matching the user's mockup exactly
+        const defaultItems = [
+            { id: 1, text: "Follow up with Sarah re: partnership", rot: -2, tx: -5, ty: 2 },
+            { id: 2, text: "Research podcast hosting (Transistor vs. Buzzsprout)", rot: 4, tx: 8, ty: -4 },
+            { id: 3, text: "Book dentist appointment", rot: -5, tx: -2, ty: 5 }
+        ];
+
+        // State Management
+        let inbox = JSON.parse(localStorage.getItem('sovereign_inbox')) || [...defaultItems];
+
+        // Elements
+        const trayPapers = document.getElementById('trayPapers');
+        const inboxList = document.getElementById('inboxList');
+        const itemCount = document.getElementById('itemCount');
+        const taskInput = document.getElementById('taskInput');
+        const captureBtn = document.getElementById('captureBtn');
+        
+        // Modal Elements
+        const clearModal = document.getElementById('clearModal');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const cancelClearBtn = document.getElementById('cancelClearBtn');
+        const confirmClearBtn = document.getElementById('confirmClearBtn');
+
+        // Paper HTML Generator
+        function getPaperHtml(item, isNew = false) {
+            const zIndex = 10 + item.id; // Ensure newer items stack on top
+            const animationClass = isNew ? 'falling-paper' : '';
+            
+            return `
+                <div id="paper-${item.id}" class="paper-slip ${animationClass}" style="--rot: ${item.rot}deg; --tx: ${item.tx}px; --ty: ${item.ty}px; z-index: ${zIndex}; ${!isNew ? `transform: translateY(${item.ty}px) translateX(${item.tx}px) rotate(${item.rot}deg);` : ''}">
+                    <div class="paper-line header"></div>
+                    <div class="paper-line"></div>
+                    <div class="paper-line"></div>
+                    <div class="paper-line short"></div>
+                </div>
+            `;
+        }
+
+        // Render Functions
+        function renderVisualTray(newItem = null) {
+            if (newItem) {
+                // Just append the new one so we don't re-render/re-animate existing ones
+                trayPapers.insertAdjacentHTML('beforeend', getPaperHtml(newItem, true));
+            } else {
+                // Initial load
+                trayPapers.innerHTML = inbox.map(item => getPaperHtml(item, false)).join('');
+            }
+        }
+
+        function renderList() {
+            itemCount.innerText = inbox.length;
+            
+            if (inbox.length === 0) {
+                inboxList.innerHTML = `
+                    <div class="w-full h-full flex items-center justify-center">
+                        <p class="text-xs text-[#A39F96] italic text-center">Your mind is clear. The tray is empty.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Reverse so newest is at the top of the list
+            inboxList.innerHTML = [...inbox].reverse().map(item => `
+                <div class="inbox-row flex items-center justify-between" id="row-${item.id}" onclick="processItem(${item.id})">
+                    <div class="flex items-center space-x-3 min-w-0 flex-1">
+                        <div class="check-box shadow-sm shrink-0">
+                            <svg class="w-4 h-4 check-mark" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <span class="task-label truncate">${item.text}</span>
+                    </div>
+                    <div class="shrink-0 pl-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span class="text-[9px] font-bold uppercase tracking-widest text-[#B48025]">Process</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Logic
+        function captureThought() {
+            const text = taskInput.value.trim();
+            if (!text) {
+                taskInput.focus();
+                return;
+            }
+
+            // Generate physically grounded, randomized traits for the paper
+            const newItem = {
+                id: Date.now(),
+                text: text,
+                rot: (Math.random() * 16) - 8, // -8deg to +8deg
+                tx: (Math.random() * 20) - 10, // -10px to +10px
+                ty: (Math.random() * 16) - 8   // -8px to +8px
+            };
+
+            inbox.push(newItem);
+            localStorage.setItem('sovereign_inbox', JSON.stringify(inbox));
+
+            taskInput.value = '';
+            
+            // Visual Updates
+            renderVisualTray(newItem);
+            renderList();
+            
+            // Scroll list to top
+            inboxList.scrollTop = 0;
+        }
+
+        window.processItem = function(id) {
+            const row = document.getElementById(`row-${id}`);
+            const paper = document.getElementById(`paper-${id}`);
+
+            // 1. Trigger Animations
+            if (row) row.classList.add('processing');
+            if (paper) {
+                paper.classList.remove('falling-paper');
+                void paper.offsetWidth; // Trigger reflow
+                paper.classList.add('processing-paper');
+            }
+
+            // 2. Remove from state after animation finishes
+            setTimeout(() => {
+                inbox = inbox.filter(item => item.id !== id);
+                localStorage.setItem('sovereign_inbox', JSON.stringify(inbox));
+                
+                // Re-render UI entirely to clean up DOM
+                renderList();
+                renderVisualTray(); // re-renders without the removed paper
+            }, 500); // 500ms matches the CSS animation duration
+        };
+
+        // Event Listeners
+        captureBtn.addEventListener('click', captureThought);
+        taskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') captureThought();
+        });
+
+        // Clear All Logic
+        clearAllBtn.addEventListener('click', () => {
+            if (inbox.length > 0) clearModal.classList.remove('hidden');
+        });
+        
+        cancelClearBtn.addEventListener('click', () => {
+            clearModal.classList.add('hidden');
+        });
+        
+        confirmClearBtn.addEventListener('click', () => {
+            // Animate all papers flying away
+            inbox.forEach(item => {
+                const paper = document.getElementById(`paper-${item.id}`);
+                if (paper) {
+                    paper.style.animationDelay = `${Math.random() * 0.2}s`;
+                    paper.classList.add('processing-paper');
+                }
+            });
+
+            setTimeout(() => {
+                inbox = [];
+                localStorage.setItem('sovereign_inbox', JSON.stringify(inbox));
+                renderList();
+                renderVisualTray();
+                clearModal.classList.add('hidden');
+            }, 600);
+        });
+
+        // Init
+        renderVisualTray();
+        renderList();
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Sacred Minimum Vault</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        /* Sovereign Light Mode Base */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: transparent; 
+            color: #37352f; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* The Widget Container */
+        .widget-box {
+            background-color: #FCFBF9; /* Ivory Parchment */
+            border: 1px solid #E9E5DC;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.03), inset 0 0 20px rgba(255,255,255,0.5);
+            transition: all 1.5s ease;
+        }
+
+        /* Ambient Glow */
+        .ambient-glow {
+            position: absolute;
+            top: 25%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.0) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            transition: background 1.5s ease;
+        }
+        .is-unlocked .ambient-glow {
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 70%);
+            animation: breathe-glow 4s infinite alternate ease-in-out;
+        }
+        
+        @keyframes breathe-glow {
+            0% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; filter: drop-shadow(0 0 15px rgba(245, 158, 11, 0.2)); }
+        }
+
+        /* --- VAULT MECHANISM --- */
+        .vault-casing {
+            background: linear-gradient(180deg, #2D2416 0%, #1A140B 100%);
+            border: 4px solid #D4AF37;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15), inset 0 2px 10px rgba(0,0,0,0.8);
+            border-radius: 16px;
+            position: relative;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            gap: 6px;
+        }
+        /* Metal trim details */
+        .vault-casing::before {
+            content: ''; position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px;
+            border: 1px solid rgba(252, 211, 77, 0.3); border-radius: 10px; pointer-events: none;
+        }
+        .rivet {
+            position: absolute; width: 6px; height: 6px; border-radius: 50%;
+            background: #B48025; box-shadow: inset -1px -1px 2px rgba(0,0,0,0.5), 1px 1px 2px rgba(255,255,255,0.3);
+        }
+        .r-tl { top: 8px; left: 8px; } .r-tr { top: 8px; right: 8px; }
+        .r-bl { bottom: 8px; left: 8px; } .r-br { bottom: 8px; right: 8px; }
+
+        /* Tumbler Windows */
+        .tumbler-window {
+            width: 36px;
+            height: 54px;
+            background-color: #0A0A0A;
+            border-radius: 6px;
+            border: 2px solid #111;
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.9), 0 1px 0 rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+        }
+        /* Glass reflection overlay */
+        .tumbler-window::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 40%, rgba(0,0,0,0.4) 100%);
+            pointer-events: none; z-index: 10;
+        }
+
+        /* Spinning Strip */
+        .tumbler-strip {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform: translateY(0); /* 0 = dash, -54px = check */
+        }
+        .tumbler-face {
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+        }
+        .face-empty { color: #333333; text-shadow: 0 -1px 1px #000; }
+        .face-locked { color: #FCD34D; text-shadow: 0 0 10px rgba(245, 158, 11, 0.6); }
+
+        .is-checked .tumbler-strip {
+            transform: translateY(-54px);
+        }
+
+        /* Vault Unlock Animation */
+        .vault-flash {
+            position: absolute; inset: 0; background: #ffffff; z-index: 50;
+            opacity: 0; pointer-events: none; border-radius: 12px;
+        }
+        .is-unlocked .vault-flash {
+            animation: flash-bang 1s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+        }
+        @keyframes flash-bang {
+            0% { opacity: 0; }
+            20% { opacity: 0.8; }
+            100% { opacity: 0; }
+        }
+
+        /* --- THE VICTORY TOKEN JAR --- */
+        .jar-container {
+            position: relative;
+            width: 50px;
+            height: 70px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.6) 100%);
+            border: 2px solid rgba(220, 220, 215, 0.8);
+            border-top: none;
+            border-radius: 0 0 15px 15px;
+            box-shadow: inset 0 -5px 10px rgba(0,0,0,0.03);
+            overflow: hidden;
+            backdrop-filter: blur(2px);
+        }
+        .jar-lip {
+            width: 54px; height: 8px; background: rgba(220, 220, 215, 0.9);
+            border-radius: 4px; position: absolute; top: -8px; left: -4px;
+        }
+
+        /* The Golden Token */
+        .token {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: radial-gradient(circle at 30% 30%, #FDE68A 0%, #D4AF37 50%, #B48025 100%);
+            border-radius: 50%;
+            border: 1px solid #FCD34D;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2), inset 0 -1px 2px rgba(139, 101, 8, 0.8);
+            z-index: 20;
+        }
+
+        /* Token Drop Animation */
+        .dropping-token {
+            animation: arcDrop 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+        @keyframes arcDrop {
+            0% { transform: translate(0, 0) scale(0.5); opacity: 0; }
+            20% { transform: translate(20px, -40px) scale(1.2); opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(1); opacity: 0.9; }
+        }
+
+        /* Checklist Items */
+        .habit-row {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            background-color: #FFFFFF;
+            border-color: #E9E5DC;
+            margin-bottom: 8px;
+        }
+        .habit-row:hover:not(.completed) {
+            border-color: #DCD7CA;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            transform: translateX(4px);
+        }
+        .habit-row.completed {
+            background-color: #FCFBF9;
+            border-color: transparent;
+        }
+        
+        .check-box {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            border: 2px solid #DCD7CA;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            background-color: #fff;
+        }
+        .habit-row:hover .check-box { border-color: #B48025; background-color: #FFFAF0; }
+        
+        .habit-row.completed .check-box {
+            background-color: #37352f;
+            border-color: #37352f;
+        }
+
+        .check-mark {
+            stroke-dasharray: 20;
+            stroke-dashoffset: 20;
+            transition: stroke-dashoffset 0.3s ease-in-out 0.1s;
+            stroke: #fff;
+        }
+        .habit-row.completed .check-mark { stroke-dashoffset: 0; }
+
+        .habit-label {
+            font-size: 13px;
+            color: #37352f;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        .habit-row.completed .habit-label {
+            color: #A39F96;
+            text-decoration: line-through;
+        }
+
+        /* Buttons & Inputs */
+        .btn-reset {
+            background-color: transparent;
+            color: #A39F96;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid transparent;
+        }
+        .btn-reset:hover { 
+            color: #37352f; 
+            border-bottom-color: #37352f;
+        }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #DCD7CA; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #B48025; }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(255,255,255,0.8); }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-2xl rounded-3xl p-6 md:p-10 flex flex-col md:flex-row h-auto min-h-[580px] overflow-hidden gap-8">
+        
+        <div class="ambient-glow"></div>
+
+        <!-- Left Side: The Vault Visualizer -->
+        <div class="flex-shrink-0 flex flex-col items-center w-full md:w-[320px] h-full relative z-20">
+            
+            <div class="w-full flex justify-between items-center mb-6">
+                <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#A39F96]">@faithreflects</span>
+            </div>
+            
+            <h2 class="serif text-3xl text-[#37352f] mb-1 text-center w-full">The Sacred Minimum</h2>
+            <p class="text-[11px] text-[#8A867D] italic mb-8 text-center w-full">"Done every day. Without exception."</p>
+
+            <!-- The Combination Vault -->
+            <div class="vault-casing w-full mt-4" id="vaultContainer">
+                <div class="vault-flash"></div>
+                <div class="rivet r-tl"></div><div class="rivet r-tr"></div>
+                <div class="rivet r-bl"></div><div class="rivet r-br"></div>
+                
+                <!-- Tumblers (1 for each habit) -->
+                <!-- Tumbler 1 -->
+                <div class="tumbler-window" id="tumbler-0">
+                    <div class="tumbler-strip">
+                        <div class="tumbler-face face-empty">—</div>
+                        <div class="tumbler-face face-locked">✓</div>
+                    </div>
+                </div>
+                <!-- Tumbler 2 -->
+                <div class="tumbler-window" id="tumbler-1">
+                    <div class="tumbler-strip">
+                        <div class="tumbler-face face-empty">—</div>
+                        <div class="tumbler-face face-locked">✓</div>
+                    </div>
+                </div>
+                <!-- Tumbler 3 -->
+                <div class="tumbler-window" id="tumbler-2">
+                    <div class="tumbler-strip">
+                        <div class="tumbler-face face-empty">—</div>
+                        <div class="tumbler-face face-locked">✓</div>
+                    </div>
+                </div>
+                <!-- Tumbler 4 -->
+                <div class="tumbler-window" id="tumbler-3">
+                    <div class="tumbler-strip">
+                        <div class="tumbler-face face-empty">—</div>
+                        <div class="tumbler-face face-locked">✓</div>
+                    </div>
+                </div>
+                <!-- Tumbler 5 -->
+                <div class="tumbler-window" id="tumbler-4">
+                    <div class="tumbler-strip">
+                        <div class="tumbler-face face-empty">—</div>
+                        <div class="tumbler-face face-locked">✓</div>
+                    </div>
+                </div>
+                <!-- Tumbler 6 -->
+                <div class="tumbler-window" id="tumbler-5">
+                    <div class="tumbler-strip">
+                        <div class="tumbler-face face-empty">—</div>
+                        <div class="tumbler-face face-locked">✓</div>
+                    </div>
+                </div>
+                <!-- Tumbler 7 -->
+                <div class="tumbler-window" id="tumbler-6">
+                    <div class="tumbler-strip">
+                        <div class="tumbler-face face-empty">—</div>
+                        <div class="tumbler-face face-locked">✓</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vault Status Text -->
+            <div class="mt-6 mb-auto w-full text-center h-6">
+                <span id="vaultStatus" class="text-[10px] font-bold tracking-widest uppercase text-[#A39F96] transition-colors duration-500">
+                    Awaiting Alignment
+                </span>
+            </div>
+
+            <!-- The Token Jar Area -->
+            <div class="w-full flex items-end justify-between mt-auto pt-6 border-t border-[#E9E5DC]">
+                <div class="flex flex-col">
+                    <span class="text-[9px] font-bold tracking-widest uppercase text-[#8A867D] mb-1">Lifetime Victories</span>
+                    <span class="serif text-3xl text-[#B48025]" id="tokenCountDisplay">0</span>
+                </div>
+
+                <div class="relative mt-2 mr-2">
+                    <div class="jar-lip"></div>
+                    <div class="jar-container" id="tokenJar">
+                        <!-- Tokens injected here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Particle Container for falling token -->
+            <div id="particleLayer" class="absolute inset-0 pointer-events-none z-50"></div>
+
+        </div>
+
+        <!-- Right Side: The Non-Negotiables Checklist -->
+        <div class="flex-1 w-full flex flex-col justify-center z-20 min-h-0 pl-2 md:pl-0 border-t md:border-t-0 md:border-l border-[#E9E5DC] pt-6 md:pt-0 md:pl-8">
+            
+            <div class="flex justify-between items-end mb-4 shrink-0">
+                <span class="text-[11px] font-bold tracking-widest uppercase text-[#B48025]">Daily Non-Negotiables</span>
+                <span class="text-[10px] font-semibold text-[#8A867D]" id="completedCountDisplay">0 / 7 Aligned</span>
+            </div>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-1" id="habitsList">
+                <!-- Injected via JS -->
+            </div>
+
+            <!-- Reset Button -->
+            <button id="resetTriggerBtn" class="mt-6 text-[9px] tracking-widest uppercase pb-0.5 z-10 shrink-0 btn-reset self-start">
+                Reset Vault (New Day)
+            </button>
+
+        </div>
+
+        <!-- Custom Reset Modal -->
+        <div id="resetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#FCFBF9] rounded-2xl p-6 w-full max-w-[260px] border border-[#E9E5DC] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#37352f]">Reset Vault?</h3>
+                <p class="text-xs text-[#8A867D] mb-6">This will scramble the tumblers to begin a new day. Your lifetime tokens will be saved.</p>
+                <div class="flex space-x-3">
+                    <button id="cancelResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-[#8A867D] hover:bg-gray-100 border border-transparent transition-colors">Cancel</button>
+                    <button id="confirmResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#37352f] text-white hover:bg-black transition-colors shadow-md">Reset</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Default Habits from the user's mockups
+        const habits = [
+            { id: 0, icon: '🙏', text: 'Time in prayer' },
+            { id: 1, icon: '📖', text: 'Read 10 pages' },
+            { id: 2, icon: '💧', text: '3L of water' },
+            { id: 3, icon: '🚶', text: '10K steps' },
+            { id: 4, icon: '✍️', text: 'Evening reflection' },
+            { id: 5, icon: '💤', text: '7+ hours sleep' },
+            { id: 6, icon: '📵', text: '1 hour no-screens' }
+        ];
+
+        // State Management
+        const today = new Date().toDateString();
+        let state = JSON.parse(localStorage.getItem('faithreflects_sacred_vault')) || {
+            date: today,
+            checked: Array(7).fill(false),
+            lifetimeTokens: 0
+        };
+
+        // Auto-reset if it's a new day, keep tokens
+        if (state.date !== today) {
+            state.date = today;
+            state.checked = Array(7).fill(false);
+            localStorage.setItem('faithreflects_sacred_vault', JSON.stringify(state));
+        }
+
+        // Elements
+        const container = document.getElementById('widgetContainer');
+        const vaultContainer = document.getElementById('vaultContainer');
+        const habitsList = document.getElementById('habitsList');
+        const completedCountDisplay = document.getElementById('completedCountDisplay');
+        const vaultStatus = document.getElementById('vaultStatus');
+        const tokenCountDisplay = document.getElementById('tokenCountDisplay');
+        const tokenJar = document.getElementById('tokenJar');
+        const particleLayer = document.getElementById('particleLayer');
+        
+        // Modal Elements
+        const resetModal = document.getElementById('resetModal');
+        const resetTriggerBtn = document.getElementById('resetTriggerBtn');
+        const cancelResetBtn = document.getElementById('cancelResetBtn');
+        const confirmResetBtn = document.getElementById('confirmResetBtn');
+
+        let isUnlocking = false;
+
+        function renderList() {
+            habitsList.innerHTML = habits.map((h, i) => {
+                const isCompleted = state.checked[i];
+                return `
+                    <div class="habit-row flex items-center space-x-4 ${isCompleted ? 'completed' : ''}" onclick="toggleHabit(${i})">
+                        <div class="check-box shadow-sm shrink-0">
+                            <svg class="w-4 h-4 check-mark" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <div class="flex items-center space-x-2 min-w-0">
+                            <span class="text-sm opacity-80 shrink-0">${h.icon}</span>
+                            <span class="habit-label truncate">${h.text}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderTokens() {
+            tokenCountDisplay.innerText = state.lifetimeTokens;
+            tokenJar.innerHTML = '';
+            
+            // Render up to 25 physical tokens in the jar to prevent crowding
+            const displayTokens = Math.min(state.lifetimeTokens, 25);
+            
+            for(let i=0; i<displayTokens; i++) {
+                const token = document.createElement('div');
+                token.className = 'token';
+                
+                // Random pile positioning
+                const bottom = (i * 2) + Math.random() * 5; // Stack up
+                const left = 5 + Math.random() * 25; // Random X spread
+                
+                token.style.bottom = `${bottom}px`;
+                token.style.left = `${left}px`;
+                token.style.zIndex = i;
+                
+                tokenJar.appendChild(token);
+            }
+        }
+
+        function triggerUnlockAnimation() {
+            isUnlocking = true;
+            container.classList.add('is-unlocked');
+            
+            vaultStatus.innerText = "Vault Unlocked";
+            vaultStatus.classList.remove('text-[#A39F96]');
+            vaultStatus.classList.add('text-[#D4AF37]');
+
+            // 1. Drop the token
+            setTimeout(() => {
+                const token = document.createElement('div');
+                token.className = 'token dropping-token';
+                
+                // Get coords to arc from vault to jar
+                const vaultRect = vaultContainer.getBoundingClientRect();
+                const jarRect = tokenJar.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+                
+                const startX = (vaultRect.left - containerRect.left) + (vaultRect.width / 2);
+                const startY = (vaultRect.bottom - containerRect.top);
+                
+                const targetX = (jarRect.left - containerRect.left) + 15 - startX; // Relative to start
+                const targetY = (jarRect.top - containerRect.top) + 40 - startY;
+                
+                token.style.left = `${startX}px`;
+                token.style.top = `${startY}px`;
+                token.style.setProperty('--tx', `${targetX}px`);
+                token.style.setProperty('--ty', `${targetY}px`);
+                
+                particleLayer.appendChild(token);
+
+                // Add to count and render jar after animation
+                setTimeout(() => {
+                    if (particleLayer.contains(token)) token.remove();
+                    state.lifetimeTokens++;
+                    localStorage.setItem('faithreflects_sacred_vault', JSON.stringify(state));
+                    renderTokens();
+                    isUnlocking = false;
+                }, 1000);
+
+            }, 600); // Wait for the flash animation to peak
+        }
+
+        function updateVisuals(justCheckedIndex = -1) {
+            const completedCount = state.checked.filter(Boolean).length;
+            completedCountDisplay.innerText = `${completedCount} / 7 Aligned`;
+
+            // Update Tumblers
+            for(let i=0; i<7; i++) {
+                const tumbler = document.getElementById(`tumbler-${i}`);
+                if (state.checked[i]) {
+                    tumbler.classList.add('is-checked');
+                } else {
+                    tumbler.classList.remove('is-checked');
+                }
+            }
+
+            // Check if freshly unlocked
+            if (completedCount === 7) {
+                // If it was just triggered now (index passed)
+                if (justCheckedIndex > -1 && !container.classList.contains('is-unlocked')) {
+                    triggerUnlockAnimation();
+                } else if (!container.classList.contains('is-unlocked')) {
+                    // Loaded already unlocked
+                    container.classList.add('is-unlocked');
+                    vaultStatus.innerText = "Vault Unlocked";
+                    vaultStatus.classList.remove('text-[#A39F96]');
+                    vaultStatus.classList.add('text-[#D4AF37]');
+                }
+            } else {
+                container.classList.remove('is-unlocked');
+                vaultStatus.innerText = "Awaiting Alignment";
+                vaultStatus.classList.add('text-[#A39F96]');
+                vaultStatus.classList.remove('text-[#D4AF37]');
+            }
+        }
+
+        window.toggleHabit = function(index) {
+            if (isUnlocking) return; // Prevent clicks while animating
+
+            // Don't allow unchecking if already fully unlocked (prevents farming tokens)
+            if (state.checked.filter(Boolean).length === 7 && state.checked[index]) {
+                return;
+            }
+
+            state.checked[index] = !state.checked[index];
+            localStorage.setItem('faithreflects_sacred_vault', JSON.stringify(state));
+            
+            renderList();
+            updateVisuals(state.checked[index] ? index : -1);
+        };
+
+        // Modal Logic
+        resetTriggerBtn.addEventListener('click', () => {
+            if (!isUnlocking) resetModal.classList.remove('hidden');
+        });
+        cancelResetBtn.addEventListener('click', () => resetModal.classList.add('hidden'));
+        
+        confirmResetBtn.addEventListener('click', () => {
+            state.checked = Array(7).fill(false);
+            localStorage.setItem('faithreflects_sacred_vault', JSON.stringify(state));
+            
+            renderList();
+            updateVisuals();
+            resetModal.classList.add('hidden');
+        });
+
+        // Initialize
+        renderList();
+        renderTokens();
+        
+        // Timeout ensures the initial load triggers the CSS transitions on the tumblers beautifully
+        setTimeout(() => updateVisuals(), 50);
+
+    </script>
+</body>
+</html>

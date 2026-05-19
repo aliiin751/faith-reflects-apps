@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Dawn & Dusk Chronometer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        /* Sovereign Light Mode Base */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: transparent; 
+            color: #37352f; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* The Widget Container */
+        .widget-box {
+            background-color: #FCFBF9; /* Ivory Parchment */
+            border: 1px solid #E9E5DC;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.03), inset 0 0 20px rgba(255,255,255,0.5);
+            transition: all 1s ease;
+        }
+
+        /* --- THE CHRONOMETER VISUALIZER --- */
+        .chronometer-window {
+            position: relative;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 4px solid #FCFBF9;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1), inset 0 0 20px rgba(0,0,0,0.2);
+            transition: background 1.5s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 1.5s ease;
+        }
+
+        /* Dawn & Dusk Background States */
+        .is-dawn .chronometer-window {
+            background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 50%, #F59E0B 100%);
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.2), inset 0 0 20px rgba(217, 119, 6, 0.1);
+        }
+        
+        .is-dusk .chronometer-window {
+            background: linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #312E81 100%);
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.3), inset 0 0 30px rgba(0, 0, 0, 0.5);
+            border-color: #E9E5DC; /* Keep ivory ring */
+        }
+
+        /* SVG Crossfades */
+        .svg-layer {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1.5s ease, transform 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform: scale(0.9) rotate(-10deg);
+            pointer-events: none;
+        }
+        
+        .is-dawn #sunLayer { opacity: 1; transform: scale(1) rotate(0deg); }
+        .is-dusk #moonLayer { opacity: 1; transform: scale(1) rotate(0deg); }
+
+        /* --- DAWN PHYSICS (SUN) --- */
+        .sun-core {
+            fill: #FFFFFF;
+            transition: all 1s ease;
+        }
+        .is-dawn-complete .sun-core {
+            fill: #FFFBEB;
+            filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.9));
+            animation: sun-pulse 4s infinite alternate ease-in-out;
+        }
+
+        /* Sun Ray Rotation is isolated via an SVG <g> tag, so scale works perfectly */
+        .sun-ray {
+            fill: #D4AF37; /* Dull gold initially */
+            opacity: 0.3;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: 0 0;
+            transform: scale(1);
+        }
+        .sun-ray.ignited {
+            fill: #FFFFFF;
+            opacity: 1;
+            filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.9));
+            transform: scale(1.15); /* Pushes the ray outward dynamically */
+        }
+
+        @keyframes sun-pulse {
+            0% { transform: scale(0.98); filter: drop-shadow(0 0 10px rgba(255,255,255,0.6)); }
+            100% { transform: scale(1.02); filter: drop-shadow(0 0 25px rgba(255,255,255,1)); }
+        }
+
+        /* --- DUSK PHYSICS (MOON) --- */
+        .moon-base {
+            fill: #F8FAFC;
+            transition: all 1.5s ease;
+            filter: drop-shadow(0 0 2px rgba(248, 250, 252, 0.2));
+        }
+        .is-dusk-complete .moon-base {
+            filter: drop-shadow(0 0 20px rgba(248, 250, 252, 0.8)) drop-shadow(0 0 40px rgba(226, 232, 240, 0.4));
+        }
+
+        .moon-shadow {
+            fill: #0F172A; /* Matches deep night sky */
+            transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .star {
+            fill: #FFFFFF;
+            opacity: 0;
+            transform: scale(0);
+            transform-origin: center;
+            transition: all 1s ease;
+        }
+        .is-dusk-complete .star {
+            opacity: 0.8;
+            transform: scale(1);
+            animation: twinkle var(--dur) infinite alternate ease-in-out;
+        }
+        @keyframes twinkle {
+            0% { opacity: 0.2; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.2); filter: drop-shadow(0 0 4px #fff); }
+        }
+
+        /* --- UI ELEMENTS --- */
+        .tab-btn {
+            padding: 8px 16px;
+            border-radius: 9999px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+        
+        .tab-btn.active {
+            background-color: #37352f;
+            color: #FFFFFF;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .tab-btn:not(.active) {
+            color: #8A867D;
+            border-color: #E9E5DC;
+        }
+        .tab-btn:not(.active):hover {
+            border-color: #DCD7CA;
+            background-color: #f7f6f3;
+            color: #525252;
+        }
+
+        /* Lists */
+        .list-container {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform: translateX(10px);
+            display: flex;
+            flex-direction: column;
+        }
+        .list-container.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(0);
+        }
+
+        .task-row {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            background-color: #FFFFFF;
+            border-color: #E9E5DC;
+            margin-bottom: 8px;
+        }
+        .task-row:hover:not(.completed) {
+            border-color: #DCD7CA;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            transform: translateX(4px);
+        }
+        
+        .check-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 6px;
+            border: 2px solid #DCD7CA;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            background-color: #fff;
+        }
+        .task-row:hover .check-box { border-color: #B48025; background-color: #FFFAF0; }
+        
+        /* Checkbox completed state */
+        .task-row.completed .check-box {
+            background-color: #37352f;
+            border-color: #37352f;
+        }
+
+        .task-label {
+            font-size: 13px;
+            color: #37352f;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        .task-row.completed .task-label {
+            color: #A39F96;
+            text-decoration: line-through;
+        }
+
+        /* Context Subtitle */
+        .task-sub {
+            font-size: 10px;
+            color: #8A867D;
+            margin-top: 2px;
+            display: block;
+            transition: opacity 0.3s ease;
+        }
+        .task-row.completed .task-sub { opacity: 0.5; }
+
+        /* Victory Banner */
+        .victory-banner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            padding: 6px 20px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 40;
+        }
+        .is-dawn-complete .victory-banner.dawn-banner {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+            background: linear-gradient(90deg, #D97706, #FCD34D, #D97706);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+        }
+        .is-dusk-complete .victory-banner.dusk-banner {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+            background: linear-gradient(90deg, #1E293B, #475569, #1E293B);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(15, 23, 42, 0.4);
+        }
+
+        /* Celebration Sparks */
+        .celebration-spark {
+            position: absolute; 
+            width: 4px; 
+            height: 4px; 
+            border-radius: 50%;
+            pointer-events: none; 
+            opacity: 0; 
+            z-index: 50;
+        }
+        .celebration-spark.gold { background-color: #FCD34D; box-shadow: 0 0 10px #F59E0B; }
+        .celebration-spark.silver { background-color: #F8FAFC; box-shadow: 0 0 10px #94A3B8; }
+        
+        .is-sparking { animation: fly-spark 1.5s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+        @keyframes fly-spark {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+
+        /* Edit & Delete */
+        .delete-btn { opacity: 0; transition: opacity 0.2s ease; color: #C4B5B7; }
+        .task-row:hover .delete-btn { opacity: 1; }
+        .delete-btn:hover { color: #EF4444; }
+        
+        .editable-text { outline: none; border-bottom: 1px dashed transparent; transition: border-color 0.2s; cursor: text; }
+        .editable-text:focus { border-bottom-color: #D4AF37; }
+
+        /* Add Input Styling */
+        .add-input {
+            background: transparent; border: none; border-bottom: 1px solid #E9E5DC;
+            font-size: 11px; color: #525252; transition: border-color 0.3s ease;
+        }
+        .add-input:focus { outline: none; border-color: #D4AF37; }
+        .add-input::placeholder { color: #A39F96; font-style: italic; }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #DCD7CA; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #B48025; }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(255,255,255,0.8); }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div id="widgetContainer" class="widget-box is-dawn relative w-full max-w-2xl rounded-3xl p-6 md:p-10 flex flex-col md:flex-row h-auto min-h-[560px] overflow-hidden gap-8">
+        
+        <div id="sparksContainer" class="absolute inset-0 pointer-events-none z-50"></div>
+
+        <!-- Left Side: The Chronometer Visualizer -->
+        <div class="flex-shrink-0 flex flex-col items-center w-full md:w-[260px] h-full relative z-20">
+            
+            <div class="w-full flex justify-between items-center mb-6">
+                <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#A39F96]">@faithreflects</span>
+            </div>
+            
+            <h2 class="serif text-3xl text-[#37352f] mb-1 text-center w-full" id="chronometerTitle">Morning</h2>
+            <p class="text-[11px] text-[#8A867D] italic mb-8 text-center w-full" id="chronometerSub">"How you start determines how you finish."</p>
+
+            <!-- The Dual-State Window -->
+            <div class="chronometer-window w-52 h-52 flex justify-center items-center shrink-0">
+                
+                <!-- LAYER 1: DAWN (SUN) -->
+                <svg viewBox="0 0 200 200" class="svg-layer" id="sunLayer">
+                    <g transform="translate(100, 100)">
+                        <!-- Dynamic Rays of the Sun -->
+                        <g id="sunRaysGroup"></g>
+                        
+                        <!-- Core -->
+                        <circle cx="0" cy="0" r="30" class="sun-core" />
+                    </g>
+                </svg>
+
+                <!-- LAYER 2: DUSK (MOON & STARS) -->
+                <svg viewBox="0 0 200 200" class="svg-layer" id="moonLayer">
+                    <!-- Stars -->
+                    <circle cx="40" cy="50" r="1.5" class="star" style="--dur: 2s;" />
+                    <circle cx="60" cy="140" r="2" class="star" style="--dur: 3s; animation-delay: 0.5s;" />
+                    <circle cx="160" cy="60" r="1" class="star" style="--dur: 2.5s; animation-delay: 1s;" />
+                    <circle cx="140" cy="150" r="2" class="star" style="--dur: 3.5s; animation-delay: 0.2s;" />
+                    <circle cx="100" cy="30" r="1.5" class="star" style="--dur: 4s; animation-delay: 0.8s;" />
+                    <circle cx="30" cy="100" r="1" class="star" style="--dur: 2s; animation-delay: 1.2s;" />
+                    <circle cx="170" cy="110" r="1.5" class="star" style="--dur: 2.8s; animation-delay: 0.4s;" />
+
+                    <g transform="translate(100, 100)">
+                        <!-- The Bright Moon Base -->
+                        <circle cx="0" cy="0" r="35" class="moon-base" />
+                        
+                        <!-- The Shadow (Translates X to create phases) -->
+                        <circle cx="0" cy="0" r="35" class="moon-shadow" id="moonShadow" />
+                        
+                        <!-- Crater details (Only visible on the white part) -->
+                        <circle cx="-10" cy="-10" r="4" fill="#E2E8F0" opacity="0.6"/>
+                        <circle cx="15" cy="10" r="6" fill="#E2E8F0" opacity="0.5"/>
+                        <circle cx="-5" cy="15" r="3" fill="#E2E8F0" opacity="0.4"/>
+                    </g>
+                </svg>
+
+                <!-- Victory Banners -->
+                <div class="victory-banner dawn-banner">DAWN CONQUERED</div>
+                <div class="victory-banner dusk-banner">DUSK CONQUERED</div>
+
+            </div>
+
+            <!-- Progress Text -->
+            <div class="mt-6 w-full text-center">
+                <span class="text-[10px] font-bold tracking-widest uppercase text-[#B48025]" id="progressText">0 / 8 Complete</span>
+            </div>
+
+        </div>
+
+        <!-- Right Side: The Checklists & Toggles -->
+        <div class="flex-1 w-full flex flex-col z-20 min-h-0 pl-2 md:pl-0 border-t md:border-t-0 md:border-l border-[#E9E5DC] pt-6 md:pt-0 md:pl-8">
+            
+            <!-- Custom Tabs -->
+            <div class="flex space-x-2 mb-6 shrink-0 bg-[#f7f6f3] p-1.5 rounded-full border border-[#E9E5DC]">
+                <button id="tabMorning" class="tab-btn active flex-1 flex items-center justify-center space-x-2">
+                    <span class="text-sm">🌅</span>
+                    <span>Morning</span>
+                </button>
+                <button id="tabEvening" class="tab-btn flex-1 flex items-center justify-center space-x-2">
+                    <span class="text-sm">🌙</span>
+                    <span>Evening</span>
+                </button>
+            </div>
+
+            <!-- List Display Area (Relative for absolute positioning of active/inactive lists) -->
+            <div class="relative flex-1 w-full min-h-0 mb-4">
+                
+                <!-- Morning List (8 Tasks) -->
+                <div class="list-container active overflow-y-auto custom-scrollbar pr-2" id="listMorning">
+                    <!-- JS Injected -->
+                </div>
+
+                <!-- Evening List (7 Tasks) -->
+                <div class="list-container overflow-y-auto custom-scrollbar pr-2" id="listEvening">
+                    <!-- JS Injected -->
+                </div>
+
+            </div>
+
+            <!-- Add New Task Input -->
+            <div class="w-full flex items-center space-x-2 shrink-0 border-t border-[#E9E5DC] pt-3 mb-3 z-10">
+                <div class="flex-1 flex flex-col space-y-1">
+                    <input type="text" id="newTaskLabel" placeholder="Add a new ritual..." class="add-input w-full py-1" autocomplete="off">
+                    <input type="text" id="newTaskSub" placeholder="Subtitle / intention..." class="add-input w-full py-1" autocomplete="off">
+                </div>
+                <button id="addTaskBtn" class="text-[#D4AF37] hover:text-[#B48025] transition-colors shrink-0 p-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                </button>
+            </div>
+
+            <!-- Reset Button -->
+            <button id="resetTriggerBtn" class="mt-2 text-[9px] tracking-widest uppercase pb-0.5 z-10 shrink-0 text-[#A39F96] hover:text-[#37352f] transition-colors border-b border-transparent hover:border-[#37352f] self-start">
+                Reset Rhythms
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- Custom Reset Modal -->
+    <div id="resetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+        <div class="bg-[#FCFBF9] rounded-2xl p-6 w-full max-w-[260px] border border-[#E9E5DC] shadow-2xl text-center transform transition-all">
+            <h3 class="font-serif text-xl mb-2 text-[#37352f]">Reset Rhythms?</h3>
+            <p class="text-xs text-[#8A867D] mb-6">This will uncheck all habits for the current day. (Auto-resets at midnight).</p>
+            <div class="flex space-x-3">
+                <button id="cancelResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-[#8A867D] hover:bg-gray-100 border border-transparent transition-colors">Cancel</button>
+                <button id="confirmResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#37352f] text-white hover:bg-black transition-colors shadow-md">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Structures matching user's template exactly
+        const morningTasks = [
+            { id: 'm1', label: 'Wake at 05:30', sub: 'Win the morning.', done: false },
+            { id: 'm2', label: 'Hydrate', sub: '500ml lemon water', done: false },
+            { id: 'm3', label: 'Scripture / Devotion', sub: 'Proverbs 16', done: false },
+            { id: 'm4', label: 'Journal', sub: '3 gratitudes', done: false },
+            { id: 'm5', label: 'Movement', sub: '20 min mobility', done: false },
+            { id: 'm6', label: 'Cold Exposure', sub: '3 min shower', done: false },
+            { id: 'm7', label: 'Plan the day', sub: 'Identify the ONE thing', done: false },
+            { id: 'm8', label: 'Deep Work Block', sub: '07:00 - 09:30', done: false }
+        ];
+
+        const eveningTasks = [
+            { id: 'e1', label: 'Review the day', sub: 'Examen practice', done: false },
+            { id: 'e2', label: 'Log wins & lessons', sub: '3 wins, 1 lesson', done: false },
+            { id: 'e3', label: 'Tomorrow\'s Focus', sub: 'Identify the ONE thing', done: false },
+            { id: 'e4', label: 'Tidy the space', sub: '10-min sweep', done: false },
+            { id: 'e5', label: 'Skincare & Hygiene', sub: 'Wash the day away', done: false },
+            { id: 'e6', label: 'Read fiction', sub: '20 min unplugged', done: false },
+            { id: 'e7', label: 'Lights out', sub: 'By 22:00', done: false }
+        ];
+
+        // State Management
+        const today = new Date().toDateString();
+        let state = JSON.parse(localStorage.getItem('faithreflects_chronometer_v3')) || {
+            date: today,
+            morningTasks: [...morningTasks],
+            eveningTasks: [...eveningTasks]
+        };
+
+        // Migration from previous versions or auto-reset if new day
+        if (state.date !== today || !state.morningTasks) {
+            state.date = today;
+            state.morningTasks = state.morningTasks || [...morningTasks];
+            state.eveningTasks = state.eveningTasks || [...eveningTasks];
+            
+            // Uncheck all for a new day
+            state.morningTasks.forEach(t => t.done = false);
+            state.eveningTasks.forEach(t => t.done = false);
+            localStorage.setItem('faithreflects_chronometer_v3', JSON.stringify(state));
+        }
+
+        // Elements
+        const container = document.getElementById('widgetContainer');
+        const chronometerTitle = document.getElementById('chronometerTitle');
+        const chronometerSub = document.getElementById('chronometerSub');
+        const progressText = document.getElementById('progressText');
+        const sparksContainer = document.getElementById('sparksContainer');
+        
+        const tabMorning = document.getElementById('tabMorning');
+        const tabEvening = document.getElementById('tabEvening');
+        const listMorning = document.getElementById('listMorning');
+        const listEvening = document.getElementById('listEvening');
+        
+        const moonShadow = document.getElementById('moonShadow');
+        const sunRaysGroup = document.getElementById('sunRaysGroup');
+        
+        const newTaskLabel = document.getElementById('newTaskLabel');
+        const newTaskSub = document.getElementById('newTaskSub');
+        const addTaskBtn = document.getElementById('addTaskBtn');
+        
+        // Modals
+        const resetModal = document.getElementById('resetModal');
+        const resetTriggerBtn = document.getElementById('resetTriggerBtn');
+        const cancelResetBtn = document.getElementById('cancelResetBtn');
+        const confirmResetBtn = document.getElementById('confirmResetBtn');
+
+        let currentView = 'morning'; 
+        let hasCelebratedMorning = false;
+        let hasCelebratedEvening = false;
+
+        // Determine initial view based on actual time
+        const hour = new Date().getHours();
+        if (hour >= 16 || hour < 4) { // 4:00 PM to 3:59 AM defaults to Evening
+            currentView = 'evening';
+        }
+
+        // Trigger the magical particle explosion
+        function triggerCelebration(type) {
+            const rect = document.querySelector('.chronometer-window').getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            
+            const centerX = (rect.left - containerRect.left) + (rect.width / 2);
+            const centerY = (rect.top - containerRect.top) + (rect.height / 2);
+
+            for(let i=0; i<25; i++) {
+                setTimeout(() => {
+                    const spark = document.createElement('div');
+                    spark.className = `celebration-spark ${type === 'morning' ? 'gold' : 'silver'} is-sparking`;
+                    
+                    spark.style.left = `${centerX}px`;
+                    spark.style.top = `${centerY}px`;
+                    
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = 60 + Math.random() * 120;
+                    
+                    spark.style.setProperty('--tx', `${Math.cos(angle) * dist}px`);
+                    spark.style.setProperty('--ty', `${Math.sin(angle) * dist}px`);
+                    
+                    sparksContainer.appendChild(spark);
+                    
+                    setTimeout(() => { if(spark.parentNode) spark.remove(); }, 1500);
+                }, i * 30);
+            }
+        }
+
+        function renderLists() {
+            // Render Morning
+            listMorning.innerHTML = state.morningTasks.map((task, i) => {
+                return `
+                    <div class="task-row flex items-center space-x-4 group ${task.done ? 'completed' : ''}">
+                        <div class="check-box shadow-sm shrink-0" onclick="toggleTask('morning', ${i})">
+                            <svg class="w-4 h-4 text-white transition-all duration-300" style="stroke-dasharray: 24; stroke-dashoffset: ${task.done ? 0 : 24};" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <span class="task-label block truncate leading-none editable-text" contenteditable="true" onblur="updateTaskText('morning', ${i}, 'label', this.innerText)">${task.label}</span>
+                            <span class="task-sub truncate editable-text" contenteditable="true" onblur="updateTaskText('morning', ${i}, 'sub', this.innerText)">${task.sub}</span>
+                        </div>
+                        <button class="delete-btn shrink-0 pl-2 p-1" onclick="deleteTask('morning', ${i})" title="Remove">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+
+            // Render Evening
+            listEvening.innerHTML = state.eveningTasks.map((task, i) => {
+                return `
+                    <div class="task-row flex items-center space-x-4 group ${task.done ? 'completed' : ''}">
+                        <div class="check-box shadow-sm shrink-0" onclick="toggleTask('evening', ${i})">
+                            <svg class="w-4 h-4 text-white transition-all duration-300" style="stroke-dasharray: 24; stroke-dashoffset: ${task.done ? 0 : 24};" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <span class="task-label block truncate leading-none editable-text" contenteditable="true" onblur="updateTaskText('evening', ${i}, 'label', this.innerText)">${task.label}</span>
+                            <span class="task-sub truncate editable-text" contenteditable="true" onblur="updateTaskText('evening', ${i}, 'sub', this.innerText)">${task.sub}</span>
+                        </div>
+                        <button class="delete-btn shrink-0 pl-2 p-1" onclick="deleteTask('evening', ${i})" title="Remove">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.toggleTask = function(type, index) {
+            if (type === 'morning') {
+                state.morningTasks[index].done = !state.morningTasks[index].done;
+            } else {
+                state.eveningTasks[index].done = !state.eveningTasks[index].done;
+            }
+            localStorage.setItem('faithreflects_chronometer_v3', JSON.stringify(state));
+            renderLists();
+            updatePhysics();
+        };
+
+        window.deleteTask = function(type, index) {
+            if (type === 'morning') {
+                state.morningTasks.splice(index, 1);
+            } else {
+                state.eveningTasks.splice(index, 1);
+            }
+            localStorage.setItem('faithreflects_chronometer_v3', JSON.stringify(state));
+            renderLists();
+            updatePhysics();
+        };
+
+        window.updateTaskText = function(type, index, field, newText) {
+            if (type === 'morning') {
+                state.morningTasks[index][field] = newText.trim();
+            } else {
+                state.eveningTasks[index][field] = newText.trim();
+            }
+            localStorage.setItem('faithreflects_chronometer_v3', JSON.stringify(state));
+        };
+
+        function addNewTask() {
+            const label = newTaskLabel.value.trim();
+            const sub = newTaskSub.value.trim();
+            if (!label) return;
+
+            const newTask = { id: Date.now().toString(), label: label, sub: sub || '...', done: false };
+            
+            if (currentView === 'morning') {
+                state.morningTasks.push(newTask);
+            } else {
+                state.eveningTasks.push(newTask);
+            }
+            
+            localStorage.setItem('faithreflects_chronometer_v3', JSON.stringify(state));
+            newTaskLabel.value = '';
+            newTaskSub.value = '';
+            
+            renderLists();
+            updatePhysics();
+            
+            // Scroll to bottom
+            const activeList = currentView === 'morning' ? listMorning : listEvening;
+            activeList.scrollTop = activeList.scrollHeight;
+        }
+
+        addTaskBtn.addEventListener('click', addNewTask);
+        newTaskLabel.addEventListener('keypress', (e) => { if (e.key === 'Enter') addNewTask(); });
+        newTaskSub.addEventListener('keypress', (e) => { if (e.key === 'Enter') addNewTask(); });
+
+        function switchView(view) {
+            currentView = view;
+            
+            if (view === 'morning') {
+                tabMorning.classList.add('active');
+                tabEvening.classList.remove('active');
+                listMorning.classList.add('active');
+                listEvening.classList.remove('active');
+                
+                container.classList.add('is-dawn');
+                container.classList.remove('is-dusk');
+                
+                chronometerTitle.innerText = "Dawn Ritual";
+                chronometerSub.innerText = '"How you start determines how you finish."';
+            } else {
+                tabEvening.classList.add('active');
+                tabMorning.classList.remove('active');
+                listEvening.classList.add('active');
+                listMorning.classList.remove('active');
+                
+                container.classList.add('is-dusk');
+                container.classList.remove('is-dawn');
+                
+                chronometerTitle.innerText = "Dusk Ritual";
+                chronometerSub.innerText = '"Close the day with intention."';
+            }
+            
+            updatePhysics();
+        }
+
+        function updatePhysics() {
+            if (currentView === 'morning') {
+                const total = state.morningTasks.length;
+                const completed = state.morningTasks.filter(t => t.done).length;
+                progressText.innerText = `${completed} / ${total} Complete`;
+
+                // Generate and light up sun rays dynamically
+                sunRaysGroup.innerHTML = '';
+                for(let i=0; i < total; i++) {
+                    const angle = (360 / total) * i;
+                    const isIgnited = i < completed;
+                    const delay = isIgnited ? i * 0.05 : 0;
+                    
+                    // Crucial fix: Isolated rotation in <g> tag so <polygon> can scale properly
+                    sunRaysGroup.innerHTML += `
+                        <g transform="rotate(${angle})">
+                            <polygon class="sun-ray ${isIgnited ? 'ignited' : ''}" points="-4,-40 0,-70 4,-40" style="transition-delay: ${delay}s" />
+                        </g>`;
+                }
+
+                if (completed === total && total > 0) {
+                    container.classList.add('is-dawn-complete');
+                    if (!hasCelebratedMorning) {
+                        triggerCelebration('morning');
+                        hasCelebratedMorning = true;
+                    }
+                } else {
+                    container.classList.remove('is-dawn-complete');
+                    hasCelebratedMorning = false; // Reset flag so it can celebrate again if unchecked/rechecked
+                }
+
+            } else {
+                const total = state.eveningTasks.length;
+                const completed = state.eveningTasks.filter(t => t.done).length;
+                progressText.innerText = `${completed} / ${total} Complete`;
+
+                // Move Moon Shadow
+                const percentage = total > 0 ? completed / total : 0;
+                const shadowX = percentage * 75;
+                moonShadow.style.transform = `translateX(${shadowX}px)`;
+
+                if (completed === total && total > 0) {
+                    container.classList.add('is-dusk-complete');
+                    if (!hasCelebratedEvening) {
+                        triggerCelebration('evening');
+                        hasCelebratedEvening = true;
+                    }
+                } else {
+                    container.classList.remove('is-dusk-complete');
+                    hasCelebratedEvening = false;
+                }
+            }
+        }
+
+        // Tab Listeners
+        tabMorning.addEventListener('click', () => switchView('morning'));
+        tabEvening.addEventListener('click', () => switchView('evening'));
+
+        // Reset Modal Logic
+        resetTriggerBtn.addEventListener('click', () => resetModal.classList.remove('hidden'));
+        cancelResetBtn.addEventListener('click', () => resetModal.classList.add('hidden'));
+        
+        confirmResetBtn.addEventListener('click', () => {
+            state.morningTasks.forEach(t => t.done = false);
+            state.eveningTasks.forEach(t => t.done = false);
+            localStorage.setItem('faithreflects_chronometer_v3', JSON.stringify(state));
+            
+            hasCelebratedMorning = false;
+            hasCelebratedEvening = false;
+            
+            renderLists();
+            updatePhysics();
+            resetModal.classList.add('hidden');
+        });
+
+        // Initialize
+        renderLists();
+        switchView(currentView);
+
+    </script>
+</body>
+</html>

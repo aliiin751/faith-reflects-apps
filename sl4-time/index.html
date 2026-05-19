@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Celestial Chronometer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* Sovereign Light Mode Base */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: transparent; 
+            color: #37352f; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* The Widget Container */
+        .widget-box {
+            background-color: #FCFBF9; /* Ivory Parchment */
+            border: 1px solid #E9E5DC;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.03), inset 0 0 20px rgba(255,255,255,0.5);
+            transition: all 1.5s ease;
+        }
+
+        /* Ambient Glow */
+        .ambient-glow {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* The Astrolabe SVG Elements */
+        .astrolabe-casing {
+            fill: #2D2114; /* Dark Mahogany Wood */
+            stroke: #1A130B;
+            stroke-width: 2;
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.15));
+        }
+
+        .brass-ring {
+            fill: none;
+            stroke: url(#brassGrad);
+            stroke-width: 6;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+
+        .celestial-disc {
+            transform-origin: 100px 100px;
+            /* Smooth rotation driven by JS based on time of day */
+            transition: transform 1s linear; 
+        }
+
+        .horizon-plate {
+            fill: url(#brassGrad);
+            stroke: #5C451A;
+            stroke-width: 1.5;
+            filter: drop-shadow(0 -4px 6px rgba(0,0,0,0.3));
+        }
+
+        /* Sun and Moon Glows */
+        .sun-glow {
+            animation: pulse-sun 4s infinite alternate ease-in-out;
+        }
+        @keyframes pulse-sun {
+            0% { filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.6)); transform: scale(0.95); }
+            100% { filter: drop-shadow(0 0 20px rgba(245, 158, 11, 1)); transform: scale(1.05); }
+        }
+
+        .moon-glow {
+            filter: drop-shadow(0 0 10px rgba(226, 232, 240, 0.6));
+        }
+
+        /* Itinerary List Styling */
+        .block-row {
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            margin-bottom: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .block-row::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 4px;
+            background-color: transparent;
+            transition: background-color 0.5s ease;
+        }
+
+        /* Past Blocks */
+        .block-past {
+            opacity: 0.5;
+            background-color: transparent;
+        }
+        .block-past .block-time { text-decoration: line-through; color: #A39F96; }
+        .block-past .block-label { color: #8A867D; }
+
+        /* Future Blocks */
+        .block-future {
+            opacity: 0.8;
+            background-color: #FFFFFF;
+            border-color: #E9E5DC;
+        }
+        .block-future:hover {
+            opacity: 1;
+            transform: translateX(4px);
+            border-color: #DCD7CA;
+        }
+
+        /* Active (Current) Block */
+        .block-active {
+            opacity: 1;
+            background: linear-gradient(90deg, #FFFAF0 0%, #FFFFFF 100%);
+            border-color: #D4AF37;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.1);
+            transform: scale(1.02);
+            z-index: 10;
+        }
+        .block-active::before {
+            background-color: #D4AF37;
+        }
+        .block-active .block-time {
+            color: #B48025;
+            font-weight: 700;
+        }
+        .block-active .block-label {
+            color: #37352f;
+            font-weight: 600;
+        }
+
+        /* Inputs & Buttons */
+        input[type="time"], input[type="text"] {
+            background-color: #FFFFFF;
+            border: 1px solid #E9E5DC;
+            color: #37352f;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
+        }
+        input:focus {
+            outline: none;
+            border-color: #D4AF37;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.1);
+        }
+
+        .btn-add {
+            background-color: #37352f;
+            color: #FFFFFF;
+            border: 1px solid #2d2d2d;
+            transition: all 0.3s ease;
+        }
+        .btn-add:hover { background-color: #000000; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+        .btn-add:active { transform: translateY(1px) scale(0.95); }
+
+        .btn-delete {
+            opacity: 0;
+            color: #A39F96;
+            transition: all 0.2s ease;
+        }
+        .block-row:hover .btn-delete { opacity: 1; }
+        .btn-delete:hover { color: #EF4444; }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #DCD7CA; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #B48025; }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-md rounded-3xl p-6 md:p-8 flex flex-col h-[720px] overflow-hidden">
+        
+        <div class="ambient-glow"></div>
+
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-4 z-10 shrink-0">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#A39F96]">@faithreflects</span>
+            <div class="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider text-[#8A867D] border border-[#E9E5DC] bg-white flex items-center space-x-1 shadow-sm">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse mr-1"></span>
+                <span>Real-Time Sync</span>
+            </div>
+        </div>
+
+        <h2 class="serif text-3xl text-[#37352f] mb-1 z-10 text-center shrink-0">Time Blocking</h2>
+        <p class="text-xs text-[#8A867D] italic mb-6 z-10 text-center shrink-0">"Command your day. Command your life."</p>
+
+        <!-- The Celestial Astrolabe SVG -->
+        <div class="relative w-full h-56 mb-6 z-10 flex justify-center items-center shrink-0 drop-shadow-xl">
+            <svg viewBox="0 0 200 200" class="w-full h-full overflow-visible">
+                <defs>
+                    <linearGradient id="brassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#FDE68A"/>
+                        <stop offset="40%" stop-color="#D4AF37"/>
+                        <stop offset="70%" stop-color="#B48025"/>
+                        <stop offset="100%" stop-color="#5C451A"/>
+                    </linearGradient>
+                    <linearGradient id="skyDay" x1="0" y1="1" x2="0" y2="0">
+                        <stop offset="0%" stop-color="#7DD3FC"/>
+                        <stop offset="100%" stop-color="#3B82F6"/>
+                    </linearGradient>
+                    <linearGradient id="skyNight" x1="0" y1="1" x2="0" y2="0">
+                        <stop offset="0%" stop-color="#1E1B4B"/>
+                        <stop offset="100%" stop-color="#0F172A"/>
+                    </linearGradient>
+                    <!-- Clip path to keep everything inside the astrolabe circle -->
+                    <clipPath id="circleClip">
+                        <circle cx="100" cy="100" r="76"/>
+                    </clipPath>
+                </defs>
+
+                <!-- Outer Wood Casing -->
+                <circle cx="100" cy="100" r="90" class="astrolabe-casing"/>
+                <circle cx="100" cy="100" r="82" fill="#1A130B"/>
+                
+                <!-- Inner Brass Ring with Tick Marks -->
+                <circle cx="100" cy="100" r="80" class="brass-ring"/>
+                <circle cx="100" cy="100" r="76" fill="none" stroke="#5C451A" stroke-width="1.5" stroke-dasharray="2 4.6"/>
+
+                <!-- THE ROTATING CELESTIAL DISC -->
+                <g class="celestial-disc" id="celestialDisc" clip-path="url(#circleClip)">
+                    
+                    <!-- Sky Backgrounds (Split Circle) -->
+                    <!-- Top Half: Day -->
+                    <path d="M 24 100 A 76 76 0 0 1 176 100 Z" fill="url(#skyDay)"/>
+                    <!-- Bottom Half: Night -->
+                    <path d="M 24 100 A 76 76 0 0 0 176 100 Z" fill="url(#skyNight)"/>
+
+                    <!-- The Sun (At top by default, which represents Noon) -->
+                    <g transform="translate(100, 45)" class="sun-glow">
+                        <circle cx="0" cy="0" r="12" fill="#FCD34D"/>
+                        <!-- Sun Rays -->
+                        <path d="M 0 -18 L 0 -14 M 0 14 L 0 18 M -18 0 L -14 0 M 14 0 L 18 0 M -12 -12 L -10 -10 M 10 10 L 12 12 M 12 -12 L 10 -10 M -10 10 L -12 12" stroke="#FDE68A" stroke-width="2" stroke-linecap="round"/>
+                    </g>
+
+                    <!-- The Moon (At bottom by default, which represents Midnight) -->
+                    <g transform="translate(100, 155)" class="moon-glow">
+                        <circle cx="0" cy="0" r="10" fill="#E2E8F0"/>
+                        <circle cx="3" cy="-3" r="8" fill="url(#skyNight)"/> <!-- Crescent cutout -->
+                        <!-- Tiny stars around moon -->
+                        <circle cx="-15" cy="-5" r="1" fill="#fff"/>
+                        <circle cx="12" cy="10" r="1.5" fill="#fff"/>
+                        <circle cx="-10" cy="15" r="1" fill="#fff"/>
+                    </g>
+                    
+                    <!-- Horizon Divider Line -->
+                    <line x1="24" y1="100" x2="176" y2="100" stroke="#FCD34D" stroke-width="1" opacity="0.5"/>
+                </g>
+
+                <!-- THE FIXED HORIZON PLATE (Covers the bottom half) -->
+                <!-- This creates the illusion of the sun rising and setting -->
+                <path class="horizon-plate" d="M 10 100 L 190 100 A 90 90 0 0 1 10 100 Z"/>
+                
+                <!-- Engraved Details on Horizon Plate -->
+                <path d="M 25 105 Q 100 120 175 105" fill="none" stroke="#5C451A" stroke-width="1" opacity="0.6"/>
+                <path d="M 40 115 Q 100 135 160 115" fill="none" stroke="#5C451A" stroke-width="1" opacity="0.6"/>
+                
+                <!-- Central Digital Clock Display (Embedded in the brass) -->
+                <rect x="65" y="145" width="70" height="24" rx="4" fill="#221A11" stroke="#3A2A1A" stroke-width="2"/>
+                <text x="100" y="162" class="mono" font-size="16" fill="#FCD34D" text-anchor="middle" font-weight="bold" letter-spacing="2" id="digitalClock">
+                    12:00
+                </text>
+                
+                <!-- Rivets -->
+                <circle cx="15" cy="105" r="2" fill="#5C451A"/>
+                <circle cx="185" cy="105" r="2" fill="#5C451A"/>
+                <circle cx="100" cy="180" r="2" fill="#5C451A"/>
+
+                <!-- Golden Pointer Arrow at Top (Noon) -->
+                <path d="M 95 10 L 105 10 L 100 22 Z" fill="#FCD34D" filter="drop-shadow(0 2px 2px rgba(0,0,0,0.4))"/>
+
+            </svg>
+        </div>
+
+        <!-- The Itinerary List -->
+        <div class="flex-1 w-full flex flex-col min-h-0 z-10 bg-[#FCFBF9] border border-[#E9E5DC] rounded-2xl p-4 shadow-inner overflow-hidden">
+            <span class="text-[9px] font-bold tracking-widest uppercase text-[#A39F96] mb-3 block pl-1">Daily Protocol</span>
+            
+            <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-1" id="blockList">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+
+        <!-- Add Block Form -->
+        <div class="w-full mt-4 flex items-center space-x-2 z-10 shrink-0">
+            <input type="time" id="newTime" class="w-[30%] rounded-xl px-3 py-3 text-xs font-bold font-mono text-[#B48025]">
+            <input type="text" id="newLabel" placeholder="Focus block..." class="flex-1 rounded-xl px-3 py-3 text-xs font-medium" autocomplete="off">
+            <button id="addBtn" class="btn-add px-4 py-3 rounded-xl flex items-center justify-center shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // Default Itinerary exactly from the user's mockup
+        const defaultBlocks = [
+            { id: 1, time: "05:30", label: "Morning routine" },
+            { id: 2, time: "07:00", label: "Deep work block 1" },
+            { id: 3, time: "09:30", label: "Break + walk" },
+            { id: 4, time: "10:00", label: "Deep work block 2" },
+            { id: 5, time: "12:30", label: "Lunch & walk" },
+            { id: 6, time: "14:00", label: "Meetings / admin" },
+            { id: 7, time: "15:30", label: "Inbox & shallow work" },
+            { id: 8, time: "16:30", label: "Creative block" },
+            { id: 9, time: "18:00", label: "Family / dinner" },
+            { id: 10, time: "19:30", label: "Movement / walk" },
+            { id: 11, time: "21:00", label: "Evening routine" },
+            { id: 12, time: "22:00", label: "Reflection & rest" }
+        ];
+
+        // State Management
+        let itinerary = JSON.parse(localStorage.getItem('sovereign_chronometer')) || [...defaultBlocks];
+
+        // DOM Elements
+        const celestialDisc = document.getElementById('celestialDisc');
+        const digitalClock = document.getElementById('digitalClock');
+        const blockList = document.getElementById('blockList');
+        
+        const newTime = document.getElementById('newTime');
+        const newLabel = document.getElementById('newLabel');
+        const addBtn = document.getElementById('addBtn');
+
+        // Helper: Convert "HH:MM" string to total minutes from midnight
+        function timeToMinutes(timeStr) {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return (hours * 60) + minutes;
+        }
+
+        // Helper: Format Date object to "HH:MM"
+        function formatTime(date) {
+            const h = date.getHours().toString().padStart(2, '0');
+            const m = date.getMinutes().toString().padStart(2, '0');
+            return `${h}:${m}`;
+        }
+
+        function updateClockPhysics() {
+            const now = new Date();
+            
+            // Update Digital Display (SVG requires textContent instead of innerText)
+            digitalClock.textContent = formatTime(now);
+
+            // Calculate precise rotation based on seconds for buttery smooth movement
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+            
+            // Total seconds in a day = 86400
+            const totalSecondsPassed = (hours * 3600) + (minutes * 60) + seconds;
+            
+            // Calculate Degrees. 
+            // We want Midnight (00:00) to have the Moon at the top. 
+            // In our SVG, Moon is at bottom (155), Sun is at top (45).
+            // So at 00:00, we need a 180 degree rotation.
+            // A full day is 360 degrees. 
+            
+            const baseDegrees = (totalSecondsPassed / 86400) * 360;
+            const finalRotation = baseDegrees + 180; // Offset by 180 to put midnight at top
+
+            celestialDisc.style.transform = `rotate(${finalRotation}deg)`;
+
+            updateItinerary(hours, minutes);
+        }
+
+        function updateItinerary(currentHours, currentMinutes) {
+            const currentTotalMins = (currentHours * 60) + currentMinutes;
+            
+            // Sort itinerary chronologically
+            itinerary.sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
+
+            // Find the active block
+            let activeIndex = -1;
+            for (let i = 0; i < itinerary.length; i++) {
+                const blockMins = timeToMinutes(itinerary[i].time);
+                if (currentTotalMins >= blockMins) {
+                    activeIndex = i;
+                } else {
+                    break; // Because it's sorted, the first one in the future stops the loop
+                }
+            }
+
+            // If it's before the very first block, no block is active
+            // If it's after the last block, the last block is active until midnight
+
+            // Render List
+            blockList.innerHTML = '';
+            
+            if (itinerary.length === 0) {
+                blockList.innerHTML = `<p class="text-xs text-[#A39F96] italic text-center mt-8">Your day is entirely open.</p>`;
+                return;
+            }
+
+            itinerary.forEach((block, index) => {
+                const row = document.createElement('div');
+                let stateClass = '';
+                
+                if (index < activeIndex) stateClass = 'block-past';
+                else if (index === activeIndex) stateClass = 'block-active';
+                else stateClass = 'block-future';
+
+                row.className = `block-row flex items-center justify-between group ${stateClass}`;
+                row.id = `block-${index}`;
+
+                row.innerHTML = `
+                    <div class="flex items-center space-x-4 min-w-0">
+                        <span class="block-time mono text-sm font-semibold text-[#8A867D] shrink-0 w-12">${block.time}</span>
+                        <span class="block-label text-sm text-[#525252] truncate font-medium">${block.label}</span>
+                    </div>
+                    <button onclick="deleteBlock(${block.id})" class="btn-delete p-1 shrink-0" title="Remove Block">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                `;
+                
+                blockList.appendChild(row);
+            });
+
+            // Auto-scroll to the active block
+            if (activeIndex !== -1) {
+                const activeElement = document.getElementById(`block-${activeIndex}`);
+                if (activeElement) {
+                    // Smoothly scroll the container so the active item is near the top/center
+                    activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        }
+
+        window.deleteBlock = function(id) {
+            itinerary = itinerary.filter(b => b.id !== id);
+            localStorage.setItem('sovereign_chronometer', JSON.stringify(itinerary));
+            // Force immediate update
+            const now = new Date();
+            updateItinerary(now.getHours(), now.getMinutes());
+        };
+
+        addBtn.addEventListener('click', () => {
+            const time = newTime.value;
+            const label = newLabel.value.trim();
+
+            if (time && label) {
+                itinerary.push({
+                    id: Date.now(),
+                    time: time,
+                    label: label
+                });
+                localStorage.setItem('sovereign_chronometer', JSON.stringify(itinerary));
+                
+                newTime.value = '';
+                newLabel.value = '';
+                newLabel.focus();
+
+                // Button physical feedback
+                addBtn.style.transform = 'translateY(2px) scale(0.95)';
+                setTimeout(() => addBtn.style.transform = 'none', 150);
+
+                const now = new Date();
+                updateItinerary(now.getHours(), now.getMinutes());
+            }
+        });
+
+        // Enter key support
+        newLabel.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addBtn.click();
+        });
+
+        // Initialize and start Engine
+        updateClockPhysics(); // Run instantly once
+        setInterval(updateClockPhysics, 1000); // Update every second for smooth UI
+
+    </script>
+</body>
+</html>

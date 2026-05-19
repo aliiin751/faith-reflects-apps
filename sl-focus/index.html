@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Focus Lens</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    <!-- Clean monospace for the timer -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* Sovereign Light Mode Base */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: transparent; 
+            color: #37352f; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* The Widget Container */
+        .widget-box {
+            background-color: #FCFBF9; /* Ivory Parchment */
+            border: 1px solid #E9E5DC;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.03), inset 0 0 20px rgba(255,255,255,0.5);
+            transition: all 1.5s ease;
+        }
+
+        .widget-box.is-focused {
+            border-color: rgba(212, 175, 55, 0.4);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.05), inset 0 0 40px rgba(212, 175, 55, 0.05);
+        }
+
+        /* Ambient Glow */
+        .ambient-glow {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 280px;
+            height: 280px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0;
+            transition: opacity 2s ease;
+        }
+        .is-focused .ambient-glow {
+            opacity: 1;
+            animation: pulse-glow 4s infinite alternate ease-in-out;
+        }
+        @keyframes pulse-glow {
+            0% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; }
+        }
+
+        /* View Transitions */
+        .view-section {
+            position: absolute;
+            inset: 0;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), visibility 0.8s;
+        }
+        
+        #setupView {
+            opacity: 1; transform: scale(1); visibility: visible; z-index: 20;
+        }
+        #setupView.hidden-view {
+            opacity: 0; transform: scale(0.95); visibility: hidden; pointer-events: none;
+        }
+
+        #activeView {
+            opacity: 0; transform: scale(1.05); visibility: hidden; z-index: 10;
+        }
+        #activeView.visible-view {
+            opacity: 1; transform: scale(1); visibility: visible; z-index: 30;
+        }
+
+        /* SVG Brass Ring (The Lens) */
+        .lens-track {
+            fill: none;
+            stroke: #E9E5DC;
+            stroke-width: 4;
+        }
+        .lens-progress {
+            fill: none;
+            stroke: url(#brassGradient);
+            stroke-width: 6;
+            stroke-linecap: round;
+            /* Circumference of r=90 is ~565.48 */
+            stroke-dasharray: 565.48;
+            stroke-dashoffset: 565.48;
+            transform: rotate(-90deg);
+            transform-origin: center;
+            transition: stroke-dashoffset 1s linear;
+            filter: drop-shadow(0 2px 4px rgba(212, 175, 55, 0.3));
+        }
+
+        /* Inputs & Selects */
+        input[type="text"], select {
+            background-color: #FFFFFF;
+            border: 1px solid #E9E5DC;
+            color: #37352f;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
+        }
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: #D4AF37;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.1), inset 0 2px 4px rgba(0,0,0,0.01);
+        }
+        input::placeholder { color: #A39F96; font-style: italic; }
+        
+        /* Custom Select Arrow */
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%238A867D'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1em;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background-color: #37352f;
+            color: #FFFFFF;
+            border: 1px solid #2d2d2d;
+            transition: all 0.4s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .btn-primary:hover { 
+            background-color: #000000; 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+        .btn-primary:active { transform: translateY(1px) scale(0.98); }
+
+        .btn-complete {
+            background-color: #FCFBF9;
+            color: #B48025;
+            border: 1px solid #D4AF37;
+            transition: all 0.4s ease;
+        }
+        .btn-complete:hover {
+            background-color: #FFFAF0;
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.15);
+        }
+
+        .btn-cancel {
+            background-color: transparent;
+            color: #A39F96;
+            transition: all 0.3s ease;
+        }
+        .btn-cancel:hover { color: #37352f; }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(255,255,255,0.8); }
+
+        /* Success Animation */
+        .success-flash {
+            position: absolute;
+            inset: 0;
+            background-color: #ffffff;
+            z-index: 50;
+            opacity: 0;
+            pointer-events: none;
+            border-radius: 1.5rem;
+        }
+        .success-flash.trigger {
+            animation: flash 1.5s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+        }
+        @keyframes flash {
+            0% { opacity: 0; }
+            20% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-sm rounded-3xl h-[520px] overflow-hidden">
+        
+        <div class="ambient-glow" id="ambientGlow"></div>
+        <div class="success-flash" id="successFlash"></div>
+
+        <!-- ================= VIEW 1: SETUP ================= -->
+        <div id="setupView" class="view-section">
+            <!-- Header -->
+            <div class="w-full flex justify-between items-center mb-6 shrink-0">
+                <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#A39F96]">@faithreflects</span>
+                <div class="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider text-[#8A867D] border border-[#E9E5DC] bg-white">
+                    Deep Work
+                </div>
+            </div>
+
+            <h2 class="serif text-3xl text-[#37352f] mb-1">The One Thing</h2>
+            <p class="text-xs text-[#8A867D] italic mb-8">"If nothing else gets done today, this does."</p>
+
+            <div class="flex-1 flex flex-col space-y-5 justify-center pb-6">
+                <!-- Task Input -->
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold tracking-widest uppercase text-[#A39F96] mb-2 pl-1">My Focus Objective</label>
+                    <input type="text" id="taskInput" placeholder="e.g., Ship the landing page..." class="w-full rounded-xl px-4 py-3.5 text-sm font-medium" autocomplete="off">
+                </div>
+
+                <!-- Time Selection -->
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold tracking-widest uppercase text-[#A39F96] mb-2 pl-1">Time Block</label>
+                    <select id="timeSelect" class="w-full rounded-xl px-4 py-3.5 text-sm font-medium">
+                        <option value="1500">25 Minutes (Pomodoro)</option>
+                        <option value="2700">45 Minutes (Sprint)</option>
+                        <option value="3600" selected>60 Minutes (Deep Work)</option>
+                        <option value="5400">90 Minutes (Sovereign Block)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Action -->
+            <button id="startBtn" class="btn-primary w-full py-4 rounded-xl text-xs font-bold uppercase tracking-widest flex items-center justify-center space-x-2 shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                <span>Engage Focus</span>
+            </button>
+        </div>
+
+
+        <!-- ================= VIEW 2: ACTIVE FOCUS ================= -->
+        <div id="activeView" class="view-section items-center">
+            
+            <!-- Header (Minimal) -->
+            <div class="w-full flex justify-between items-center mb-2 shrink-0 z-10">
+                <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#A39F96]">Active Lens</span>
+                <span class="text-[10px] tracking-widest uppercase text-[#D4AF37] font-bold flex items-center space-x-1">
+                    <span class="w-1.5 h-1.5 bg-[#D4AF37] rounded-full animate-pulse inline-block"></span>
+                    <span>Recording</span>
+                </span>
+            </div>
+
+            <!-- The Brass Lens Visualizer -->
+            <div class="relative w-full flex-1 flex items-center justify-center min-h-0 z-10 my-4">
+                
+                <svg viewBox="0 0 200 200" class="absolute inset-0 w-full h-full overflow-visible">
+                    <defs>
+                        <!-- Polished Brass Gradient -->
+                        <linearGradient id="brassGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#FCD34D"/>
+                            <stop offset="30%" stop-color="#D97706"/>
+                            <stop offset="70%" stop-color="#B48025"/>
+                            <stop offset="100%" stop-color="#FDE68A"/>
+                        </linearGradient>
+                    </defs>
+                    
+                    <!-- Background Track -->
+                    <circle class="lens-track" cx="100" cy="100" r="90"/>
+                    
+                    <!-- Animated Progress Ring -->
+                    <circle id="lensProgress" class="lens-progress" cx="100" cy="100" r="90"/>
+                </svg>
+
+                <!-- Center Content inside the ring -->
+                <div class="relative z-20 flex flex-col items-center justify-center text-center w-[160px] h-[160px]">
+                    <span class="text-[9px] uppercase tracking-widest font-bold text-[#A39F96] mb-2">The Objective</span>
+                    
+                    <!-- The Task -->
+                    <h3 id="activeTaskText" class="serif text-lg text-[#37352f] leading-tight mb-4 line-clamp-3 px-2">
+                        Task Name Here
+                    </h3>
+                    
+                    <!-- The Digital Timer -->
+                    <div id="timerDisplay" class="mono text-3xl font-medium text-[#B48025] tracking-tight">
+                        60:00
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Actions -->
+            <div class="w-full flex space-x-3 z-10 shrink-0 mt-auto">
+                <button id="cancelTriggerBtn" class="btn-cancel flex-1 py-3.5 rounded-xl text-xs font-semibold uppercase tracking-wider">
+                    Abort
+                </button>
+                <button id="completeBtn" class="btn-complete flex-[2] py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center space-x-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <span>Task Achieved</span>
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Custom Abort Modal -->
+        <div id="abortModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#FCFBF9] rounded-2xl p-6 w-full max-w-[260px] border border-[#E9E5DC] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#37352f]">Break Focus?</h3>
+                <p class="text-xs text-[#8A867D] mb-6">Are you sure you want to shatter the lens and abort this block?</p>
+                <div class="flex space-x-3">
+                    <button id="cancelAbortBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-[#8A867D] hover:bg-gray-100 border border-transparent transition-colors">Resume</button>
+                    <button id="confirmAbortBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#37352f] text-white hover:bg-black transition-colors">Abort</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Elements
+        const container = document.getElementById('widgetContainer');
+        const setupView = document.getElementById('setupView');
+        const activeView = document.getElementById('activeView');
+        
+        const taskInput = document.getElementById('taskInput');
+        const timeSelect = document.getElementById('timeSelect');
+        const startBtn = document.getElementById('startBtn');
+        
+        const activeTaskText = document.getElementById('activeTaskText');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const lensProgress = document.getElementById('lensProgress');
+        const completeBtn = document.getElementById('completeBtn');
+        const successFlash = document.getElementById('successFlash');
+        
+        // Modal
+        const abortModal = document.getElementById('abortModal');
+        const cancelTriggerBtn = document.getElementById('cancelTriggerBtn');
+        const cancelAbortBtn = document.getElementById('cancelAbortBtn');
+        const confirmAbortBtn = document.getElementById('confirmAbortBtn');
+
+        // State variables
+        let isRunning = false;
+        let timerId = null;
+        let totalSeconds = 0;
+        let secondsRemaining = 0;
+        
+        // Math for SVG Ring
+        const circleRadius = 90;
+        const circumference = 2 * Math.PI * circleRadius; // ~565.48
+
+        // Load previously written task if it exists (but reset the timer)
+        const savedTask = localStorage.getItem('sovereign_focus_task');
+        if (savedTask) taskInput.value = savedTask;
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function updateVisuals() {
+            // Update Text
+            timerDisplay.innerText = formatTime(secondsRemaining);
+            
+            // Calculate SVG stroke offset
+            // When remaining = total, offset = circumference (empty)
+            // When remaining = 0, offset = 0 (full)
+            // Note: We are "drawing" the ring as time counts down.
+            const progressRatio = secondsRemaining / totalSeconds;
+            const offset = progressRatio * circumference;
+            lensProgress.style.strokeDashoffset = offset;
+        }
+
+        function startFocus() {
+            const task = taskInput.value.trim();
+            if (!task) {
+                taskInput.focus();
+                return;
+            }
+
+            // Save text
+            localStorage.setItem('sovereign_focus_task', task);
+            
+            // Button feedback
+            startBtn.style.transform = 'scale(0.95)';
+            setTimeout(() => startBtn.style.transform = 'scale(1)', 150);
+
+            // Initialize State
+            totalSeconds = parseInt(timeSelect.value);
+            secondsRemaining = totalSeconds;
+            activeTaskText.innerText = task;
+            
+            // Instantly set ring to empty
+            lensProgress.style.transition = 'none';
+            lensProgress.style.strokeDashoffset = circumference;
+            
+            // Transition Views
+            setupView.classList.add('hidden-view');
+            activeView.classList.add('visible-view');
+            container.classList.add('is-focused');
+
+            isRunning = true;
+            updateVisuals();
+
+            // Wait for view transition to finish before starting timer physics
+            setTimeout(() => {
+                if (!isRunning) return;
+                
+                // Re-enable smooth transition for the countdown
+                lensProgress.style.transition = 'stroke-dashoffset 1s linear';
+                
+                timerId = setInterval(() => {
+                    secondsRemaining--;
+                    
+                    // Don't let it go below 0 (but keep the ring full)
+                    if (secondsRemaining < 0) {
+                        secondsRemaining = 0;
+                        clearInterval(timerId);
+                        timerDisplay.classList.add('animate-pulse'); // Subtle indication time is up if they haven't clicked complete
+                    }
+                    
+                    updateVisuals();
+                    
+                }, 1000);
+            }, 800);
+        }
+
+        function endFocus(success = false) {
+            isRunning = false;
+            clearInterval(timerId);
+            timerDisplay.classList.remove('animate-pulse');
+
+            if (success) {
+                // Flashbang & reset
+                successFlash.classList.add('trigger');
+                setTimeout(() => {
+                    resetToSetup();
+                    successFlash.classList.remove('trigger');
+                }, 1500);
+            } else {
+                resetToSetup();
+            }
+        }
+
+        function resetToSetup() {
+            container.classList.remove('is-focused');
+            activeView.classList.remove('visible-view');
+            setupView.classList.remove('hidden-view');
+            taskInput.value = ''; // Clear task on successful/aborted finish
+            localStorage.removeItem('sovereign_focus_task');
+        }
+
+        // Event Listeners
+        startBtn.addEventListener('click', startFocus);
+        
+        taskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') startFocus();
+        });
+
+        completeBtn.addEventListener('click', () => {
+            completeBtn.style.transform = 'scale(0.95)';
+            setTimeout(() => completeBtn.style.transform = 'scale(1)', 150);
+            endFocus(true);
+        });
+
+        // Abort Modal Logic
+        cancelTriggerBtn.addEventListener('click', () => abortModal.classList.remove('hidden'));
+        cancelAbortBtn.addEventListener('click', () => abortModal.classList.add('hidden'));
+        
+        confirmAbortBtn.addEventListener('click', () => {
+            abortModal.classList.add('hidden');
+            endFocus(false);
+        });
+
+    </script>
+</body>
+</html>

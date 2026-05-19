@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Arc of Mastery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        /* Sovereign Light Mode Base - Scholar Aesthetic */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: transparent; 
+            color: #37352f; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* The Widget Container */
+        .widget-box {
+            background-color: #FCFBF9; /* Ivory Parchment */
+            border: 1px solid #E9E5DC;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.03), inset 0 0 20px rgba(255,255,255,0.5);
+            transition: all 1.5s ease;
+        }
+
+        /* Ambient Glow behind the arch */
+        .ambient-glow {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.0) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            transition: background 1.5s ease;
+        }
+        .is-mastered .ambient-glow {
+            background: radial-gradient(circle, rgba(252, 211, 77, 0.2) 0%, transparent 70%);
+            animation: breathe-glow 4s infinite alternate ease-in-out;
+        }
+
+        @keyframes breathe-glow {
+            0% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; filter: drop-shadow(0 0 10px rgba(252, 211, 77, 0.2)); }
+        }
+
+        /* SVG Architecture Physics */
+        .arch-stone {
+            fill: url(#marbleGrad);
+            stroke: #DCD7CA;
+            stroke-width: 1.5;
+            transition: fill 0.3s ease;
+        }
+        .arch-shadow {
+            fill: rgba(0,0,0,0.05);
+        }
+
+        .arch-block-group {
+            transform: translateY(-200px);
+            opacity: 0;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        /* Placed State (Static) */
+        .arch-block-group.is-placed {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Dropping Animation */
+        .arch-block-group.is-dropping {
+            animation: heavyDrop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes heavyDrop {
+            0% { transform: translateY(-200px); opacity: 0; filter: drop-shadow(0 20px 10px rgba(0,0,0,0.3)); }
+            60% { transform: translateY(0); opacity: 1; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1)); }
+            75% { transform: translateY(-5px); }
+            90% { transform: translateY(1px); }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Keystone Styling */
+        .keystone {
+            fill: url(#brassGrad);
+            stroke: #B48025;
+            stroke-width: 2;
+        }
+        .is-mastered .keystone {
+            fill: url(#goldGrad);
+            filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.6));
+        }
+
+        /* Sunbeam Effect (Through the arch) */
+        .sunbeam {
+            opacity: 0;
+            transform-origin: 100px 55px;
+            transform: scaleY(0);
+            transition: opacity 1.5s ease 0.5s, transform 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.5s;
+            pointer-events: none;
+            mix-blend-mode: overlay;
+        }
+        .is-mastered .sunbeam {
+            opacity: 0.8;
+            transform: scaleY(1);
+            animation: breathe-beam 4s infinite alternate ease-in-out 2s;
+        }
+
+        @keyframes breathe-beam {
+            0% { opacity: 0.7; }
+            100% { opacity: 0.9; }
+        }
+
+        /* Impact Shake applied to the base */
+        .impact-shake {
+            animation: shake 0.4s cubic-bezier(0.36, 0, 0.66, -0.56) forwards;
+        }
+        @keyframes shake {
+            0% { transform: translateY(0); }
+            20% { transform: translateY(3px); }
+            40% { transform: translateY(-1px); }
+            60% { transform: translateY(1px); }
+            80% { transform: translateY(-0.5px); }
+            100% { transform: translateY(0); }
+        }
+
+        /* Dust Particles */
+        .dust-cloud {
+            position: absolute;
+            background-color: #DCD7CA;
+            border-radius: 50%;
+            pointer-events: none;
+            filter: blur(2px);
+            z-index: 20;
+            opacity: 0;
+            animation: dustPuff 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+        @keyframes dustPuff {
+            0% { transform: translate(0, 0) scale(0.5); opacity: 0.8; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(3); opacity: 0; }
+        }
+
+        /* Checklist & Input Styling */
+        .milestone-row {
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            background-color: #FFFFFF;
+        }
+        .milestone-row:hover:not(.completed) {
+            background-color: #fcfbf9;
+            border-color: #E9E5DC;
+            transform: translateX(2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        }
+        
+        .check-box {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            border: 2px solid #E9E5DC;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            background-color: #fff;
+            cursor: pointer;
+        }
+        .check-box:hover { border-color: #D4AF37; }
+        
+        .milestone-row.completed .check-box {
+            background-color: #37352f;
+            border-color: #37352f;
+        }
+        .milestone-row.completed.mastery-row .check-box {
+            background-color: #D4AF37;
+            border-color: #B48025;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+        }
+
+        .check-mark {
+            stroke-dasharray: 20;
+            stroke-dashoffset: 20;
+            transition: stroke-dashoffset 0.4s ease-in-out 0.1s;
+            stroke: #fff;
+        }
+        .milestone-row.completed .check-mark { stroke-dashoffset: 0; }
+
+        input[type="text"], textarea {
+            background-color: transparent;
+            color: #37352f;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid transparent;
+            width: 100%;
+        }
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-bottom-color: #D4AF37;
+        }
+        input::placeholder, textarea::placeholder { color: #A39F96; font-style: italic; }
+
+        .milestone-row.completed input[type="text"] {
+            color: #A39F96;
+            text-decoration: line-through;
+            pointer-events: none;
+        }
+
+        /* Custom Select */
+        select {
+            appearance: none;
+            background-color: #FFFFFF;
+            border: 1px solid #E9E5DC;
+            color: #37352f;
+            padding: 8px 36px 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%238A867D'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 14px;
+            transition: all 0.3s ease;
+        }
+        select:focus { outline: none; border-color: #D4AF37; }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #DCD7CA; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #B48025; }
+
+        /* Buttons */
+        .btn-add {
+            background-color: #37352f;
+            color: #FFFFFF;
+            transition: all 0.3s ease;
+        }
+        .btn-add:hover { background-color: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .btn-add:active { transform: scale(0.95); }
+
+        .btn-reset {
+            background-color: transparent;
+            color: #A39F96;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid transparent;
+        }
+        .btn-reset:hover { color: #EF4444; border-bottom-color: #EF4444; }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(255,255,255,0.8); }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-4xl rounded-3xl p-6 md:p-10 flex flex-col md:flex-row h-auto min-h-[620px] overflow-hidden gap-8">
+        
+        <div class="ambient-glow"></div>
+
+        <!-- Left Side: The Architectural Visualizer -->
+        <div class="flex-shrink-0 flex flex-col items-center w-full md:w-[320px] h-full relative z-20">
+            
+            <div class="w-full flex justify-between items-center mb-4">
+                <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#A39F96]">@faithreflects</span>
+            </div>
+            
+            <h2 class="serif text-3xl text-[#37352f] mb-1 text-center w-full">Arc of Mastery</h2>
+            <p class="text-[11px] text-[#8A867D] italic mb-6 text-center w-full border-b border-[#E9E5DC] pb-4">"Built stone by stone."</p>
+
+            <!-- SVG Arch Area -->
+            <div class="relative w-full flex-1 flex justify-center items-end" id="svgContainer">
+                
+                <div id="particlesArea" class="absolute inset-0 pointer-events-none z-30 overflow-visible"></div>
+
+                <svg viewBox="0 0 200 240" class="w-full h-full overflow-visible z-20" id="archSvg">
+                    <defs>
+                        <linearGradient id="marbleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#FFFFFF"/>
+                            <stop offset="60%" stop-color="#FCFBF9"/>
+                            <stop offset="100%" stop-color="#E9E5DC"/>
+                        </linearGradient>
+                        <linearGradient id="brassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#FDE68A"/>
+                            <stop offset="50%" stop-color="#D4AF37"/>
+                            <stop offset="100%" stop-color="#B48025"/>
+                        </linearGradient>
+                        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#FFFBEB"/>
+                            <stop offset="40%" stop-color="#FCD34D"/>
+                            <stop offset="100%" stop-color="#D97706"/>
+                        </linearGradient>
+                        <linearGradient id="beamGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="rgba(252, 211, 77, 0.4)"/>
+                            <stop offset="100%" stop-color="rgba(252, 211, 77, 0)"/>
+                        </linearGradient>
+                    </defs>
+
+                    <!-- The Sunbeam (Activates on Mastery) -->
+                    <polygon class="sunbeam" points="100,55 30,220 170,220" fill="url(#beamGrad)"/>
+
+                    <!-- Foundation / Ground -->
+                    <line x1="10" y1="210" x2="190" y2="210" stroke="#DCD7CA" stroke-width="2" stroke-linecap="round"/>
+
+                    <!-- Base Pillars (Always present) -->
+                    <g id="base-pillars">
+                        <!-- Left Pillar -->
+                        <rect x="30" y="140" width="30" height="70" class="arch-stone"/>
+                        <rect x="30" y="140" width="10" height="70" class="arch-shadow"/>
+                        <!-- Right Pillar -->
+                        <rect x="140" y="140" width="30" height="70" class="arch-stone"/>
+                        <rect x="140" y="140" width="10" height="70" class="arch-shadow"/>
+                        <!-- Decorative Base Caps -->
+                        <path d="M 25 140 L 65 140 L 65 145 L 25 145 Z" class="arch-stone"/>
+                        <path d="M 135 140 L 175 140 L 175 145 L 135 145 Z" class="arch-stone"/>
+                    </g>
+
+                    <!-- Milestone 1: Beginner Blocks -->
+                    <g id="block-1" class="arch-block-group">
+                        <rect x="30" y="110" width="30" height="30" class="arch-stone"/>
+                        <rect x="30" y="110" width="10" height="30" class="arch-shadow"/>
+                        
+                        <rect x="140" y="110" width="30" height="30" class="arch-stone"/>
+                        <rect x="140" y="110" width="10" height="30" class="arch-shadow"/>
+                    </g>
+
+                    <!-- Milestone 2: Intermediate Curves -->
+                    <g id="block-2" class="arch-block-group">
+                        <path d="M 30 110 L 60 110 L 70 80 L 40 80 Z" class="arch-stone"/>
+                        <path d="M 30 110 L 40 110 L 50 80 L 40 80 Z" class="arch-shadow"/>
+                        
+                        <path d="M 140 110 L 170 110 L 160 80 L 130 80 Z" class="arch-stone"/>
+                        <path d="M 140 110 L 150 110 L 140 80 L 130 80 Z" class="arch-shadow"/>
+                    </g>
+
+                    <!-- Milestone 3: Advanced Upper Curves -->
+                    <g id="block-3" class="arch-block-group">
+                        <path d="M 40 80 L 70 80 L 85 55 L 60 55 Z" class="arch-stone"/>
+                        <path d="M 40 80 L 50 80 L 65 55 L 60 55 Z" class="arch-shadow"/>
+                        
+                        <path d="M 160 80 L 130 80 L 115 55 L 140 55 Z" class="arch-stone"/>
+                        <path d="M 160 80 L 150 80 L 135 55 L 140 55 Z" class="arch-shadow"/>
+                    </g>
+
+                    <!-- Milestone 4: Mastery Keystone -->
+                    <g id="block-4" class="arch-block-group z-30">
+                        <path d="M 85 55 L 115 55 L 120 30 L 80 30 Z" class="keystone"/>
+                        <path d="M 85 55 L 95 55 L 100 30 L 80 30 Z" fill="rgba(255,255,255,0.3)"/> <!-- Highlight -->
+                        <!-- Embedded gem -->
+                        <circle cx="100" cy="42" r="4" fill="#FFFFFF" opacity="0.8"/>
+                    </g>
+
+                </svg>
+            </div>
+            
+            <div class="mt-4 w-full flex flex-col items-center">
+                <span class="text-[10px] font-bold tracking-widest uppercase text-[#B48025]" id="progressText">0 / 4 Blocks Placed</span>
+            </div>
+
+        </div>
+
+        <!-- Right Side: The Editor & Milestones -->
+        <div class="flex-1 w-full flex flex-col z-20 min-h-0 pl-2 md:pl-0 border-t md:border-t-0 md:border-l border-[#E9E5DC] pt-6 md:pt-0 md:pl-8">
+            
+            <!-- Skill Selector -->
+            <div class="flex justify-between items-center mb-6 shrink-0 relative z-30">
+                <select id="skillSelector" class="w-[70%]" onchange="switchSkill(this.value)">
+                    <!-- Injected by JS -->
+                </select>
+                <button onclick="openAddModal()" class="btn-add w-8 h-8 rounded-full flex items-center justify-center shadow-sm" title="Add New Skill">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                </button>
+            </div>
+
+            <!-- Context Input -->
+            <div class="flex flex-col mb-6 shrink-0">
+                <label class="text-[9px] font-bold tracking-widest uppercase text-[#A39F96] mb-1.5 pl-1">Why this skill?</label>
+                <textarea id="skillContext" placeholder="The driving reason for mastering this..." class="w-full rounded-xl px-4 py-3 text-sm font-medium leading-relaxed custom-scrollbar min-h-[60px] bg-[#FCFBF9]" autocomplete="off"></textarea>
+            </div>
+
+            <!-- Milestones List -->
+            <div class="flex-1 flex flex-col space-y-3 overflow-y-auto custom-scrollbar pr-2 min-h-0" id="milestonesContainer">
+                
+                <!-- M1: Beginner -->
+                <div class="milestone-row p-3 rounded-xl flex items-start space-x-3" id="row-0">
+                    <div class="check-box shadow-sm shrink-0 mt-1" onclick="toggleMilestone(0)">
+                        <svg class="w-3.5 h-3.5 check-mark" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <div class="flex-1 flex flex-col min-w-0">
+                        <span class="text-[9px] font-bold tracking-widest uppercase text-[#8A867D] mb-1">1. Beginner</span>
+                        <input type="text" id="input-0" placeholder="e.g. Complete fundamentals course..." class="text-sm font-medium pb-1" autocomplete="off">
+                    </div>
+                </div>
+
+                <!-- M2: Intermediate -->
+                <div class="milestone-row p-3 rounded-xl flex items-start space-x-3" id="row-1">
+                    <div class="check-box shadow-sm shrink-0 mt-1" onclick="toggleMilestone(1)">
+                        <svg class="w-3.5 h-3.5 check-mark" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <div class="flex-1 flex flex-col min-w-0">
+                        <span class="text-[9px] font-bold tracking-widest uppercase text-[#8A867D] mb-1">2. Intermediate</span>
+                        <input type="text" id="input-1" placeholder="e.g. Practice daily for 30 days..." class="text-sm font-medium pb-1" autocomplete="off">
+                    </div>
+                </div>
+
+                <!-- M3: Advanced -->
+                <div class="milestone-row p-3 rounded-xl flex items-start space-x-3" id="row-2">
+                    <div class="check-box shadow-sm shrink-0 mt-1" onclick="toggleMilestone(2)">
+                        <svg class="w-3.5 h-3.5 check-mark" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <div class="flex-1 flex flex-col min-w-0">
+                        <span class="text-[9px] font-bold tracking-widest uppercase text-[#8A867D] mb-1">3. Advanced</span>
+                        <input type="text" id="input-2" placeholder="e.g. Execute first real-world project..." class="text-sm font-medium pb-1" autocomplete="off">
+                    </div>
+                </div>
+
+                <!-- M4: Mastery Project -->
+                <div class="milestone-row mastery-row p-3 rounded-xl flex items-start space-x-3" id="row-3">
+                    <div class="check-box shadow-sm shrink-0 mt-1" onclick="toggleMilestone(3)">
+                        <svg class="w-3.5 h-3.5 check-mark" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <div class="flex-1 flex flex-col min-w-0">
+                        <span class="text-[9px] font-bold tracking-widest uppercase text-[#D4AF37] mb-1 flex items-center space-x-1">
+                            <span>👑</span> <span>Mastery Project</span>
+                        </span>
+                        <input type="text" id="input-3" placeholder="e.g. Publish the definitive framework..." class="text-sm font-bold text-[#B48025] pb-1" autocomplete="off">
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Reset Button -->
+            <div class="w-full flex justify-between items-center mt-4 border-t border-[#E9E5DC] pt-4 shrink-0">
+                <button onclick="confirmDeleteSkill()" class="text-[9px] tracking-widest uppercase pb-0.5 btn-reset">
+                    Delete Skill
+                </button>
+                <button onclick="confirmReset()" class="text-[9px] tracking-widest uppercase pb-0.5 text-[#A39F96] hover:text-[#37352f] transition-colors border-b border-transparent hover:border-[#37352f]">
+                    Dismantle Arch
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Add Skill Modal -->
+        <div id="addModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#FCFBF9] rounded-2xl p-6 w-full max-w-[300px] border border-[#E9E5DC] shadow-2xl transform transition-all">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-serif text-xl text-[#37352f]">New Roadmap</h3>
+                    <button onclick="closeAddModal()" class="text-[#A39F96] hover:text-[#37352f] transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                </div>
+                <div class="flex flex-col mb-6">
+                    <label class="text-[9px] font-bold tracking-widest uppercase text-[#8A867D] mb-1.5 pl-1">Skill Name</label>
+                    <input type="text" id="newSkillInput" placeholder="e.g. Copywriting, Web Dev..." class="w-full rounded-xl px-4 py-3 text-sm font-medium bg-white" autocomplete="off">
+                </div>
+                <button onclick="saveNewSkill()" class="btn-add w-full py-3.5 rounded-xl text-xs font-semibold uppercase tracking-widest shadow-lg">
+                    Initialize Project
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Default Template Data
+        const defaultSkills = [
+            {
+                id: 'skill_1',
+                name: 'Long-form Copywriting',
+                context: 'Every launch rises or falls on the copy — and I want to never outsource my story.',
+                milestones: [
+                    { text: 'Complete Write of Passage fundamentals', done: true },
+                    { text: 'Write 5 full sales pages for practice', done: true },
+                    { text: 'Drive $10k+ launch with own copy', done: false },
+                    { text: 'Publish copywriting framework ebook', done: false }
+                ]
+            },
+            {
+                id: 'skill_2',
+                name: 'Notion Certified Consultant',
+                context: 'To master the tool I use to architect my entire digital life and offer consulting.',
+                milestones: [
+                    { text: 'Complete Notion 101 Certification', done: false },
+                    { text: 'Build 3 complex workspace templates', done: false },
+                    { text: 'Pass the Consultant Exam', done: false },
+                    { text: 'Onboard first official client', done: false }
+                ]
+            }
+        ];
+
+        // State
+        let skills = JSON.parse(localStorage.getItem('faithreflects_arc_mastery')) || defaultSkills;
+        let activeSkillId = skills.length > 0 ? skills[0].id : null;
+
+        let previousCount = 0;
+
+        // Elements
+        const container = document.getElementById('widgetContainer');
+        const archSvg = document.getElementById('archSvg');
+        const particlesArea = document.getElementById('particlesArea');
+        const progressText = document.getElementById('progressText');
+        const skillSelector = document.getElementById('skillSelector');
+        const skillContext = document.getElementById('skillContext');
+        
+        const inputs = [
+            document.getElementById('input-0'),
+            document.getElementById('input-1'),
+            document.getElementById('input-2'),
+            document.getElementById('input-3')
+        ];
+        
+        const rows = [
+            document.getElementById('row-0'),
+            document.getElementById('row-1'),
+            document.getElementById('row-2'),
+            document.getElementById('row-3')
+        ];
+
+        const blocks = [
+            document.getElementById('block-1'),
+            document.getElementById('block-2'),
+            document.getElementById('block-3'),
+            document.getElementById('block-4')
+        ];
+
+        // Dust Particle Generator
+        function spawnDust(yLevel) {
+            const rect = document.getElementById('svgContainer').getBoundingClientRect();
+            // Map SVG Y to Pixel Y (approximate based on container)
+            const pixelY = (yLevel / 240) * rect.height;
+            const centerX = rect.width / 2;
+
+            for(let i=0; i<6; i++) {
+                const dust = document.createElement('div');
+                dust.className = 'dust-cloud';
+                
+                const size = 15 + Math.random() * 20;
+                dust.style.width = `${size}px`;
+                dust.style.height = `${size}px`;
+                
+                dust.style.left = `${centerX - (size/2)}px`;
+                dust.style.top = `${pixelY - (size/2)}px`;
+                
+                const travelX = (Math.random() * 80) - 40;
+                const travelY = (Math.random() * -20);
+                
+                dust.style.setProperty('--tx', `${travelX}px`);
+                dust.style.setProperty('--ty', `${travelY}px`);
+                
+                particlesArea.appendChild(dust);
+                
+                setTimeout(() => {
+                    if(particlesArea.contains(dust)) dust.remove();
+                }, 800);
+            }
+        }
+
+        function triggerImpactShake() {
+            archSvg.classList.remove('impact-shake');
+            void archSvg.offsetWidth;
+            archSvg.classList.add('impact-shake');
+        }
+
+        function getActiveSkill() {
+            return skills.find(s => s.id === activeSkillId);
+        }
+
+        function saveState() {
+            localStorage.setItem('faithreflects_arc_mastery', JSON.stringify(skills));
+        }
+
+        // --- Render UI ---
+        function renderSelector() {
+            skillSelector.innerHTML = '';
+            if (skills.length === 0) {
+                skillSelector.innerHTML = '<option value="">No skills defined</option>';
+                skillSelector.disabled = true;
+                return;
+            }
+            
+            skillSelector.disabled = false;
+            skills.forEach(skill => {
+                const opt = document.createElement('option');
+                opt.value = skill.id;
+                opt.textContent = skill.name;
+                if (skill.id === activeSkillId) opt.selected = true;
+                skillSelector.appendChild(opt);
+            });
+        }
+
+        window.switchSkill = function(id) {
+            if (!id) return;
+            activeSkillId = id;
+            
+            // Re-render
+            const skill = getActiveSkill();
+            skillContext.value = skill.context;
+            
+            skill.milestones.forEach((m, i) => {
+                inputs[i].value = m.text;
+            });
+
+            // Calculate active blocks instantly without dropping animation to set state
+            const currentCount = skill.milestones.filter(m => m.done).length;
+            previousCount = currentCount; 
+            updateVisuals(false);
+        };
+
+        function updateVisuals(animate = true) {
+            const skill = getActiveSkill();
+            if (!skill) return;
+
+            const currentCount = skill.milestones.filter(m => m.done).length;
+            
+            // Text
+            if (currentCount === 4) {
+                progressText.innerText = "✦ Mastery Achieved ✦";
+                progressText.classList.replace('text-[#B48025]', 'text-[#D4AF37]');
+            } else {
+                progressText.innerText = `${currentCount} / 4 Blocks Placed`;
+                progressText.classList.replace('text-[#D4AF37]', 'text-[#B48025]');
+            }
+
+            // Checklist UI
+            skill.milestones.forEach((m, i) => {
+                if (m.done) rows[i].classList.add('completed');
+                else rows[i].classList.remove('completed');
+            });
+
+            // SVG Arch UI
+            // SVG Landing Y coords for dust: block 1=140, block 2=110, block 3=80, block 4=55
+            const landingY = [140, 110, 80, 55];
+
+            for(let i = 0; i < 4; i++) {
+                const block = blocks[i];
+                const isRequired = currentCount > i;
+                const wasRequired = previousCount > i;
+
+                if (isRequired && !wasRequired && animate) {
+                    // New block! Drop it.
+                    block.classList.remove('is-placed');
+                    block.classList.add('is-dropping');
+                    
+                    setTimeout(() => {
+                        triggerImpactShake();
+                        spawnDust(landingY[i]);
+                        
+                        // If it's the keystone, trigger mastery glow
+                        if (i === 3) container.classList.add('is-mastered');
+                    }, 650); 
+                    
+                } else if (isRequired) {
+                    // Already there
+                    block.classList.remove('is-dropping');
+                    block.classList.add('is-placed');
+                } else {
+                    // Hide
+                    block.classList.remove('is-dropping', 'is-placed');
+                }
+            }
+
+            if (currentCount < 4) {
+                container.classList.remove('is-mastered');
+            } else if (!animate && currentCount === 4) {
+                container.classList.add('is-mastered');
+            }
+
+            previousCount = currentCount;
+        }
+
+        window.toggleMilestone = function(index) {
+            const skill = getActiveSkill();
+            if (!skill) return;
+
+            // Optional: Block checking if text is empty
+            if (!skill.milestones[index].done && inputs[index].value.trim() === '') {
+                inputs[index].focus();
+                return;
+            }
+
+            skill.milestones[index].done = !skill.milestones[index].done;
+            saveState();
+            updateVisuals(true);
+        };
+
+        // Auto-save inputs
+        skillContext.addEventListener('input', (e) => {
+            const skill = getActiveSkill();
+            if (skill) { skill.context = e.target.value; saveState(); }
+        });
+        
+        inputs.forEach((input, i) => {
+            input.addEventListener('input', (e) => {
+                const skill = getActiveSkill();
+                if (skill) { skill.milestones[i].text = e.target.value; saveState(); }
+            });
+        });
+
+        // --- Modals & Buttons ---
+        window.openAddModal = function() {
+            document.getElementById('newSkillInput').value = '';
+            document.getElementById('addModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('newSkillInput').focus(), 100);
+        };
+        
+        window.closeAddModal = function() {
+            document.getElementById('addModal').classList.add('hidden');
+        };
+
+        window.saveNewSkill = function() {
+            const name = document.getElementById('newSkillInput').value.trim();
+            if (name) {
+                const newId = 'skill_' + Date.now();
+                skills.push({
+                    id: newId,
+                    name: name,
+                    context: '',
+                    milestones: [
+                        { text: '', done: false }, { text: '', done: false }, { text: '', done: false }, { text: '', done: false }
+                    ]
+                });
+                saveState();
+                renderSelector();
+                switchSkill(newId);
+                closeAddModal();
+            }
+        };
+
+        window.confirmDeleteSkill = function() {
+            if (skills.length === 0) return;
+            if (confirm("Are you sure you want to permanently delete this entire skill roadmap?")) {
+                skills = skills.filter(s => s.id !== activeSkillId);
+                saveState();
+                
+                if (skills.length > 0) {
+                    activeSkillId = skills[0].id;
+                } else {
+                    activeSkillId = null;
+                    // Clear inputs visually
+                    skillContext.value = '';
+                    inputs.forEach(input => input.value = '');
+                }
+                
+                renderSelector();
+                switchSkill(activeSkillId);
+            }
+        };
+
+        window.confirmReset = function() {
+            const skill = getActiveSkill();
+            if (!skill) return;
+            if (confirm("Dismantle the arch? This will uncheck all milestones for this skill.")) {
+                skill.milestones.forEach(m => m.done = false);
+                saveState();
+                updateVisuals(false);
+            }
+        };
+
+        // Initialize
+        renderSelector();
+        switchSkill(activeSkillId);
+
+    </script>
+</body>
+</html>

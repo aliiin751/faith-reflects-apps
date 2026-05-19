@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Crimson Votive Altar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        /* Light Mode Base - Relationships Aesthetic */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: transparent; 
+            color: #37352f; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* The Widget Container */
+        .widget-box {
+            background-color: #FCFBF9; /* Ivory Parchment */
+            border: 1px solid #F5E6E8; /* Soft blush border */
+            box-shadow: 0 8px 30px rgba(159, 18, 57, 0.04), inset 0 0 20px rgba(255,255,255,0.6);
+            transition: all 1.5s ease;
+        }
+
+        /* Ambient Altar Glow */
+        .ambient-glow {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(159, 18, 57, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            opacity: var(--base-opacity, 0);
+            transition: opacity 1s ease;
+        }
+        
+        .has-candles .ambient-glow {
+            animation: altar-flicker 4s infinite alternate ease-in-out;
+        }
+        
+        @keyframes altar-flicker {
+            0% { transform: translate(-50%, -50%) scale(0.95); opacity: calc(var(--base-opacity) * 0.7); }
+            50% { transform: translate(-50%, -50%) scale(1.02); opacity: calc(var(--base-opacity) * 1.1); }
+            100% { transform: translate(-50%, -50%) scale(0.98); opacity: var(--base-opacity); }
+        }
+
+        /* The Altar Niche */
+        .altar-niche {
+            background: linear-gradient(180deg, #F5E6E8 0%, #FCFBF9 100%);
+            box-shadow: inset 0 10px 30px rgba(159, 18, 57, 0.08), 0 0 0 1px #F0DCE0;
+            border-radius: 50% 50% 0 0 / 20% 20% 0 0;
+            position: relative;
+            overflow: visible;
+        }
+
+        /* Votive Candle Styling */
+        .votive-candle {
+            position: absolute;
+            width: 24px;
+            height: 32px;
+            transform-origin: bottom center;
+            animation: placeCandle 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            cursor: pointer;
+            z-index: 20;
+            transition: transform 0.3s ease;
+        }
+        .votive-candle:hover {
+            transform: translateY(-3px) scale(1.05);
+            z-index: 30;
+        }
+
+        @keyframes placeCandle {
+            0% { transform: translateY(-20px) scale(0.8); opacity: 0; }
+            100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        /* The Flame & Glow */
+        .flame {
+            transform-origin: 50% 100%;
+            animation: flicker 2s infinite alternate ease-in-out;
+            fill: url(#flameGrad);
+        }
+
+        @keyframes flicker {
+            0% { transform: scale(0.95) rotate(-2deg); filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.6)); opacity: 0.9; }
+            50% { transform: scale(1.1) rotate(3deg); filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.9)); opacity: 1; }
+            100% { transform: scale(0.98) rotate(-1deg); filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.7)); opacity: 0.8; }
+        }
+
+        .candle-glow {
+            transform-origin: center;
+            animation: glow-flicker 2s infinite alternate ease-in-out;
+            filter: blur(5px);
+        }
+
+        @keyframes glow-flicker {
+            0% { transform: scale(0.8); opacity: 0.15; }
+            50% { transform: scale(1.3); opacity: 0.35; filter: blur(6px); }
+            100% { transform: scale(1.1); opacity: 0.25; }
+        }
+
+        /* Answered Prayer Heart Emblem */
+        .heart-emblem {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            transform-origin: center;
+            animation: popHeart 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            cursor: pointer;
+            z-index: 10;
+        }
+        .heart-emblem:hover {
+            filter: drop-shadow(0 0 8px rgba(212, 154, 137, 0.8));
+            transform: scale(1.2);
+            z-index: 30;
+        }
+
+        @keyframes popHeart {
+            0% { transform: scale(0) rotate(-15deg); opacity: 0; filter: drop-shadow(0 0 20px rgba(212, 154, 137, 1)); }
+            60% { transform: scale(1.2) rotate(5deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); opacity: 0.9; filter: drop-shadow(0 2px 4px rgba(183, 110, 121, 0.4)); }
+        }
+
+        /* Tooltip */
+        .altar-tooltip {
+            position: absolute;
+            bottom: -60px;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            background-color: #37352f;
+            color: #FCFBF9;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 11px;
+            width: 220px;
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 50;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .altar-tooltip.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .altar-tooltip::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: 50%;
+            margin-left: -6px;
+            border-width: 0 6px 6px 6px;
+            border-style: solid;
+            border-color: transparent transparent #37352f transparent;
+        }
+
+        /* List Items */
+        .prayer-row {
+            transition: all 0.3s ease;
+            border: 1px solid #F5E6E8;
+            background-color: #FFFFFF;
+        }
+        .prayer-row:hover {
+            border-color: #E5D5D8;
+            box-shadow: 0 4px 12px rgba(159, 18, 57, 0.03);
+            transform: translateX(2px);
+        }
+
+        /* Buttons & Inputs */
+        input[type="text"] {
+            background-color: #FFFFFF;
+            border: 1px solid #F5E6E8;
+            color: #37352f;
+            transition: all 0.3s ease;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #B76E79;
+            box-shadow: 0 0 10px rgba(183, 110, 121, 0.1);
+        }
+        input::placeholder { color: #C4B5B7; font-style: italic; }
+
+        .btn-light {
+            background-color: #9F1239;
+            color: #FFE4E6;
+            transition: all 0.3s ease;
+        }
+        .btn-light:hover { 
+            background-color: #881337; 
+            box-shadow: 0 4px 12px rgba(159, 18, 57, 0.2);
+        }
+        .btn-light:active { transform: scale(0.96); }
+
+        .btn-answered {
+            background-color: #FCFBF9;
+            color: #B76E79;
+            border: 1px solid #E5D5D8;
+            transition: all 0.3s ease;
+        }
+        .btn-answered:hover {
+            background-color: #FFFDFD;
+            border-color: #B76E79;
+            box-shadow: 0 4px 10px rgba(183, 110, 121, 0.1);
+        }
+
+        .btn-delete {
+            opacity: 0;
+            color: #C4B5B7;
+            transition: all 0.2s ease;
+        }
+        .prayer-row:hover .btn-delete { opacity: 1; }
+        .btn-delete:hover { color: #EF4444; }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E5D5D8; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #B76E79; }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(255,255,255,0.8); }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-sm rounded-3xl p-6 md:p-8 flex flex-col h-[650px] overflow-hidden">
+        
+        <div class="ambient-glow" id="ambientGlow"></div>
+
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-4 z-10 shrink-0">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#A39F96]">@faithreflects</span>
+            <div class="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider text-[#B76E79] border border-[#F5E6E8] bg-white flex items-center space-x-1 shadow-sm">
+                <span id="activeCount" class="text-[#9F1239]">0</span>
+                <span>Burning</span>
+            </div>
+        </div>
+
+        <h2 class="serif text-2xl text-[#37352f] mb-1 z-10 shrink-0">People I'm Praying For</h2>
+        <p class="text-xs text-[#8A867D] italic mb-6 z-10 shrink-0 text-center">"Pray without ceasing."</p>
+
+        <!-- The Visual Altar -->
+        <div class="relative w-full h-48 mb-6 z-10 shrink-0" id="altarArea">
+            
+            <div class="absolute inset-0 altar-niche flex justify-center">
+                <!-- Shelves / Tiers inside the niche -->
+                <div class="absolute bottom-0 w-full h-8 bg-gradient-to-b from-[#FCFBF9] to-[#F5E6E8] border-t border-[#E5D5D8]"></div>
+                <div class="absolute bottom-8 w-[80%] h-6 bg-gradient-to-b from-[#FCFBF9] to-[#F5E6E8] border-t border-[#E5D5D8] rounded-t-sm shadow-lg"></div>
+                <div class="absolute bottom-14 w-[60%] h-6 bg-gradient-to-b from-[#FCFBF9] to-[#F5E6E8] border-t border-[#E5D5D8] rounded-t-sm shadow-lg"></div>
+            </div>
+
+            <!-- Candles and Hearts injected here -->
+            <div id="candlesContainer" class="absolute inset-0 z-20"></div>
+
+            <!-- Hover Tooltip -->
+            <div id="altarTooltip" class="altar-tooltip">
+                <span id="tooltipName" class="text-[10px] font-bold tracking-widest uppercase text-[#D49A89] block mb-1">Name</span>
+                <p id="tooltipPrayer" class="serif italic text-[12px] text-[#E5E5E5] leading-relaxed line-clamp-3">Prayer request goes here...</p>
+                <div id="tooltipAnswer" class="hidden mt-2 pt-2 border-t border-[#525252]">
+                    <span class="text-[9px] font-bold uppercase tracking-widest text-[#10B981]">✨ Answered</span>
+                </div>
+            </div>
+
+            <!-- Defs for SVGs -->
+            <svg width="0" height="0" class="absolute hidden">
+                <defs>
+                    <linearGradient id="flameGrad" x1="0" y1="1" x2="0" y2="0">
+                        <stop offset="0%" stop-color="#F59E0B"/>
+                        <stop offset="50%" stop-color="#FCD34D"/>
+                        <stop offset="100%" stop-color="#FFFBEB"/>
+                    </linearGradient>
+                    <linearGradient id="glassGrad" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stop-color="rgba(255,255,255,0.4)"/>
+                        <stop offset="30%" stop-color="rgba(255,255,255,0)"/>
+                        <stop offset="70%" stop-color="rgba(255,255,255,0)"/>
+                        <stop offset="100%" stop-color="rgba(255,255,255,0.2)"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+        </div>
+
+        <!-- Add Prayer Input -->
+        <div class="w-full flex space-x-2 z-10 shrink-0 mb-4 border-b border-[#F5E6E8] pb-4">
+            <div class="flex-1 flex flex-col space-y-2">
+                <input type="text" id="personInput" placeholder="Person's Name" class="w-full rounded-xl px-3 py-2 text-xs font-semibold" autocomplete="off">
+                <input type="text" id="prayerInput" placeholder="What are you praying for?" class="w-full rounded-xl px-3 py-2 text-xs font-light" autocomplete="off">
+            </div>
+            <button id="addBtn" class="btn-light px-3 rounded-xl flex flex-col items-center justify-center space-y-1 shadow-md w-20 shrink-0">
+                <span class="text-base">🕯️</span>
+                <span class="text-[9px] font-bold uppercase tracking-widest">Light</span>
+            </button>
+        </div>
+
+        <!-- Active Prayers List -->
+        <div class="flex-1 w-full flex flex-col min-h-0 z-10">
+            <div class="flex justify-between items-end mb-2 shrink-0 px-1">
+                <span class="text-[10px] font-bold tracking-widest uppercase text-[#8A867D]">Active Prayers</span>
+                <button id="viewAnsweredBtn" class="text-[9px] font-semibold uppercase tracking-widest text-[#B76E79] hover:text-[#9F1239] transition-colors underline">
+                    View Answered
+                </button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2" id="prayersList">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+
+        <!-- Answered Archive Modal -->
+        <div id="archiveModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#FCFBF9] rounded-3xl p-6 w-full max-w-md border border-[#F5E6E8] shadow-2xl flex flex-col h-[500px]">
+                
+                <div class="flex justify-between items-center mb-4 pb-4 border-b border-[#E5D5D8]">
+                    <h3 class="font-serif text-xl text-[#37352f] flex items-center space-x-2">
+                        <span class="text-[#D49A89]">✨</span>
+                        <span>Answered Prayers</span>
+                    </h3>
+                    <button id="closeArchiveBtn" class="text-[#A39F96] hover:text-[#37352f] transition-colors p-1">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                
+                <div id="archiveList" class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3">
+                    <!-- Logs injected by JS -->
+                </div>
+                
+                <button id="clearArchiveBtn" class="mt-4 w-full py-2.5 rounded-xl text-xs font-semibold text-[#C4B5B7] hover:text-[#EF4444] border border-transparent hover:bg-red-50 transition-colors">
+                    Clear Archive
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // State Management
+        let prayers = JSON.parse(localStorage.getItem('faithreflects_votive_altar')) || [];
+
+        // Elements
+        const container = document.getElementById('widgetContainer');
+        const candlesContainer = document.getElementById('candlesContainer');
+        const prayersList = document.getElementById('prayersList');
+        const activeCountDisplay = document.getElementById('activeCount');
+        const ambientGlow = document.getElementById('ambientGlow');
+        
+        const personInput = document.getElementById('personInput');
+        const prayerInput = document.getElementById('prayerInput');
+        const addBtn = document.getElementById('addBtn');
+        
+        // Tooltip
+        const altarTooltip = document.getElementById('altarTooltip');
+        const tooltipName = document.getElementById('tooltipName');
+        const tooltipPrayer = document.getElementById('tooltipPrayer');
+        const tooltipAnswer = document.getElementById('tooltipAnswer');
+        
+        // Modal
+        const archiveModal = document.getElementById('archiveModal');
+        const viewAnsweredBtn = document.getElementById('viewAnsweredBtn');
+        const closeArchiveBtn = document.getElementById('closeArchiveBtn');
+        const clearArchiveBtn = document.getElementById('clearArchiveBtn');
+        const archiveList = document.getElementById('archiveList');
+
+        // Math generator for stable pseudorandom positioning based on ID
+        function seededRandom(seed) {
+            let x = Math.sin(seed++) * 10000;
+            return x - Math.floor(x);
+        }
+
+        function getCandleSvg(delay) {
+            return `
+                <svg viewBox="0 0 30 40" class="w-full h-full overflow-visible drop-shadow-md">
+                    <!-- Ambient Glow Cast on Glass -->
+                    <circle cx="15" cy="15" r="10" fill="#F59E0B" class="candle-glow" style="animation-delay: ${delay}s"/>
+                    <!-- Glass Body (Back) -->
+                    <rect x="5" y="15" width="20" height="25" rx="3" fill="#881337"/>
+                    <!-- Wax -->
+                    <rect x="7" y="20" width="16" height="18" rx="2" fill="#BE123C"/>
+                    <path d="M15 20 L15 17" stroke="#4C0519" stroke-width="1.5" stroke-linecap="round"/>
+                    <!-- Flame -->
+                    <path class="flame" style="animation-delay: ${delay}s" d="M15 5 C15 5, 11 12, 11 15 C11 17.5, 13 19, 15 19 C17 19, 19 17.5, 19 15 C19 12, 15 5, 15 5 Z"/>
+                    <!-- Glass Body (Front Reflection) -->
+                    <rect x="5" y="15" width="20" height="25" rx="3" fill="url(#glassGrad)"/>
+                    <rect x="5" y="15" width="20" height="25" rx="3" fill="none" stroke="#F43F5E" stroke-width="0.5" opacity="0.3"/>
+                </svg>
+            `;
+        }
+
+        function getHeartSvg() {
+            return `
+                <svg viewBox="0 0 24 24" class="w-full h-full drop-shadow-md">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#D49A89" stroke="#B76E79" stroke-width="1.5"/>
+                    <path d="M7.5 5 C5.5 5, 4 6.5, 4 8.5" fill="none" stroke="#FFE4E6" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+                </svg>
+            `;
+        }
+
+        function renderAltar() {
+            candlesContainer.innerHTML = '';
+            let activeCount = 0;
+
+            // Separate arrays
+            const activePrayers = prayers.filter(p => !p.isAnswered);
+            const answeredPrayers = prayers.filter(p => p.isAnswered);
+
+            // 1. Draw Answered Hearts on the Arch Wall
+            // We want them scattered naturally across the upper portion
+            answeredPrayers.forEach(p => {
+                const emblem = document.createElement('div');
+                emblem.className = 'heart-emblem';
+                
+                const seed = p.id;
+                // Wall bounds roughly: left 20-80%, top 10-50%
+                const leftPos = 20 + (seededRandom(seed) * 60);
+                const topPos = 10 + (seededRandom(seed + 1) * 40);
+                const rotation = (seededRandom(seed + 2) * 30) - 15;
+                
+                emblem.style.left = `${leftPos}%`;
+                emblem.style.top = `${topPos}%`;
+                emblem.style.transform = `rotate(${rotation}deg)`;
+                
+                emblem.innerHTML = getHeartSvg();
+                
+                // Hover events
+                emblem.addEventListener('mouseenter', (e) => showTooltip(p, e.currentTarget));
+                emblem.addEventListener('mouseleave', hideTooltip);
+
+                candlesContainer.appendChild(emblem);
+            });
+
+            // 2. Draw Active Candles on the Shelves
+            // We have 3 shelves. Bottom, Mid, Top.
+            const shelfYs = ['calc(100% - 32px)', 'calc(100% - 64px)', 'calc(100% - 88px)'];
+            const shelfWidths = [100, 80, 60]; // Percentage width available
+            
+            activePrayers.forEach((p, i) => {
+                activeCount++;
+                const candle = document.createElement('div');
+                candle.className = 'votive-candle';
+                
+                // Determine shelf based on index
+                const shelfIndex = i % 3;
+                const availableWidth = shelfWidths[shelfIndex];
+                
+                // Distribute evenly along the shelf
+                const itemsOnThisShelf = Math.ceil(activePrayers.length / 3);
+                const positionInShelf = Math.floor(i / 3);
+                
+                // Spacing logic (centered)
+                let leftPercent;
+                if (itemsOnThisShelf <= 1) {
+                    leftPercent = 50;
+                } else {
+                    const step = availableWidth / itemsOnThisShelf;
+                    const startOffset = 50 - (availableWidth / 2) + (step / 2);
+                    leftPercent = startOffset + (positionInShelf * step);
+                    // Add slight organic jitter
+                    leftPercent += (seededRandom(p.id) * 6) - 3;
+                }
+
+                candle.style.left = `calc(${leftPercent}% - 12px)`; // center the 24px candle
+                candle.style.top = shelfYs[shelfIndex];
+                
+                candle.innerHTML = getCandleSvg(seededRandom(p.id) * 2);
+
+                // Hover events
+                candle.addEventListener('mouseenter', (e) => showTooltip(p, e.currentTarget));
+                candle.addEventListener('mouseleave', hideTooltip);
+
+                candlesContainer.appendChild(candle);
+            });
+
+            // Update UI
+            activeCountDisplay.innerText = activeCount;
+            
+            // Adjust ambient glow
+            if (activeCount > 0) {
+                const opacity = Math.min(1, 0.3 + (activeCount * 0.1));
+                ambientGlow.style.setProperty('--base-opacity', opacity);
+                container.classList.add('has-candles');
+            } else {
+                ambientGlow.style.setProperty('--base-opacity', 0);
+                container.classList.remove('has-candles');
+            }
+        }
+
+        function showTooltip(prayer, element) {
+            const rect = element.getBoundingClientRect();
+            const altarRect = document.getElementById('altarArea').getBoundingClientRect();
+            
+            // Position tooltip above the hovered element
+            const x = rect.left - altarRect.left + (rect.width / 2);
+            const y = rect.top - altarRect.top - 10;
+            
+            altarTooltip.style.left = `${x}px`;
+            altarTooltip.style.top = `${y}px`;
+            altarTooltip.style.bottom = 'auto'; // Override bottom pos
+            
+            tooltipName.innerText = prayer.name;
+            tooltipPrayer.innerText = `"${prayer.request}"`;
+            
+            if (prayer.isAnswered) {
+                tooltipAnswer.classList.remove('hidden');
+            } else {
+                tooltipAnswer.classList.add('hidden');
+            }
+            
+            altarTooltip.classList.add('visible');
+        }
+
+        function hideTooltip() {
+            altarTooltip.classList.remove('visible');
+        }
+
+        function renderList() {
+            prayersList.innerHTML = '';
+            const activePrayers = prayers.filter(p => !p.isAnswered).reverse(); // Newest first
+
+            if (activePrayers.length === 0) {
+                prayersList.innerHTML = '<p class="text-xs text-[#A39F96] italic text-center mt-4">No active prayers on the altar.</p>';
+                return;
+            }
+
+            activePrayers.forEach(p => {
+                const row = document.createElement('div');
+                row.className = 'prayer-row p-3 rounded-xl flex items-center justify-between group';
+                
+                row.innerHTML = `
+                    <div class="flex flex-col min-w-0 flex-1 pr-3">
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-[#B76E79] mb-0.5 truncate">${p.name}</span>
+                        <p class="text-xs text-[#525252] leading-snug line-clamp-2">"${p.request}"</p>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2 shrink-0">
+                        <button class="btn-answered px-2 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest flex items-center space-x-1" onclick="markAnswered(${p.id})">
+                            <span>✨ Answered</span>
+                        </button>
+                        <button class="btn-delete p-1" onclick="deletePrayer(${p.id})" title="Remove">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                `;
+                prayersList.appendChild(row);
+            });
+        }
+
+        function renderArchive() {
+            archiveList.innerHTML = '';
+            const answeredPrayers = prayers.filter(p => p.isAnswered).reverse();
+
+            if (answeredPrayers.length === 0) {
+                archiveList.innerHTML = '<p class="text-xs text-[#A39F96] italic text-center mt-8">Your answered prayers will be recorded here.</p>';
+                return;
+            }
+
+            answeredPrayers.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'bg-[#FCFBF9] border border-[#F5E6E8] p-4 rounded-xl flex flex-col relative group';
+                
+                item.innerHTML = `
+                    <button class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-[#C4B5B7] hover:text-[#EF4444] transition-colors p-1" onclick="deletePrayer(${p.id})">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                    <div class="flex items-center space-x-2 mb-2">
+                        <span class="text-lg">✨</span>
+                        <div class="flex flex-col">
+                            <span class="text-[9px] font-bold uppercase tracking-widest text-[#D49A89]">${p.name}</span>
+                            <span class="text-[8px] text-[#A39F96] uppercase tracking-wider">${p.dateAnswered}</span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-[#37352f] leading-relaxed italic border-l-2 border-[#F0DCE0] pl-3">"${p.request}"</p>
+                `;
+                archiveList.appendChild(item);
+            });
+        }
+
+        // Actions
+        addBtn.addEventListener('click', () => {
+            const name = personInput.value.trim();
+            const request = prayerInput.value.trim();
+            
+            if (name && request) {
+                // Button feedback
+                addBtn.style.transform = 'scale(0.95)';
+                setTimeout(() => addBtn.style.transform = 'scale(1)', 150);
+
+                prayers.push({
+                    id: Date.now(),
+                    name: name,
+                    request: request,
+                    isAnswered: false,
+                    timestamp: Date.now()
+                });
+                
+                localStorage.setItem('faithreflects_votive_altar', JSON.stringify(prayers));
+                
+                personInput.value = '';
+                prayerInput.value = '';
+                personInput.focus();
+                
+                renderAltar();
+                renderList();
+            }
+        });
+
+        // Enter key support
+        prayerInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addBtn.click();
+        });
+
+        window.markAnswered = function(id) {
+            const index = prayers.findIndex(p => p.id === id);
+            if (index > -1) {
+                prayers[index].isAnswered = true;
+                prayers[index].dateAnswered = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                localStorage.setItem('faithreflects_votive_altar', JSON.stringify(prayers));
+                
+                // Re-render
+                renderAltar();
+                renderList();
+                // Render archive in background in case they open it
+                renderArchive();
+            }
+        };
+
+        window.deletePrayer = function(id) {
+            prayers = prayers.filter(p => p.id !== id);
+            localStorage.setItem('faithreflects_votive_altar', JSON.stringify(prayers));
+            renderAltar();
+            renderList();
+            renderArchive(); // Update modal if it's open
+        };
+
+        // Modal Logic
+        viewAnsweredBtn.addEventListener('click', () => {
+            renderArchive();
+            archiveModal.classList.remove('hidden');
+        });
+        
+        closeArchiveBtn.addEventListener('click', () => archiveModal.classList.add('hidden'));
+
+        clearArchiveBtn.addEventListener('click', () => {
+            if (confirm("Are you sure you want to clear all answered prayers from the wall? This cannot be undone.")) {
+                prayers = prayers.filter(p => !p.isAnswered); // Keep active ones
+                localStorage.setItem('faithreflects_votive_altar', JSON.stringify(prayers));
+                renderAltar();
+                renderArchive();
+            }
+        });
+
+        // Init
+        renderAltar();
+        renderList();
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Empire Pillars</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        /* Sovereign Light Mode Base */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: transparent; 
+            color: #37352f; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* The Widget Container */
+        .widget-box {
+            background-color: #FCFBF9; /* Ivory Parchment */
+            border: 1px solid #E9E5DC;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.03), inset 0 0 20px rgba(255,255,255,0.5);
+            transition: all 1.5s ease;
+        }
+
+        /* Ambient Glow */
+        .ambient-glow {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 350px;
+            height: 250px;
+            border-radius: 50%;
+            background: radial-gradient(ellipse, rgba(212, 175, 55, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Pillar SVG Animations */
+        .pillar-fill {
+            transition: y 1.2s cubic-bezier(0.34, 1.56, 0.64, 1), height 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .pillar-crown {
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.6));
+        }
+
+        .is-complete .pillar-crown {
+            opacity: 1;
+            transform: translateY(0);
+            animation: float-crown 3s infinite alternate ease-in-out 0.8s;
+        }
+
+        @keyframes float-crown {
+            0% { transform: translateY(0); filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.6)); }
+            100% { transform: translateY(-4px); filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.9)); }
+        }
+
+        /* Text floating above pillars */
+        .pillar-percent {
+            fill: #8A867D;
+            font-size: 10px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            text-anchor: middle;
+            transition: fill 0.5s ease, transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .is-complete .pillar-percent {
+            fill: #D4AF37;
+        }
+
+        /* Custom Sliders */
+        .goal-row {
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: background 0.3s ease;
+            border: 1px solid transparent;
+        }
+        .goal-row:hover {
+            background-color: #fcfbf9;
+            border-color: #E9E5DC;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 14px;
+            width: 14px;
+            border-radius: 50%;
+            background: #FFFFFF;
+            border: 2px solid #D4AF37;
+            cursor: pointer;
+            margin-top: -5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.1s, background 0.2s, border-color 0.3s;
+        }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+        
+        .is-complete-slider input[type=range]::-webkit-slider-thumb {
+            background: #FCD34D;
+            border-color: #B48025;
+            box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #E9E5DC;
+            border-radius: 2px;
+        }
+        input[type=range]:focus { outline: none; }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #DCD7CA; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #B48025; }
+
+        /* Confetti */
+        .confetti {
+            position: absolute;
+            width: 4px;
+            height: 8px;
+            background-color: #FCD34D;
+            pointer-events: none;
+            z-index: 30;
+            opacity: 0;
+        }
+        @keyframes fall-confetti {
+            0% { transform: translate(0, -20px) rotate(0deg); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) rotate(var(--rot)); opacity: 0; }
+        }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-2xl rounded-3xl p-6 md:p-10 flex flex-col md:flex-row h-auto min-h-[500px] overflow-hidden gap-8">
+        
+        <div class="ambient-glow" id="ambientGlow"></div>
+
+        <!-- Left Side: The Architectural Visualizer -->
+        <div class="flex-shrink-0 flex flex-col items-center w-full md:w-[320px] h-full relative z-20">
+            
+            <div class="w-full flex justify-between items-center mb-2">
+                <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#A39F96]">@faithreflects</span>
+            </div>
+            
+            <h2 class="serif text-2xl text-[#37352f] mb-1 text-center w-full">Empire Pillars</h2>
+            <p class="text-[10px] text-[#8A867D] italic mb-6 text-center w-full">"Construct your legacy, brick by brick."</p>
+
+            <!-- SVG Pillars Area -->
+            <div class="relative w-full h-64 flex justify-center items-end" id="svgContainer">
+                <svg viewBox="0 0 350 250" class="w-full h-full overflow-visible">
+                    
+                    <defs>
+                        <!-- Golden Fill Gradient -->
+                        <linearGradient id="goldFill" x1="0%" y1="100%" x2="0%" y2="0%">
+                            <stop offset="0%" stop-color="#D97706"/>
+                            <stop offset="40%" stop-color="#FCD34D"/>
+                            <stop offset="100%" stop-color="#FDE68A"/>
+                        </linearGradient>
+                        
+                        <!-- Empty Stone Gradient -->
+                        <linearGradient id="stoneEmpty" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#FCFBF9"/>
+                            <stop offset="50%" stop-color="#F4F1EB"/>
+                            <stop offset="100%" stop-color="#E9E5DC"/>
+                        </linearGradient>
+                        
+                        <!-- Dynamic Clip Paths generated per pillar -->
+                        <clipPath id="clip-0"><rect class="pillar-fill" x="20" y="200" width="30" height="0"/></clipPath>
+                        <clipPath id="clip-1"><rect class="pillar-fill" x="85" y="200" width="30" height="0"/></clipPath>
+                        <clipPath id="clip-2"><rect class="pillar-fill" x="150" y="200" width="30" height="0"/></clipPath>
+                        <clipPath id="clip-3"><rect class="pillar-fill" x="215" y="200" width="30" height="0"/></clipPath>
+                        <clipPath id="clip-4"><rect class="pillar-fill" x="280" y="200" width="30" height="0"/></clipPath>
+                    </defs>
+
+                    <!-- Base Platform -->
+                    <path d="M 10 230 L 340 230 L 330 215 L 20 215 Z" fill="#E9E5DC" stroke="#DCD7CA" stroke-width="1"/>
+                    <rect x="0" y="230" width="350" height="10" fill="#DCD7CA"/>
+                    <rect x="0" y="240" width="350" height="4" fill="#A39F96" opacity="0.3"/>
+
+                    <!-- Pillars Group (Injected via JS to keep HTML clean) -->
+                    <g id="pillarsGroup"></g>
+
+                </svg>
+            </div>
+        </div>
+
+        <!-- Right Side: The Goal Sliders -->
+        <div class="flex-1 w-full flex flex-col justify-center z-20 min-h-0 pl-2 md:pl-0 border-t md:border-t-0 md:border-l border-[#E9E5DC] pt-6 md:pt-0 md:pl-8">
+            
+            <div class="flex justify-between items-end mb-6 shrink-0">
+                <span class="text-[11px] font-bold tracking-widest uppercase text-[#B48025]">Wealth Goals</span>
+                <span class="text-[10px] font-semibold text-[#8A867D]" id="completedCountDisplay">0 / 5 Funded</span>
+            </div>
+
+            <div class="flex-1 flex flex-col space-y-3 overflow-y-auto custom-scrollbar pr-2" id="slidersContainer">
+                <!-- Injected via JS -->
+            </div>
+
+            <!-- Reset Button -->
+            <button id="resetTriggerBtn" class="mt-6 text-[9px] tracking-widest uppercase pb-0.5 z-10 shrink-0 text-[#A39F96] hover:text-[#37352f] transition-colors border-b border-transparent hover:border-[#37352f] self-start">
+                Reset Foundations
+            </button>
+
+        </div>
+
+    </div>
+
+    <script>
+        // Data Structure corresponding to the user's Finances & Wealth mockup
+        const goalsData = [
+            { id: 'freedom', name: 'Freedom Fund', subtitle: '6 months expenses', val: 40 },
+            { id: 'home', name: 'Home Fund', subtitle: 'Down payment', val: 30 },
+            { id: 'invest', name: 'Investment Target', subtitle: 'Annual max', val: 50 },
+            { id: 'dream', name: 'Dream Fund', subtitle: 'Vacation', val: 20 },
+            { id: 'giving', name: 'Giving Goal', subtitle: 'Generosity', val: 60 }
+        ];
+
+        // State Management
+        let state = JSON.parse(localStorage.getItem('sovereign_empire_pillars')) || goalsData;
+
+        // Elements
+        const pillarsGroup = document.getElementById('pillarsGroup');
+        const slidersContainer = document.getElementById('slidersContainer');
+        const completedCountDisplay = document.getElementById('completedCountDisplay');
+        const svgContainer = document.getElementById('svgContainer');
+
+        // Render the 5 SVG Pillars statically, using the dynamic clip-paths
+        function renderSVGPillars() {
+            pillarsGroup.innerHTML = '';
+            
+            // X coordinates for the 5 pillars (350 width total)
+            const xPositions = [35, 100, 165, 230, 295];
+            
+            state.forEach((goal, i) => {
+                const cx = xPositions[i];
+                
+                // Construct Pillar HTML
+                const pillarHtml = `
+                    <g id="pillar-group-${i}" class="transition-all duration-500">
+                        <!-- Percentage Text (Moves up and down) -->
+                        <text id="percent-text-${i}" x="${cx}" y="35" class="pillar-percent">0%</text>
+                        
+                        <!-- The Crown (Hidden until 100%) -->
+                        <g transform="translate(${cx}, 40) scale(0.7)">
+                            <g class="pillar-crown">
+                                <path d="M -15 0 L 15 0 L 20 -15 L 8 -5 L 0 -20 L -8 -5 L -20 -15 Z" fill="#D4AF37" stroke="#B48025" stroke-width="1"/>
+                                <circle cx="-20" cy="-15" r="2" fill="#FFFBEB"/>
+                                <circle cx="0" cy="-20" r="2.5" fill="#FFFBEB"/>
+                                <circle cx="20" cy="-15" r="2" fill="#FFFBEB"/>
+                            </g>
+                        </g>
+
+                        <!-- Capital (Top Base) -->
+                        <path d="M ${cx - 20} 55 L ${cx + 20} 55 L ${cx + 15} 65 L ${cx - 15} 65 Z" fill="#E9E5DC" stroke="#DCD7CA" stroke-width="1"/>
+                        <rect x="${cx - 16}" y="65" width="32" height="5" fill="#FCFBF9" stroke="#DCD7CA" stroke-width="1"/>
+
+                        <!-- Pillar Shaft (Empty Stone) -->
+                        <rect x="${cx - 12}" y="70" width="24" height="135" fill="url(#stoneEmpty)" stroke="#DCD7CA" stroke-width="1"/>
+                        <!-- Flutes (Details) -->
+                        <line x1="${cx - 6}" y1="70" x2="${cx - 6}" y2="205" stroke="#DCD7CA" stroke-width="1" opacity="0.6"/>
+                        <line x1="${cx}" y1="70" x2="${cx}" y2="205" stroke="#DCD7CA" stroke-width="1" opacity="0.6"/>
+                        <line x1="${cx + 6}" y1="70" x2="${cx + 6}" y2="205" stroke="#DCD7CA" stroke-width="1" opacity="0.6"/>
+
+                        <!-- Pillar Shaft (Filled Gold - Clipped) -->
+                        <g clip-path="url(#clip-${i})">
+                            <rect x="${cx - 12}" y="70" width="24" height="135" fill="url(#goldFill)"/>
+                            <!-- Golden Flutes -->
+                            <line x1="${cx - 6}" y1="70" x2="${cx - 6}" y2="205" stroke="#B48025" stroke-width="1" opacity="0.4"/>
+                            <line x1="${cx}" y1="70" x2="${cx}" y2="205" stroke="#B48025" stroke-width="1" opacity="0.4"/>
+                            <line x1="${cx + 6}" y1="70" x2="${cx + 6}" y2="205" stroke="#B48025" stroke-width="1" opacity="0.4"/>
+                        </g>
+
+                        <!-- Bottom Base -->
+                        <rect x="${cx - 16}" y="205" width="32" height="5" fill="#FCFBF9" stroke="#DCD7CA" stroke-width="1"/>
+                        <path d="M ${cx - 15} 210 L ${cx + 15} 210 L ${cx + 20} 215 L ${cx - 20} 215 Z" fill="#E9E5DC" stroke="#DCD7CA" stroke-width="1"/>
+                    </g>
+                `;
+                pillarsGroup.innerHTML += pillarHtml;
+            });
+        }
+
+        // Render UI Sliders
+        function renderSliders() {
+            slidersContainer.innerHTML = state.map((goal, i) => `
+                <div class="goal-row flex flex-col ${goal.val === 100 ? 'is-complete-slider' : ''}" id="row-${i}">
+                    <div class="flex justify-between items-end mb-2">
+                        <div class="flex flex-col">
+                            <span class="text-[10px] font-bold tracking-widest uppercase text-[#525252]">${goal.name}</span>
+                            <span class="text-[8px] text-[#A39F96] uppercase">${goal.subtitle}</span>
+                        </div>
+                        <span class="text-[10px] font-bold ${goal.val === 100 ? 'text-[#D4AF37]' : 'text-[#37352f]'}" id="val-${i}">${goal.val}%</span>
+                    </div>
+                    <input type="range" min="0" max="100" value="${goal.val}" 
+                           oninput="updateGoal(${i}, this.value)" 
+                           onchange="checkConfetti(${i}, this.value)">
+                </div>
+            `).join('');
+        }
+
+        // Celebrate 100%
+        function checkConfetti(index, value) {
+            if (parseInt(value) === 100) {
+                // Get the exact X position of the pillar to spawn confetti
+                const xPositions = [35, 100, 165, 230, 295];
+                const cx = xPositions[index];
+                
+                // Map SVG coords to DOM coords
+                const svgRect = svgContainer.getBoundingClientRect();
+                const pixelX = (cx / 350) * svgRect.width;
+                
+                for(let i=0; i<15; i++) {
+                    const conf = document.createElement('div');
+                    conf.className = 'confetti';
+                    conf.style.left = `${pixelX + (Math.random() * 20 - 10)}px`;
+                    conf.style.top = '40px';
+                    
+                    const ty = Math.random() * 100 + 50;
+                    const tx = Math.random() * 60 - 30;
+                    const rot = Math.random() * 360;
+                    
+                    conf.style.setProperty('--tx', `${tx}px`);
+                    conf.style.setProperty('--ty', `${ty}px`);
+                    conf.style.setProperty('--rot', `${rot}deg`);
+                    
+                    conf.style.animation = `fall-confetti 1.5s cubic-bezier(0.25, 1, 0.5, 1) forwards ${Math.random() * 0.2}s`;
+                    
+                    svgContainer.appendChild(conf);
+                    setTimeout(() => conf.remove(), 2000);
+                }
+            }
+        }
+
+        window.updateGoal = function(index, value) {
+            state[index].val = parseInt(value);
+            
+            // Update Text
+            const valEl = document.getElementById(`val-${index}`);
+            valEl.innerText = `${value}%`;
+            
+            // Update Row Styling
+            const rowEl = document.getElementById(`row-${index}`);
+            if (state[index].val === 100) {
+                rowEl.classList.add('is-complete-slider');
+                valEl.classList.replace('text-[#37352f]', 'text-[#D4AF37]');
+            } else {
+                rowEl.classList.remove('is-complete-slider');
+                valEl.classList.replace('text-[#D4AF37]', 'text-[#37352f]');
+            }
+            
+            localStorage.setItem('sovereign_empire_pillars', JSON.stringify(state));
+            updatePhysics();
+        };
+
+        function updatePhysics() {
+            let completedCount = 0;
+
+            state.forEach((goal, i) => {
+                // Shaft total height is 135 (from y=70 to y=205)
+                // When 0%, rect y=205, height=0
+                // When 100%, rect y=70, height=135
+                const height = (goal.val / 100) * 135;
+                const yPos = 205 - height;
+                
+                // Update SVG Clip Path Rect
+                const clipRect = document.querySelector(`#clip-${i} rect`);
+                clipRect.setAttribute('y', yPos);
+                clipRect.setAttribute('height', height);
+
+                // Update Text Position
+                const textEl = document.getElementById(`percent-text-${i}`);
+                textEl.textContent = `${goal.val}%`;
+                textEl.setAttribute('y', yPos - 8); // Float just above the liquid gold
+
+                // Check Completion
+                const groupEl = document.getElementById(`pillar-group-${i}`);
+                if (goal.val === 100) {
+                    groupEl.classList.add('is-complete');
+                    completedCount++;
+                } else {
+                    groupEl.classList.remove('is-complete');
+                }
+            });
+
+            // Update Header
+            completedCountDisplay.innerText = `${completedCount} / 5 Funded`;
+            if (completedCount === 5) {
+                completedCountDisplay.classList.replace('text-[#8A867D]', 'text-[#D4AF37]');
+            } else {
+                completedCountDisplay.classList.replace('text-[#D4AF37]', 'text-[#8A867D]');
+            }
+        }
+
+        // Reset
+        document.getElementById('resetTriggerBtn').addEventListener('click', () => {
+            if(confirm("Are you sure you want to reset all pillars to 0%?")) {
+                state.forEach(g => g.val = 0);
+                localStorage.setItem('sovereign_empire_pillars', JSON.stringify(state));
+                renderSliders();
+                updatePhysics();
+            }
+        });
+
+        // Initialize
+        renderSVGPillars();
+        renderSliders();
+        
+        // Timeout ensures the initial load triggers the CSS transitions beautifully
+        setTimeout(updatePhysics, 100);
+
+    </script>
+</body>
+</html>

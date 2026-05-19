@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Golden Chain</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        /* Sovereign Light Mode Base */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: transparent; 
+            color: #37352f; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* The Widget Container */
+        .widget-box {
+            background-color: #FCFBF9; /* Ivory Parchment */
+            border: 1px solid #E9E5DC;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.03), inset 0 0 20px rgba(255,255,255,0.5);
+            transition: all 1.5s ease;
+        }
+
+        /* Ambient Glow (Pulses when on a hot streak) */
+        .ambient-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            transition: background 1.5s ease;
+        }
+        .hot-streak .ambient-glow {
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.12) 0%, transparent 70%);
+            animation: breathe-glow 4s infinite alternate ease-in-out;
+        }
+        
+        @keyframes breathe-glow {
+            0% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.2)); }
+        }
+
+        /* --- SVG Chain Link Physics --- */
+        
+        /* The Flat Links (Odd Days) */
+        .link-flat {
+            width: 44px;
+            height: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .link-flat .link-body {
+            fill: none;
+            stroke-width: 5;
+            transition: all 0.4s ease;
+        }
+        .link-flat .link-text {
+            font-size: 11px;
+            font-weight: 700;
+            text-anchor: middle;
+            dominant-baseline: central;
+            transition: all 0.4s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* The Edge Links (Even Days) */
+        /* Negative horizontal margins make them interlock physically with the flat links */
+        .link-edge {
+            width: 20px;
+            height: 34px;
+            margin-left: -12px;
+            margin-right: -12px;
+            z-index: 10;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .link-edge .link-body {
+            stroke: #FCFBF9; /* Matches background to create the interlocking illusion */
+            stroke-width: 2.5;
+            transition: all 0.4s ease;
+        }
+        .link-edge .link-text {
+            font-size: 9px;
+            font-weight: 700;
+            text-anchor: middle;
+            dominant-baseline: central;
+            transition: all 0.4s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* --- LINK STATES --- */
+
+        /* 1. Empty (Future/Unset) */
+        .state-empty.link-flat .link-body { stroke: #E9E5DC; }
+        .state-empty.link-flat .link-text { fill: #C4B5B7; }
+        
+        .state-empty.link-edge .link-body { fill: #E9E5DC; }
+        .state-empty.link-edge .link-text { fill: #A39F96; }
+
+        .state-empty:hover { transform: scale(1.1); filter: brightness(0.9); }
+
+        /* 2. Gold (Forged/Completed) */
+        .state-gold.link-flat .link-body { 
+            stroke: #D4AF37; 
+            filter: drop-shadow(0 2px 4px rgba(212, 175, 55, 0.4)); 
+        }
+        .state-gold.link-flat .link-text { fill: #B48025; }
+
+        .state-gold.link-edge .link-body { 
+            fill: #D4AF37; 
+            filter: drop-shadow(0 2px 4px rgba(212, 175, 55, 0.4)); 
+        }
+        .state-gold.link-edge .link-text { fill: #FFFBEB; }
+
+        .state-gold:hover { transform: scale(1.05); filter: brightness(1.1); }
+
+        /* 3. Iron (Missed) */
+        .state-iron.link-flat .link-body { 
+            stroke: #37352f; 
+            filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.2)); 
+        }
+        .state-iron.link-flat .link-text { fill: #37352f; }
+
+        .state-iron.link-edge .link-body { 
+            fill: #37352f; 
+            filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.2)); 
+        }
+        .state-iron.link-edge .link-text { fill: #E9E5DC; }
+
+        .state-iron:hover { transform: scale(1.05); filter: brightness(1.2); }
+
+        /* Today Indicator */
+        .is-today {
+            animation: gentle-pulse 2s infinite;
+        }
+        @keyframes gentle-pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        /* --- FORGING ANIMATION --- */
+        .is-forging {
+            animation: forgeFlash 0.8s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+            z-index: 30;
+        }
+        @keyframes forgeFlash {
+            0% { filter: brightness(1); transform: scale(1); }
+            15% { filter: brightness(2) drop-shadow(0 0 20px #FCD34D) sepia(1) hue-rotate(-20deg); transform: scale(1.3); }
+            100% { filter: brightness(1) drop-shadow(0 2px 6px rgba(212, 175, 55, 0.4)); transform: scale(1); }
+        }
+
+        /* Sparks */
+        .spark {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 40;
+            animation: fly-spark 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+        .spark.hot { background-color: #FFFBEB; box-shadow: 0 0 10px #FCD34D; }
+        .spark.mid { background-color: #FCD34D; box-shadow: 0 0 8px #F59E0B; }
+        .spark.cool { background-color: #D97706; box-shadow: 0 0 4px #B45309; }
+
+        @keyframes fly-spark {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+
+        /* Buttons & UI */
+        .btn-primary {
+            background-color: #37352f;
+            color: #FFFFFF;
+            border: 1px solid #2d2d2d;
+            transition: all 0.4s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .btn-primary:hover:not(:disabled) { 
+            background-color: #000000; 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+        .btn-primary:active:not(:disabled) { transform: translateY(1px) scale(0.98); }
+        .btn-primary:disabled {
+            background-color: #FCFBF9;
+            color: #D4AF37;
+            border-color: #D4AF37;
+            box-shadow: inset 0 0 10px rgba(212, 175, 55, 0.1);
+            pointer-events: none;
+        }
+
+        .btn-reset {
+            background-color: transparent;
+            color: #A39F96;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid transparent;
+        }
+        .btn-reset:hover { 
+            color: #37352f; 
+            border-bottom-color: #37352f;
+        }
+
+        .stat-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(255,255,255,0.8); }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-2xl rounded-3xl p-6 md:p-10 flex flex-col h-auto min-h-[580px] overflow-hidden">
+        
+        <div class="ambient-glow" id="ambientGlow"></div>
+
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-6 z-10 shrink-0">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#A39F96]">@faithreflects</span>
+            <div class="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider text-[#8A867D] border border-[#E9E5DC] bg-white flex items-center space-x-1 shadow-sm">
+                <span id="monthDisplay" class="text-[#B48025]">Month</span>
+            </div>
+        </div>
+
+        <div class="flex flex-col items-center z-10 shrink-0 mb-8">
+            <h2 class="serif text-3xl text-[#37352f] mb-1">The Golden Chain</h2>
+            <p class="text-[11px] text-[#8A867D] italic mb-6">"Don't break the chain. Daily discipline builds empires."</p>
+
+            <!-- Stats Bar -->
+            <div class="flex space-x-10 items-center justify-center w-full px-4 border-b border-[#E9E5DC] pb-6">
+                <div class="stat-box">
+                    <span class="text-[9px] font-bold tracking-widest uppercase text-[#8A867D] mb-1">Current Streak</span>
+                    <div class="flex items-end space-x-1">
+                        <span id="streakDisplay" class="serif text-4xl text-[#D4AF37] font-semibold leading-none drop-shadow-sm">0</span>
+                        <span class="text-xs text-[#A39F96] font-medium pb-1">Days</span>
+                    </div>
+                </div>
+                <div class="w-px h-10 bg-[#E9E5DC]"></div>
+                <div class="stat-box">
+                    <span class="text-[9px] font-bold tracking-widest uppercase text-[#8A867D] mb-1">Total Forged</span>
+                    <div class="flex items-end space-x-1">
+                        <span id="totalDisplay" class="serif text-4xl text-[#37352f] font-semibold leading-none">0</span>
+                        <span class="text-xs text-[#A39F96] font-medium pb-1" id="totalDaysText">/ 31</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- The Chain Grid (Scrollable if needed on small screens, but wraps beautifully) -->
+        <div class="flex-1 w-full relative z-10 flex flex-col justify-center min-h-[150px] mb-8">
+            
+            <div id="sparksContainer" class="absolute inset-0 pointer-events-none z-50 overflow-hidden"></div>
+            
+            <!-- We use flex-wrap with center alignment. The negative margins on the edge links make them physically interlock. -->
+            <div class="flex flex-wrap justify-center items-center gap-y-4 px-2" id="chainContainer">
+                <!-- Links injected by JS -->
+            </div>
+            
+            <div class="w-full flex justify-center items-center space-x-4 mt-8 opacity-60">
+                <div class="flex items-center space-x-1.5">
+                    <div class="w-2.5 h-2.5 rounded-full bg-[#D4AF37]"></div>
+                    <span class="text-[9px] uppercase tracking-widest font-bold text-[#8A867D]">Forged</span>
+                </div>
+                <div class="flex items-center space-x-1.5">
+                    <div class="w-2.5 h-2.5 rounded-full bg-[#37352f]"></div>
+                    <span class="text-[9px] uppercase tracking-widest font-bold text-[#8A867D]">Missed</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Area -->
+        <div class="w-full z-10 shrink-0 mt-auto flex flex-col items-center">
+            <button id="forgeBtn" class="btn-primary w-full max-w-sm py-4 rounded-xl text-xs font-bold uppercase tracking-widest flex items-center justify-center space-x-2">
+                <span class="text-base" id="btnIcon">⚒️</span>
+                <span id="btnText">Forge Today's Link</span>
+            </button>
+            
+            <button id="resetTriggerBtn" class="mt-5 text-[9px] tracking-widest uppercase pb-0.5 z-10 shrink-0 btn-reset self-center">
+                Clear Chain (Debug / New Month)
+            </button>
+        </div>
+
+        <!-- Custom Reset Modal -->
+        <div id="resetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#FCFBF9] rounded-2xl p-6 w-full max-w-[260px] border border-[#E9E5DC] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#37352f]">Melt Down Chain?</h3>
+                <p class="text-xs text-[#8A867D] mb-6">This will erase all progress for this month.</p>
+                <div class="flex space-x-3">
+                    <button id="cancelResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-[#8A867D] hover:bg-gray-100 border border-transparent transition-colors">Cancel</button>
+                    <button id="confirmResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#37352f] text-white hover:bg-black transition-colors shadow-md">Confirm</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Date Utilities
+        const dateObj = new Date();
+        const currentYear = dateObj.getFullYear();
+        const currentMonth = dateObj.getMonth();
+        const currentDay = dateObj.getDate();
+        
+        // Month string for display (e.g., "August 2026")
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        const monthString = `${monthNames[currentMonth]} ${currentYear}`;
+        
+        // Days in current month
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+        // State Management
+        // Links state array: 'empty', 'gold', 'iron'
+        let state = JSON.parse(localStorage.getItem('faithreflects_golden_chain')) || {
+            monthKey: monthString,
+            links: Array(daysInMonth).fill('empty')
+        };
+
+        // Auto-archive/reset if month changes
+        if (state.monthKey !== monthString) {
+            state = {
+                monthKey: monthString,
+                links: Array(daysInMonth).fill('empty')
+            };
+            localStorage.setItem('faithreflects_golden_chain', JSON.stringify(state));
+        }
+
+        // Elements
+        const container = document.getElementById('widgetContainer');
+        const monthDisplay = document.getElementById('monthDisplay');
+        const streakDisplay = document.getElementById('streakDisplay');
+        const totalDisplay = document.getElementById('totalDisplay');
+        const totalDaysText = document.getElementById('totalDaysText');
+        const chainContainer = document.getElementById('chainContainer');
+        const sparksContainer = document.getElementById('sparksContainer');
+        
+        const forgeBtn = document.getElementById('forgeBtn');
+        const btnText = document.getElementById('btnText');
+        const btnIcon = document.getElementById('btnIcon');
+        
+        const resetModal = document.getElementById('resetModal');
+        const resetTriggerBtn = document.getElementById('resetTriggerBtn');
+        const cancelResetBtn = document.getElementById('cancelResetBtn');
+        const confirmResetBtn = document.getElementById('confirmResetBtn');
+
+        let isAnimating = false;
+
+        // Initialize Text
+        monthDisplay.innerText = monthString;
+        totalDaysText.innerText = `/ ${daysInMonth}`;
+
+        // SVG Templates
+        function getFlatLink(day, stateClass, isToday) {
+            return `
+                <div class="link-flat state-${stateClass} ${isToday ? 'is-today' : ''}" id="link-${day}" onclick="cycleLink(${day})">
+                    <svg viewBox="0 0 46 24" class="w-full h-full overflow-visible">
+                        <rect x="3" y="3" width="40" height="18" rx="9" class="link-body"/>
+                        <text x="23" y="13.5" class="link-text">${day}</text>
+                    </svg>
+                </div>
+            `;
+        }
+
+        function getEdgeLink(day, stateClass, isToday) {
+            return `
+                <div class="link-edge state-${stateClass} ${isToday ? 'is-today' : ''}" id="link-${day}" onclick="cycleLink(${day})">
+                    <svg viewBox="0 0 20 32" class="w-full h-full overflow-visible">
+                        <rect x="3" y="2" width="14" height="28" rx="7" class="link-body"/>
+                        <text x="10" y="17.5" class="link-text">${day}</text>
+                    </svg>
+                </div>
+            `;
+        }
+
+        function calculateStats() {
+            // Total Forged
+            const forgedCount = state.links.filter(l => l === 'gold').length;
+            totalDisplay.innerText = forgedCount;
+
+            // Current Streak Logic (Don't break the chain)
+            let streak = 0;
+            const todayIndex = currentDay - 1;
+            
+            // Start checking from today. If today is empty or iron, streak is 0...
+            // UNLESS yesterday was gold and today is just empty (meaning they haven't logged today yet).
+            let startIndex = todayIndex;
+            
+            if (state.links[todayIndex] !== 'gold') {
+                if (state.links[todayIndex] === 'empty' && todayIndex > 0 && state.links[todayIndex - 1] === 'gold') {
+                    // They haven't forged today yet, but their streak from yesterday is still alive
+                    startIndex = todayIndex - 1;
+                } else {
+                    // Broken streak
+                    streakDisplay.innerText = "0";
+                    container.classList.remove('hot-streak');
+                    return;
+                }
+            }
+
+            // Count backwards
+            for (let i = startIndex; i >= 0; i--) {
+                if (state.links[i] === 'gold') {
+                    streak++;
+                } else {
+                    break; // Streak broken
+                }
+            }
+            
+            streakDisplay.innerText = streak;
+            
+            // Hot Streak visual feedback
+            if (streak >= 3) {
+                container.classList.add('hot-streak');
+            } else {
+                container.classList.remove('hot-streak');
+            }
+
+            // Update Button State
+            if (state.links[todayIndex] === 'gold') {
+                forgeBtn.disabled = true;
+                btnText.innerText = "Link Forged";
+                btnIcon.innerText = "✨";
+            } else {
+                forgeBtn.disabled = false;
+                btnText.innerText = "Forge Today's Link";
+                btnIcon.innerText = "⚒️";
+            }
+        }
+
+        function renderChain() {
+            chainContainer.innerHTML = '';
+            
+            for (let i = 0; i < daysInMonth; i++) {
+                const day = i + 1;
+                const linkState = state.links[i];
+                const isToday = (day === currentDay && linkState !== 'gold'); // Pulse if it's today and needs forging
+                
+                // Odd days are flat, Even days are edge
+                if (day % 2 !== 0) {
+                    chainContainer.innerHTML += getFlatLink(day, linkState, isToday);
+                } else {
+                    chainContainer.innerHTML += getEdgeLink(day, linkState, isToday);
+                }
+            }
+
+            calculateStats();
+        }
+
+        function fireSparks(targetId) {
+            const target = document.getElementById(`link-${targetId}`);
+            if (!target) return;
+            
+            const targetRect = target.getBoundingClientRect();
+            const containerRect = sparksContainer.getBoundingClientRect();
+            
+            const startX = targetRect.left - containerRect.left + (targetRect.width / 2);
+            const startY = targetRect.top - containerRect.top + (targetRect.height / 2);
+
+            // Generate 25 sparks
+            for(let i=0; i<25; i++) {
+                setTimeout(() => {
+                    const spark = document.createElement('div');
+                    
+                    const rand = Math.random();
+                    let typeClass = 'hot';
+                    if (rand > 0.5) typeClass = 'mid';
+                    if (rand > 0.8) typeClass = 'cool';
+                    
+                    spark.className = `spark ${typeClass}`;
+                    spark.style.left = `${startX}px`;
+                    spark.style.top = `${startY}px`;
+                    
+                    // Explosive radial trajectory
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = 30 + Math.random() * 60;
+                    
+                    spark.style.setProperty('--tx', `${Math.cos(angle) * dist}px`);
+                    spark.style.setProperty('--ty', `${Math.sin(angle) * dist}px`);
+                    
+                    sparksContainer.appendChild(spark);
+                    
+                    setTimeout(() => { if (sparksContainer.contains(spark)) spark.remove(); }, 1000);
+                }, i * 20); // Stagger
+            }
+        }
+
+        // Manual Click to cycle states: empty -> gold -> iron -> empty
+        window.cycleLink = function(day) {
+            if (isAnimating) return;
+            const index = day - 1;
+            const currentState = state.links[index];
+            
+            let nextState;
+            if (currentState === 'empty') nextState = 'gold';
+            else if (currentState === 'gold') nextState = 'iron';
+            else nextState = 'empty';
+
+            state.links[index] = nextState;
+            localStorage.setItem('faithreflects_golden_chain', JSON.stringify(state));
+            
+            // If they manually set to gold, trigger animation
+            if (nextState === 'gold') {
+                isAnimating = true;
+                const linkEl = document.getElementById(`link-${day}`);
+                linkEl.classList.remove(`state-${currentState}`);
+                linkEl.classList.add(`state-gold`, 'is-forging');
+                
+                fireSparks(day);
+                
+                setTimeout(() => {
+                    linkEl.classList.remove('is-forging');
+                    renderChain(); // Full re-render to update everything
+                    isAnimating = false;
+                }, 800);
+            } else {
+                renderChain();
+            }
+        };
+
+        // Main Action Button
+        forgeBtn.addEventListener('click', () => {
+            if (isAnimating) return;
+            
+            const todayIndex = currentDay - 1;
+            if (state.links[todayIndex] === 'gold') return; // Already done
+
+            // Button feedback
+            forgeBtn.style.transform = 'scale(0.95)';
+            setTimeout(() => forgeBtn.style.transform = 'scale(1)', 150);
+
+            isAnimating = true;
+            state.links[todayIndex] = 'gold';
+            localStorage.setItem('faithreflects_golden_chain', JSON.stringify(state));
+
+            // Animate target
+            const targetEl = document.getElementById(`link-${currentDay}`);
+            targetEl.className = targetEl.className.replace(/state-\w+/, 'state-gold');
+            targetEl.classList.add('is-forging');
+            targetEl.classList.remove('is-today'); // Stop pulse
+
+            fireSparks(currentDay);
+
+            setTimeout(() => {
+                targetEl.classList.remove('is-forging');
+                renderChain();
+                isAnimating = false;
+            }, 800);
+        });
+
+        // Modal Logic
+        resetTriggerBtn.addEventListener('click', () => {
+            if (!isAnimating) resetModal.classList.remove('hidden');
+        });
+        cancelResetBtn.addEventListener('click', () => resetModal.classList.add('hidden'));
+        
+        confirmResetBtn.addEventListener('click', () => {
+            state.links = Array(daysInMonth).fill('empty');
+            localStorage.setItem('faithreflects_golden_chain', JSON.stringify(state));
+            
+            renderChain();
+            resetModal.classList.add('hidden');
+        });
+
+        // Initialize
+        renderChain();
+
+    </script>
+</body>
+</html>

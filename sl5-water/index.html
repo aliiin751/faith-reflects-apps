@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Living Chalice</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        /* Sovereign Light Mode Base (Health & Wellness Vibe) */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: transparent; 
+            color: #37352f; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* The Widget Container */
+        .widget-box {
+            background-color: #FCFBF9; /* Ivory Parchment */
+            border: 1px solid #E9E5DC;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.03), inset 0 0 20px rgba(255,255,255,0.5);
+            transition: all 1.5s ease;
+        }
+
+        /* Sunlit Ambient Glow */
+        .ambient-glow {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(252, 211, 77, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            transition: background 1.5s ease;
+        }
+        .is-hydrated .ambient-glow {
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%);
+            animation: breathe-glow 4s infinite alternate ease-in-out;
+        }
+
+        @keyframes breathe-glow {
+            0% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.2)); }
+        }
+
+        /* SVG Animations & Physics */
+        
+        /* The Clay Pitcher */
+        .pitcher-group {
+            transform-origin: 90px 150px;
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .is-pouring .pitcher-group {
+            transform: rotate(35deg) translate(15px, -20px);
+        }
+
+        /* The Water Stream */
+        .water-stream {
+            opacity: 0;
+            stroke-dasharray: 200;
+            stroke-dashoffset: 200;
+            transition: opacity 0.2s ease;
+        }
+        .is-pouring .water-stream {
+            opacity: 1;
+            animation: pourStream 1.5s linear forwards;
+        }
+
+        @keyframes pourStream {
+            0% { stroke-dashoffset: 200; }
+            20% { stroke-dashoffset: 0; }
+            80% { stroke-dashoffset: 0; opacity: 1; }
+            100% { stroke-dashoffset: -200; opacity: 0; }
+        }
+
+        /* Water Level in the Chalice */
+        #waterLevel {
+            transition: transform 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .liquid-wave {
+            animation: wave-action 3s linear infinite;
+        }
+        .liquid-wave-back {
+            animation: wave-action 4s linear infinite reverse;
+            opacity: 0.6;
+        }
+
+        @keyframes wave-action {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-40px); }
+        }
+
+        /* Splashes when pouring */
+        .splash {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background-color: #BAE6FD;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 20;
+            opacity: 0;
+        }
+        .is-pouring .splash {
+            animation: splashUp 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards 0.4s;
+        }
+
+        @keyframes splashUp {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+
+        /* Ambient Bubbles inside Chalice */
+        .bubble {
+            position: absolute;
+            width: 3px; height: 3px;
+            background-color: rgba(255,255,255,0.6);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 15;
+            animation: floatBubble var(--dur) infinite ease-in;
+        }
+        @keyframes floatBubble {
+            0% { transform: translateY(0) scale(0.5); opacity: 0; }
+            20% { opacity: 1; }
+            100% { transform: translateY(var(--ty)) scale(1.2); opacity: 0; }
+        }
+
+        /* Buttons */
+        .action-btn {
+            background-color: #37352f;
+            color: #FFFFFF;
+            border: 1px solid #2d2d2d;
+            transition: all 0.4s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .action-btn:hover:not(:disabled) { 
+            background-color: #000000; 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+        .action-btn:active:not(:disabled) { transform: translateY(1px) scale(0.98); }
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .action-btn.is-complete {
+            background-color: #F0F9FF;
+            color: #0284C7;
+            border-color: #BAE6FD;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+            pointer-events: none;
+        }
+
+        .reset-btn {
+            background-color: transparent;
+            color: #A39F96;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid transparent;
+        }
+        .reset-btn:hover { color: #37352f; border-bottom-color: #37352f; }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(255,255,255,0.8); }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div id="widgetContainer" class="widget-box relative w-full max-w-sm rounded-3xl p-8 flex flex-col items-center h-[520px] overflow-hidden">
+        
+        <div class="ambient-glow" id="ambientGlow"></div>
+
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-6 z-10 shrink-0">
+            <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#A39F96]">@faithreflects</span>
+            <div class="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider text-[#8A867D] border border-[#E9E5DC] bg-white flex items-center space-x-1 shadow-sm transition-colors" id="statusBadge">
+                <span id="glassCount" class="text-[#0284C7]">0</span>
+                <span>/ 8 Glasses</span>
+            </div>
+        </div>
+
+        <h2 class="serif text-2xl text-[#37352f] mb-1 z-10 shrink-0">Living Water</h2>
+        <p class="text-xs text-[#8A867D] italic mb-8 z-10 shrink-0 text-center">"He leads me beside still waters."</p>
+
+        <!-- SVG Scene Area -->
+        <div class="relative w-full h-52 mb-8 z-10 flex justify-center items-end shrink-0" id="sceneContainer">
+            
+            <div id="splashContainer" class="absolute inset-0 pointer-events-none z-20 overflow-hidden"></div>
+            <div id="bubbleContainer" class="absolute inset-0 pointer-events-none z-15" style="clip-path: inset(30px 10px 10px 60%);"></div>
+
+            <svg viewBox="0 0 300 200" class="w-full h-full overflow-visible z-10">
+                <defs>
+                    <linearGradient id="clayGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#C2410C"/> <!-- Orange 700 -->
+                        <stop offset="50%" stop-color="#EA580C"/> <!-- Orange 600 -->
+                        <stop offset="100%" stop-color="#9A3412"/> <!-- Orange 800 -->
+                    </linearGradient>
+                    <linearGradient id="silverGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#94A3B8"/>
+                        <stop offset="50%" stop-color="#E2E8F0"/>
+                        <stop offset="100%" stop-color="#64748B"/>
+                    </linearGradient>
+                    <linearGradient id="waterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#7DD3FC"/>
+                        <stop offset="100%" stop-color="#0284C7"/>
+                    </linearGradient>
+                    <linearGradient id="glassReflection" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stop-color="rgba(255,255,255,0.8)"/>
+                        <stop offset="20%" stop-color="rgba(255,255,255,0.1)"/>
+                        <stop offset="80%" stop-color="rgba(255,255,255,0)"/>
+                        <stop offset="100%" stop-color="rgba(255,255,255,0.5)"/>
+                    </linearGradient>
+                    
+                    <!-- Mask for the Chalice Bowl -->
+                    <clipPath id="chaliceClip">
+                        <path d="M 170 50 C 170 120, 230 120, 230 50 Z"/>
+                    </clipPath>
+                </defs>
+
+                <!-- Wooden Table Surface -->
+                <path d="M 20 180 L 280 180 L 300 220 L 0 220 Z" fill="#E9E5DC" stroke="#DCD7CA" stroke-width="2"/>
+                <line x1="20" y1="180" x2="280" y2="180" stroke="#DCD7CA" stroke-width="3" stroke-linecap="round"/>
+
+                <!-- ================= RIGHT: THE CHALICE ================= -->
+                <!-- Chalice Back Glass -->
+                <path d="M 170 50 C 170 120, 230 120, 230 50 Z" fill="rgba(255,255,255,0.4)" stroke="#E2E8F0" stroke-width="1"/>
+                
+                <!-- Water Level (Masked) -->
+                <g clip-path="url(#chaliceClip)">
+                    <!-- Y translates from 120 (empty) to 55 (full) -->
+                    <g id="waterLevel" style="transform: translateY(120px);">
+                        <path class="liquid-wave-back" d="M 160 0 Q 180 -10 200 0 T 240 0 T 280 0 L 280 100 L 160 100 Z" fill="#38BDF8"/>
+                        <path class="liquid-wave" d="M 160 0 Q 180 10 200 0 T 240 0 T 280 0 L 280 100 L 160 100 Z" fill="url(#waterGrad)"/>
+                    </g>
+                </g>
+
+                <!-- Chalice Front Glass & Reflections -->
+                <path d="M 170 50 C 170 120, 230 120, 230 50 Z" fill="url(#glassReflection)" pointer-events="none"/>
+                <!-- Silver Stem & Base -->
+                <rect x="196" y="115" width="8" height="60" fill="url(#silverGrad)"/>
+                <path d="M 175 175 C 175 165, 225 165, 225 175 L 225 180 L 175 180 Z" fill="url(#silverGrad)"/>
+                <!-- Rim -->
+                <ellipse cx="200" cy="50" rx="30" ry="6" fill="none" stroke="#E2E8F0" stroke-width="2"/>
+                <ellipse cx="200" cy="50" rx="28" ry="4" fill="none" stroke="#FFFFFF" stroke-width="1"/>
+
+
+                <!-- ================= LEFT: THE CLAY PITCHER ================= -->
+                <!-- The Pouring Stream (Behind Pitcher, in front of Chalice) -->
+                <!-- Arc from pitcher spout to chalice bowl -->
+                <path d="M 130 50 Q 170 45, 195 90 L 205 90 Q 180 45, 140 50 Z" fill="#BAE6FD" class="water-stream"/>
+
+                <g class="pitcher-group">
+                    <!-- Drop Shadow -->
+                    <ellipse cx="90" cy="180" rx="35" ry="8" fill="rgba(0,0,0,0.1)"/>
+                    
+                    <!-- Handle -->
+                    <path d="M 50 60 C 10 60, 20 130, 55 130" fill="none" stroke="#9A3412" stroke-width="12" stroke-linecap="round"/>
+                    <path d="M 50 60 C 10 60, 20 130, 55 130" fill="none" stroke="#C2410C" stroke-width="8" stroke-linecap="round"/>
+
+                    <!-- Pitcher Body -->
+                    <path d="M 65 40 L 115 40 L 130 50 L 130 170 C 130 185, 50 185, 50 170 L 50 50 Z" fill="url(#clayGrad)" stroke="#7C2D12" stroke-width="2"/>
+                    <!-- Spout -->
+                    <path d="M 115 40 L 135 35 L 125 50 Z" fill="#EA580C" stroke="#7C2D12" stroke-width="2"/>
+                    <!-- Body Highlights (Rustic details) -->
+                    <path d="M 60 70 C 60 120, 65 150, 80 165" fill="none" stroke="#FFF" stroke-width="4" stroke-linecap="round" opacity="0.15"/>
+                    <line x1="50" y1="130" x2="130" y2="130" stroke="#7C2D12" stroke-width="2" opacity="0.3"/>
+                    <line x1="50" y1="140" x2="130" y2="140" stroke="#7C2D12" stroke-width="2" opacity="0.3"/>
+                    
+                    <!-- Top opening (Dark inside) -->
+                    <ellipse cx="90" cy="40" rx="25" ry="8" fill="#431407"/>
+                    <ellipse cx="90" cy="40" rx="25" ry="8" fill="none" stroke="#C2410C" stroke-width="3"/>
+                </g>
+
+            </svg>
+        </div>
+
+        <!-- Controls -->
+        <div class="w-full mt-auto z-10 shrink-0 flex flex-col items-center">
+            
+            <button id="drinkBtn" class="action-btn w-full py-4 rounded-xl text-xs font-bold uppercase tracking-widest flex items-center justify-center space-x-2">
+                <span class="text-base" id="btnIcon">💧</span>
+                <span id="btnText">Drink 1 Glass</span>
+            </button>
+            
+            <button id="resetTriggerBtn" class="mt-5 text-[9px] tracking-widest text-[#A39F96] uppercase hover:text-[#37352f] transition-colors pb-0.5 border-b border-transparent hover:border-[#37352f]">
+                Empty Chalice (New Day)
+            </button>
+        </div>
+
+        <!-- Custom Reset Modal -->
+        <div id="resetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#FCFBF9] rounded-2xl p-6 w-full max-w-[260px] border border-[#E9E5DC] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#37352f]">A New Day?</h3>
+                <p class="text-xs text-[#8A867D] mb-6">This will empty the chalice and reset your hydration tracker.</p>
+                <div class="flex space-x-3">
+                    <button id="cancelResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-[#8A867D] hover:bg-gray-100 border border-transparent transition-colors">Cancel</button>
+                    <button id="confirmResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#37352f] text-white hover:bg-black transition-colors shadow-md">Empty</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const MAX_GLASSES = 8;
+        const FULL_Y = 55;   // SVG Y-coord when full
+        const EMPTY_Y = 120; // SVG Y-coord when empty
+        
+        // State
+        const today = new Date().toDateString();
+        let state = JSON.parse(localStorage.getItem('faithreflects_chalice')) || {
+            date: today,
+            glasses: 0
+        };
+
+        // Auto-reset if new day
+        if (state.date !== today) {
+            state = { date: today, glasses: 0 };
+            localStorage.setItem('faithreflects_chalice', JSON.stringify(state));
+        }
+
+        // Elements
+        const container = document.getElementById('widgetContainer');
+        const waterLevel = document.getElementById('waterLevel');
+        const glassCountDisplay = document.getElementById('glassCount');
+        const statusBadge = document.getElementById('statusBadge');
+        const drinkBtn = document.getElementById('drinkBtn');
+        const btnText = document.getElementById('btnText');
+        const btnIcon = document.getElementById('btnIcon');
+        const splashContainer = document.getElementById('splashContainer');
+        const bubbleContainer = document.getElementById('bubbleContainer');
+        
+        // Modal
+        const resetModal = document.getElementById('resetModal');
+        const resetTriggerBtn = document.getElementById('resetTriggerBtn');
+        const cancelResetBtn = document.getElementById('cancelResetBtn');
+        const confirmResetBtn = document.getElementById('confirmResetBtn');
+
+        let isAnimating = false;
+
+        function createSplashes() {
+            // Get approximate position of the chalice opening relative to container
+            const rect = document.getElementById('sceneContainer').getBoundingClientRect();
+            
+            for(let i=0; i<8; i++) {
+                const splash = document.createElement('div');
+                splash.className = 'splash';
+                
+                // Position near the right side (chalice opening)
+                splash.style.left = `calc(65% + ${Math.random() * 20}px)`;
+                splash.style.top = '40%';
+                
+                // Explode upwards and outwards
+                const travelX = (Math.random() * 40) - 20;
+                const travelY = -(Math.random() * 40 + 20);
+                
+                splash.style.setProperty('--tx', `${travelX}px`);
+                splash.style.setProperty('--ty', `${travelY}px`);
+                
+                splashContainer.appendChild(splash);
+                
+                setTimeout(() => {
+                    if(splashContainer.contains(splash)) splash.remove();
+                }, 1500);
+            }
+        }
+
+        function createAmbientBubbles() {
+            bubbleContainer.innerHTML = '';
+            if (state.glasses === 0) return;
+
+            const bubbleCount = state.glasses * 2; // More water = more bubbles
+            for(let i=0; i<bubbleCount; i++) {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                
+                // Random position within the chalice bounds (roughly right side)
+                bubble.style.left = `calc(60% + ${Math.random() * 15}%)`;
+                bubble.style.bottom = '30%'; // Start near bottom of glass
+                
+                // Travel up to the surface based on current water level
+                const travelDist = (state.glasses / MAX_GLASSES) * -60; // Up to -60px
+                bubble.style.setProperty('--ty', `${travelDist}px`);
+                
+                // Random duration and delay
+                bubble.style.setProperty('--dur', `${2 + Math.random() * 2}s`);
+                bubble.style.animationDelay = `${Math.random() * 3}s`;
+                
+                bubbleContainer.appendChild(bubble);
+            }
+        }
+
+        function updateVisuals(animate = true) {
+            glassCountDisplay.innerText = state.glasses;
+            
+            // Calculate Water Y Position
+            // Ratio from 0 to 1
+            const ratio = Math.min(state.glasses / MAX_GLASSES, 1);
+            const targetY = EMPTY_Y - (ratio * (EMPTY_Y - FULL_Y));
+            
+            waterLevel.style.transform = `translateY(${targetY}px)`;
+
+            if (animate && state.glasses > 0) {
+                createAmbientBubbles();
+            }
+
+            // Completion State
+            if (state.glasses >= MAX_GLASSES) {
+                container.classList.add('is-hydrated');
+                
+                // Update Button
+                drinkBtn.classList.add('is-complete');
+                btnText.innerText = "Daily Goal Met";
+                btnIcon.innerText = "✨";
+                
+                // Update Badge
+                statusBadge.classList.replace('border-[#E9E5DC]', 'border-[#BAE6FD]');
+                statusBadge.classList.replace('bg-white', 'bg-[#F0F9FF]');
+                glassCountDisplay.classList.replace('text-[#0284C7]', 'text-[#0369A1]');
+            } else {
+                container.classList.remove('is-hydrated');
+                
+                // Revert Button
+                drinkBtn.classList.remove('is-complete');
+                btnText.innerText = "Drink 1 Glass";
+                btnIcon.innerText = "💧";
+                
+                // Revert Badge
+                statusBadge.classList.replace('border-[#BAE6FD]', 'border-[#E9E5DC]');
+                statusBadge.classList.replace('bg-[#F0F9FF]', 'bg-white');
+                glassCountDisplay.classList.replace('text-[#0369A1]', 'text-[#0284C7]');
+            }
+        }
+
+        drinkBtn.addEventListener('click', () => {
+            if (isAnimating || state.glasses >= MAX_GLASSES) return;
+            isAnimating = true;
+            drinkBtn.disabled = true;
+
+            // Trigger Pouring Animation
+            container.classList.add('is-pouring');
+            createSplashes();
+
+            // After pitcher tilts and pours (1s), update the state and water level
+            setTimeout(() => {
+                state.glasses++;
+                localStorage.setItem('faithreflects_chalice', JSON.stringify(state));
+                updateVisuals(true);
+            }, 1000);
+
+            // Finish animation and unlock
+            setTimeout(() => {
+                container.classList.remove('is-pouring');
+                isAnimating = false;
+                drinkBtn.disabled = false;
+            }, 1600);
+        });
+
+        // Reset Modal Logic
+        resetTriggerBtn.addEventListener('click', () => {
+            if (!isAnimating) resetModal.classList.remove('hidden');
+        });
+        
+        cancelResetBtn.addEventListener('click', () => resetModal.classList.add('hidden'));
+        
+        confirmResetBtn.addEventListener('click', () => {
+            state = { date: today, glasses: 0 };
+            localStorage.setItem('faithreflects_chalice', JSON.stringify(state));
+            
+            updateVisuals(false); // Snap empty
+            bubbleContainer.innerHTML = '';
+            
+            resetModal.classList.add('hidden');
+        });
+
+        // Initialize instantly on load without pouring animation
+        updateVisuals(true);
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Tree of Life</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        /* Sovereign Light Mode Base */
+        html, body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: transparent; 
+            color: #37352f; 
+            user-select: none; 
+            margin: 0;
+            padding: 0;
+        }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* The Widget Container */
+        .widget-box {
+            background-color: #FCFBF9; /* Ivory Parchment */
+            border: 1px solid #E9E5DC;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.03), inset 0 0 20px rgba(255,255,255,0.5);
+            transition: all 1.5s ease;
+        }
+
+        /* Ambient Glow */
+        .ambient-glow {
+            position: absolute;
+            top: 40%;
+            left: 25%;
+            transform: translate(-50%, -50%);
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.0) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            transition: background 2s ease;
+        }
+        .stage-5 .ambient-glow {
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 70%);
+            animation: breathe-glow 4s infinite alternate ease-in-out;
+        }
+
+        @keyframes breathe-glow {
+            0% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; }
+        }
+
+        /* Tree SVG Animations & Physics */
+        .tree-part {
+            transition: all 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* Initial Setup */
+        .root-line { stroke-dasharray: 100; stroke-dashoffset: 100; }
+        .trunk-line { stroke-dasharray: 150; stroke-dashoffset: 150; }
+        .branch-line { stroke-dasharray: 80; stroke-dashoffset: 80; }
+        .leaf { transform: scale(0); opacity: 0; transform-origin: center; transition: all 1s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+        /* Stage 1: Read (Roots begin) */
+        .stage-1 .root-line.primary { stroke-dashoffset: 40; }
+        
+        /* Stage 2: Write (Trunk sprouts, deeper roots) */
+        .stage-2 .root-line.primary { stroke-dashoffset: 0; }
+        .stage-2 .root-line.secondary { stroke-dashoffset: 50; }
+        .stage-2 .trunk-line { stroke-dashoffset: 0; }
+        
+        /* Stage 3: Speak (Branches form) */
+        .stage-3 .root-line.secondary { stroke-dashoffset: 0; }
+        .stage-3 .trunk-line { stroke-dashoffset: 0; stroke-width: 8; }
+        .stage-3 .branch-line { stroke-dashoffset: 0; }
+        
+        /* Stage 4: Review (Initial Leaves) */
+        .stage-4 .trunk-line { stroke-dashoffset: 0; stroke-width: 10; }
+        .stage-4 .branch-line { stroke-dashoffset: 0; }
+        .stage-4 .leaf.early { transform: scale(1); opacity: 1; }
+        
+        /* Stage 5: Integrate (Full Canopy & Glow) */
+        .stage-5 .trunk-line { stroke-dashoffset: 0; stroke-width: 12; }
+        .stage-5 .branch-line { stroke-dashoffset: 0; }
+        .stage-5 .leaf { transform: scale(1); opacity: 1; }
+        .stage-5 .leaf.late { transition-delay: 0.3s; }
+        .stage-5 .leaf.gold { fill: #D4AF37; filter: drop-shadow(0 0 6px rgba(212, 175, 55, 0.6)); transition-delay: 0.6s; }
+        
+        .stage-5 #canopy-group {
+            animation: gentle-sway 6s infinite alternate ease-in-out;
+            transform-origin: 100px 140px;
+        }
+
+        @keyframes gentle-sway {
+            0% { transform: rotate(-2deg); }
+            100% { transform: rotate(2deg); }
+        }
+
+        /* Earth Cross-Section */
+        .earth-crust {
+            fill: #2D2416;
+        }
+        .earth-core {
+            fill: #1A140B;
+        }
+
+        /* Floating Light Particles (Stage 5) */
+        .firefly {
+            position: absolute;
+            width: 3px; height: 3px;
+            background-color: #FCD34D;
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: 0 0 6px #F59E0B;
+            animation: float 4s infinite alternate ease-in-out;
+            opacity: 0;
+            z-index: 20;
+        }
+        .stage-5 .firefly { opacity: 0.8; }
+        @keyframes float {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(var(--tx), var(--ty)); }
+        }
+
+        /* Inputs & Checklists */
+        .memory-row {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px solid transparent;
+        }
+        .memory-row:hover:not(.locked):not(.completed) {
+            background-color: #f7f6f3;
+            border-color: #E9E5DC;
+            transform: translateX(4px);
+        }
+        
+        .memory-row.completed {
+            background-color: #FCFBF9;
+            border-color: transparent;
+        }
+
+        .memory-row.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+
+        .check-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 6px;
+            border: 2px solid #E9E5DC;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            background-color: #fff;
+        }
+        
+        .memory-row:hover:not(.locked) .check-box { border-color: #D4AF37; }
+        
+        .memory-row.completed .check-box {
+            background-color: #D4AF37;
+            border-color: #B48025;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+        }
+
+        .check-mark {
+            stroke-dasharray: 20;
+            stroke-dashoffset: 20;
+            transition: stroke-dashoffset 0.4s ease-in-out 0.1s;
+            stroke: #fff;
+        }
+        .memory-row.completed .check-mark { stroke-dashoffset: 0; }
+
+        .day-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: #8A867D;
+            transition: color 0.3s ease;
+            width: 45px;
+        }
+        .task-label {
+            font-size: 13px;
+            color: #37352f;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .memory-row.completed .day-label { color: #D4AF37; }
+        .memory-row.completed .task-label {
+            color: #A39F96;
+            text-decoration: line-through;
+        }
+
+        /* Input Fields */
+        input[type="text"], textarea {
+            background-color: transparent;
+            border: 1px solid transparent;
+            color: #37352f;
+            transition: all 0.3s ease;
+            resize: none;
+        }
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: #D4AF37;
+            background-color: #FFFFFF;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.05);
+        }
+        input::placeholder, textarea::placeholder { color: #A39F96; font-style: italic; }
+
+        /* Integrated/Engraved state for inputs */
+        .stage-5 textarea {
+            color: #B48025;
+            font-weight: 500;
+            text-shadow: 0 0 1px rgba(212, 175, 55, 0.2);
+            pointer-events: none;
+        }
+        .stage-5 input[type="text"] {
+            color: #D4AF37;
+            pointer-events: none;
+        }
+
+        /* Buttons */
+        .btn-reset {
+            background-color: transparent;
+            color: #A39F96;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid transparent;
+        }
+        .btn-reset:hover { 
+            color: #37352f; 
+            border-bottom-color: #37352f;
+        }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E9E5DC; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #D4AF37; }
+
+        /* Modal blur */
+        .modal-bg { backdrop-filter: blur(5px); background-color: rgba(255,255,255,0.8); }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen w-full p-4 overflow-hidden">
+
+    <div id="widgetContainer" class="widget-box stage-0 relative w-full max-w-2xl rounded-3xl p-6 md:p-10 flex flex-col md:flex-row h-[600px] overflow-hidden gap-8">
+        
+        <div class="ambient-glow"></div>
+        <div id="firefliesContainer" class="absolute inset-0 pointer-events-none z-30"></div>
+
+        <!-- Left Side: Visual Tree -->
+        <div class="flex-shrink-0 flex flex-col items-center w-full md:w-[260px] h-full relative z-20">
+            
+            <div class="w-full flex justify-between items-center mb-2">
+                <span class="text-[10px] tracking-[0.2em] uppercase font-bold text-[#A39F96]">@faithreflects</span>
+            </div>
+            
+            <h2 class="serif text-2xl text-[#37352f] mb-1 text-center w-full">Tree of Life</h2>
+            <p class="text-[10px] text-[#8A867D] italic mb-4 text-center w-full border-b border-[#E9E5DC] pb-4">"Planted by streams of water."</p>
+
+            <!-- SVG Tree Area -->
+            <div class="relative w-full flex-1 flex justify-center items-end" id="svgContainer">
+                <svg viewBox="0 0 200 240" class="w-full h-full overflow-visible">
+                    
+                    <defs>
+                        <radialGradient id="seedGlow" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stop-color="#FCD34D"/>
+                            <stop offset="100%" stop-color="transparent"/>
+                        </radialGradient>
+                        <linearGradient id="trunkGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#5C451A"/>
+                            <stop offset="100%" stop-color="#8B6508"/>
+                        </linearGradient>
+                    </defs>
+
+                    <!-- Cross Section of Earth -->
+                    <!-- Sky/Backdrop behind canopy -->
+                    <circle cx="100" cy="90" r="70" fill="#FCFBF9" opacity="0.5"/>
+                    
+                    <!-- Dirt Layer -->
+                    <path d="M 20 180 Q 100 170 180 180 L 170 240 C 140 245, 60 245, 30 240 Z" class="earth-crust"/>
+                    <path d="M 30 240 C 60 245, 140 245, 170 240 L 160 260 C 130 270, 70 270, 40 260 Z" class="earth-core"/>
+                    
+                    <!-- Grass Top -->
+                    <path d="M 20 180 Q 100 170 180 180 L 175 185 Q 100 175 25 185 Z" fill="#8A9D92"/>
+                    <path d="M 40 178 L 45 170 M 50 177 L 53 172 M 160 178 L 155 170 M 150 177 L 147 172" stroke="#8A9D92" stroke-width="1.5" stroke-linecap="round"/>
+
+                    <!-- The Seed (Always visible) -->
+                    <circle cx="100" cy="190" r="10" fill="url(#seedGlow)" opacity="0.4"/>
+                    <ellipse cx="100" cy="190" rx="4" ry="2.5" fill="#D4AF37"/>
+
+                    <!-- The Roots (Grow downwards) -->
+                    <g fill="none" stroke="#D4AF37" stroke-width="2" stroke-linecap="round">
+                        <!-- Primary Roots (Stage 1) -->
+                        <path class="tree-part root-line primary" d="M 100 190 Q 95 210 90 225"/>
+                        <path class="tree-part root-line primary" d="M 100 190 Q 110 215 115 230"/>
+                        <!-- Secondary Roots (Stage 2) -->
+                        <path class="tree-part root-line secondary" d="M 95 205 Q 80 220 75 235" stroke-width="1.5"/>
+                        <path class="tree-part root-line secondary" d="M 105 200 Q 125 210 135 220" stroke-width="1.5"/>
+                        <path class="tree-part root-line secondary" d="M 92 215 Q 95 235 98 245" stroke-width="1"/>
+                    </g>
+
+                    <!-- The Trunk & Branches (Grow upwards) -->
+                    <g id="canopy-group">
+                        <g fill="none" stroke="url(#trunkGrad)" stroke-linecap="round">
+                            <!-- Main Trunk -->
+                            <path class="tree-part trunk-line" d="M 100 190 Q 95 140 100 80" stroke-width="6"/>
+                            <!-- Branches -->
+                            <path class="tree-part branch-line" d="M 98 120 Q 70 100 55 95" stroke-width="4"/>
+                            <path class="tree-part branch-line" d="M 102 105 Q 130 90 145 80" stroke-width="3"/>
+                            <path class="tree-part branch-line" d="M 98 90 Q 80 70 70 65" stroke-width="2.5"/>
+                            <path class="tree-part branch-line" d="M 101 85 Q 115 65 125 55" stroke-width="2"/>
+                        </g>
+
+                        <!-- Leaves -->
+                        <g fill="#A3B8AC">
+                            <!-- Lower left branch -->
+                            <circle cx="55" cy="95" r="15" class="tree-part leaf early"/>
+                            <circle cx="70" cy="105" r="12" class="tree-part leaf early"/>
+                            <circle cx="45" cy="85" r="10" class="tree-part leaf late"/>
+                            
+                            <!-- Lower right branch -->
+                            <circle cx="145" cy="80" r="16" class="tree-part leaf early"/>
+                            <circle cx="125" cy="95" r="12" class="tree-part leaf early"/>
+                            <circle cx="155" cy="70" r="10" class="tree-part leaf late"/>
+
+                            <!-- Upper left branch -->
+                            <circle cx="70" cy="65" r="14" class="tree-part leaf early"/>
+                            <circle cx="85" cy="75" r="10" class="tree-part leaf late"/>
+                            <circle cx="60" cy="55" r="12" class="tree-part leaf late"/>
+
+                            <!-- Upper right branch -->
+                            <circle cx="125" cy="55" r="15" class="tree-part leaf early"/>
+                            <circle cx="110" cy="70" r="10" class="tree-part leaf late"/>
+                            <circle cx="135" cy="45" r="10" class="tree-part leaf late"/>
+
+                            <!-- Center Top -->
+                            <circle cx="100" cy="50" r="18" class="tree-part leaf late"/>
+                            <circle cx="85" cy="45" r="12" class="tree-part leaf late"/>
+                            <circle cx="115" cy="40" r="12" class="tree-part leaf late"/>
+                        </g>
+
+                        <!-- Golden Leaves (Final Stage) -->
+                        <path d="M 50 90 Q 55 85 60 95 Q 50 100 50 90 Z" class="tree-part leaf gold"/>
+                        <path d="M 140 75 Q 145 70 150 80 Q 140 85 140 75 Z" class="tree-part leaf gold"/>
+                        <path d="M 95 45 Q 100 40 105 50 Q 95 55 95 45 Z" class="tree-part leaf gold"/>
+                        <path d="M 75 60 Q 80 55 85 65 Q 75 70 75 60 Z" class="tree-part leaf gold"/>
+                        <path d="M 120 50 Q 125 45 130 55 Q 120 60 120 50 Z" class="tree-part leaf gold"/>
+                    </g>
+                </svg>
+            </div>
+            
+            <div class="mt-2 h-6 flex items-center justify-center">
+                <span id="statusText" class="text-[10px] font-bold tracking-widest uppercase text-[#A39F96] transition-colors duration-500">
+                    Awaiting Seed
+                </span>
+            </div>
+        </div>
+
+        <!-- Right Side: The Input & Checklist -->
+        <div class="flex-1 w-full flex flex-col justify-center z-20 min-h-0 pl-2 md:pl-0 border-t md:border-t-0 md:border-l border-[#E9E5DC] pt-6 md:pt-0 md:pl-8">
+            
+            <!-- Verse Input Area -->
+            <div class="bg-[#FCFBF9] border border-[#E9E5DC] rounded-2xl p-4 mb-4 shrink-0 shadow-sm transition-all duration-1000" id="verseBox">
+                <input type="text" id="verseRef" placeholder="Reference (e.g. Psalm 23:1)" class="w-full rounded-xl px-2 py-1 text-sm font-bold text-[#D4AF37] mb-1" autocomplete="off">
+                <textarea id="verseText" placeholder="Write out the scripture you are memorizing..." class="w-full rounded-xl px-2 py-1 text-sm text-[#525252] leading-relaxed custom-scrollbar h-20" autocomplete="off"></textarea>
+            </div>
+
+            <!-- The 5 Stages -->
+            <div class="flex-1 flex flex-col space-y-2 overflow-y-auto custom-scrollbar pr-2" id="checklistContainer">
+                <!-- Injected via JS -->
+            </div>
+
+            <!-- Reset Button -->
+            <button id="resetTriggerBtn" class="mt-4 text-[9px] tracking-widest uppercase pb-0.5 z-10 shrink-0 btn-reset self-start">
+                Plant New Seed
+            </button>
+
+        </div>
+
+        <!-- Custom Reset Modal -->
+        <div id="resetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg transition-opacity">
+            <div class="bg-[#FCFBF9] rounded-2xl p-6 w-full max-w-[260px] border border-[#E9E5DC] shadow-2xl text-center transform transition-all">
+                <h3 class="font-serif text-xl mb-2 text-[#37352f]">Plant New Seed?</h3>
+                <p class="text-xs text-[#8A867D] mb-6">This will clear your current progress to memorize a new verse.</p>
+                <div class="flex space-x-3">
+                    <button id="cancelResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-[#8A867D] hover:bg-gray-100 border border-transparent transition-colors">Cancel</button>
+                    <button id="confirmResetBtn" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-[#37352f] text-white hover:bg-black transition-colors shadow-md">Confirm</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Data Structure exactly matching user screenshot
+        const milestones = [
+            { id: 0, title: 'Day 1', desc: 'Read', tooltip: 'Read 10x, write 3x, say out loud' },
+            { id: 1, title: 'Day 2', desc: 'Write', tooltip: 'Write from memory, check accuracy' },
+            { id: 2, title: 'Day 3', desc: 'Speak', tooltip: 'Recite aloud perfectly 3 times' },
+            { id: 3, title: 'Day 7', desc: 'Review', tooltip: 'Recite to someone else' },
+            { id: 4, title: 'Day 30', desc: 'Integrate', tooltip: 'Verse is permanently rooted' }
+        ];
+
+        // State Management
+        let state = JSON.parse(localStorage.getItem('faithreflects_tree_of_life')) || {
+            verseRef: '', verseText: '',
+            progress: [false, false, false, false, false]
+        };
+
+        // Elements
+        const container = document.getElementById('widgetContainer');
+        const checklistContainer = document.getElementById('checklistContainer');
+        const verseRefInput = document.getElementById('verseRef');
+        const verseTextInput = document.getElementById('verseText');
+        const verseBox = document.getElementById('verseBox');
+        const statusText = document.getElementById('statusText');
+        const firefliesContainer = document.getElementById('firefliesContainer');
+        
+        // Modal Elements
+        const resetModal = document.getElementById('resetModal');
+        const resetTriggerBtn = document.getElementById('resetTriggerBtn');
+        const cancelResetBtn = document.getElementById('cancelResetBtn');
+        const confirmResetBtn = document.getElementById('confirmResetBtn');
+
+        // Inputs Auto-Save
+        verseRefInput.value = state.verseRef;
+        verseTextInput.value = state.verseText;
+        verseRefInput.addEventListener('input', (e) => { state.verseRef = e.target.value; saveState(); });
+        verseTextInput.addEventListener('input', (e) => { state.verseText = e.target.value; saveState(); });
+
+        function saveState() {
+            localStorage.setItem('faithreflects_tree_of_life', JSON.stringify(state));
+        }
+
+        function createFireflies() {
+            firefliesContainer.innerHTML = '';
+            for(let i=0; i<12; i++) {
+                const fly = document.createElement('div');
+                fly.className = 'firefly';
+                
+                // Position around the canopy
+                fly.style.left = `${30 + Math.random() * 40}%`; // 30% to 70% width
+                fly.style.top = `${20 + Math.random() * 30}%`; // 20% to 50% height
+                
+                const tx = (Math.random() * 40) - 20;
+                const ty = (Math.random() * 40) - 20;
+                
+                fly.style.setProperty('--tx', `${tx}px`);
+                fly.style.setProperty('--ty', `${ty}px`);
+                fly.style.animationDelay = `-${Math.random() * 4}s`;
+                
+                firefliesContainer.appendChild(fly);
+            }
+        }
+
+        function updateVisuals() {
+            // Determine sequential stage (0 to 5)
+            // It looks for the first unchecked item to determine the current consecutive stage.
+            let currentStage = 0;
+            for (let i = 0; i < 5; i++) {
+                if (state.progress[i]) currentStage = i + 1;
+                else break; // Stop at first gap
+            }
+
+            // Update Container Class for SVG CSS mapping
+            container.className = `widget-box stage-${currentStage} relative w-full max-w-2xl rounded-3xl p-6 md:p-10 flex flex-col md:flex-row h-[600px] overflow-hidden gap-8`;
+
+            // Update Status Text
+            const statusMessages = [
+                "Awaiting Seed",
+                "Roots Established",
+                "Trunk Sprouting",
+                "Branches Reaching",
+                "Canopy Forming",
+                "Deeply Rooted"
+            ];
+            statusText.innerText = statusMessages[currentStage];
+            
+            if (currentStage === 5) {
+                statusText.classList.remove('text-[#A39F96]');
+                statusText.classList.add('text-[#D4AF37]');
+                verseBox.style.backgroundColor = '#FFFAF0';
+                verseBox.style.borderColor = '#D4AF37';
+                createFireflies();
+            } else {
+                statusText.classList.add('text-[#A39F96]');
+                statusText.classList.remove('text-[#D4AF37]');
+                verseBox.style.backgroundColor = '#FCFBF9';
+                verseBox.style.borderColor = '#E9E5DC';
+                firefliesContainer.innerHTML = ''; // Remove fireflies
+            }
+        }
+
+        window.toggleTask = function(index) {
+            // Enforce sequential checking (can't check day 3 if day 2 is false)
+            if (!state.progress[index]) {
+                // Trying to check
+                if (index > 0 && !state.progress[index - 1]) return; // Blocked
+                state.progress[index] = true;
+            } else {
+                // Trying to uncheck
+                // Must uncheck all subsequent ones too
+                for (let i = index; i < 5; i++) state.progress[i] = false;
+            }
+            
+            saveState();
+            renderChecklist();
+            updateVisuals();
+        };
+
+        function renderChecklist() {
+            checklistContainer.innerHTML = milestones.map((m, index) => {
+                const isCompleted = state.progress[index];
+                const isLocked = index > 0 && !state.progress[index - 1]; // Locked if previous is false
+
+                let rowClass = 'memory-row flex items-center justify-between ';
+                if (isCompleted) rowClass += 'completed';
+                else if (isLocked) rowClass += 'locked';
+
+                return `
+                    <div class="${rowClass}" onclick="${isLocked ? '' : `toggleTask(${index})`}" title="${m.tooltip}">
+                        <div class="flex items-center space-x-3 w-full">
+                            <div class="check-box shadow-sm shrink-0">
+                                <svg class="w-3.5 h-3.5 check-mark" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <span class="day-label shrink-0">${m.title}</span>
+                            <div class="flex-1 border-b border-dashed border-[#E9E5DC] mx-2 opacity-50"></div>
+                            <span class="task-label shrink-0 text-right">${m.desc}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Modal Logic
+        resetTriggerBtn.addEventListener('click', () => resetModal.classList.remove('hidden'));
+        cancelResetBtn.addEventListener('click', () => resetModal.classList.add('hidden'));
+        
+        confirmResetBtn.addEventListener('click', () => {
+            state = { verseRef: '', verseText: '', progress: [false, false, false, false, false] };
+            saveState();
+            
+            verseRefInput.value = '';
+            verseTextInput.value = '';
+            
+            renderChecklist();
+            updateVisuals();
+            
+            resetModal.classList.add('hidden');
+        });
+
+        // Initialize
+        renderChecklist();
+        
+        // Small timeout allows initial DOM rendering before applying CSS transforms
+        setTimeout(updateVisuals, 50);
+
+    </script>
+</body>
+</html>
